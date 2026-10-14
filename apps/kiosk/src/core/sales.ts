@@ -389,11 +389,11 @@ export class SalesService {
     const row = this.row(localId);
     if (!row) return { ok: false, code: 'NOT_FOUND', message: 'سفارش یافت نشد' };
     if (row.status === OrderStatus.PAID) return { ok: true, result: this.outcomeView(localId, TerminalOutcome.PAID) };
-    if (row.status !== OrderStatus.LOCKED && row.status !== OrderStatus.FAILED) {
-      return { ok: false, code: 'ORDER_NOT_PAYABLE', message: 'این سفارش در وضعیت قابل پرداخت نیست' };
-    }
     if (this.journalFor(localId).some((j) => j.state === 'IN_FLIGHT' || j.state === TerminalOutcome.UNKNOWN)) {
       return { ok: false, code: 'PAYMENT_UNRESOLVED', message: 'نتیجه پرداخت قبلی هنوز مشخص نیست؛ ابتدا استعلام لازم است' };
+    }
+    if (row.status !== OrderStatus.LOCKED && row.status !== OrderStatus.FAILED) {
+      return { ok: false, code: 'ORDER_NOT_PAYABLE', message: 'این سفارش در وضعیت قابل پرداخت نیست' };
     }
     const posStatus = await this.payment.status();
     if (this.payment.name === 'not-configured') {

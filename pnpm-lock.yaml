@@ -44,6 +44,9 @@ importers:
       concurrently:
         specifier: 9.2.1
         version: 9.2.1
+      dotenv:
+        specifier: 16.6.1
+        version: 16.6.1
       electron:
         specifier: 36.9.5
         version: 36.9.5
