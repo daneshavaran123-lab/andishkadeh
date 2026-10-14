@@ -1,0 +1,22 @@
+{
+  "name": "andishkadeh",
+  "private": true,
+  "description": "اندیشکده کشتی ایران — کیوسک سلف‌سرویس، پنل مدیریت و سرور",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "build:shared": "pnpm --filter @andishkadeh/shared run build",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run typecheck",
+    "db:migrate": "pnpm --filter @andishkadeh/server run db:migrate",
+    "db:seed": "pnpm --filter @andishkadeh/server run db:seed",
+    "dev:server": "pnpm --filter @andishkadeh/server run dev",
+    "dev:admin": "pnpm --filter @andishkadeh/admin run dev",
+    "dev:kiosk": "pnpm --filter @andishkadeh/kiosk run dev:web",
+    "e2e": "pnpm --filter @andishkadeh/e2e run test"
+  }
+}

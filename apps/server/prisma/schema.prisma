@@ -1,0 +1,468 @@
+// اندیشکده کشتی ایران — مدل داده مرکزی (PRD §11 و پیوست I-01)
+// Money columns are integer Toman. Historical prices live in OrderItem snapshots.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  ADMIN
+  OPERATOR
+}
+
+enum ItemType {
+  SERVICE
+  PLAN
+}
+
+enum OrderKind {
+  SERVICES
+  SUBSCRIPTION
+}
+
+enum OrderStatus {
+  LOCKED
+  PAYMENT_PENDING
+  PAID
+  FAILED
+  UNKNOWN
+  CANCELLED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+  CANCELLED
+  UNKNOWN
+}
+
+enum PaymentResultSource {
+  TERMINAL
+  INQUIRY
+  RECONCILE
+  RECOVERY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+enum DiscountTargetType {
+  SERVICE
+  SUBCATEGORY
+  CATEGORY
+  PLAN
+}
+
+enum AccessResult {
+  ACTIVE
+  EXPIRED
+  NOT_STARTED
+  REVOKED
+  INVALID
+}
+
+enum PrintStatus {
+  NOT_PRINTED
+  PRINTED
+  FAILED
+}
+
+enum SyncEventStatus {
+  APPLIED
+  REJECTED
+  CONFLICT
+}
+
+enum DeviceCommandType {
+  PAYMENT_INQUIRY
+  PRINT_RECEIPT
+  SYNC_NOW
+}
+
+enum DeviceCommandStatus {
+  PENDING
+  DELIVERED
+  DONE
+  FAILED
+}
+
+model AdminUser {
+  id               String    @id @default(uuid())
+  username         String    @unique
+  displayName      String
+  passwordHash     String
+  role             AdminRole
+  active           Boolean   @default(true)
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  lastLoginAt      DateTime?
+  /// Incremented on password change / deactivation to invalidate issued tokens.
+  tokenVersion     Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  /// Normalised 09xxxxxxxxx
+  mobile    String   @unique
+  createdAt DateTime @default(now())
+
+  orders        Order[]
+  subscriptions Subscription[]
+}
+
+model Media {
+  id           String   @id @default(uuid())
+  storageKey   String
+  originalName String
+  mime         String
+  size         Int
+  checksum     String   @unique
+  width        Int?
+  height       Int?
+  revision     Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  categories    Category[]
+  subcategories Subcategory[]
+  services      Service[]
+}
+
+model Category {
+  id                  String   @id @default(uuid())
+  code                String   @unique
+  title               String
+  subtitle            String   @default("")
+  description         String   @default("")
+  theme               String   @default("blue")
+  mediaId             String?
+  media               Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  sortOrder           Int      @default(0)
+  active              Boolean  @default(true)
+  salesEnabled        Boolean  @default(true)
+  subscriptionCovered Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  subcategories Subcategory[]
+}
+
+model Subcategory {
+  id          String   @id @default(uuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  code        String   @unique
+  title       String
+  description String   @default("")
+  mediaId     String?
+  media       Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  services Service[]
+
+  @@index([categoryId])
+}
+
+model Service {
+  id                 String      @id @default(uuid())
+  code               String      @unique
+  subcategoryId      String
+  subcategory        Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Restrict)
+  title              String
+  description        String      @default("")
+  includes           String[]    @default([])
+  unit               String
+  /// null = tariff not yet approved; such services can not be activated.
+  price              Int?
+  mediaId            String?
+  media              Media?      @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  fullAccessIncluded Boolean     @default(true)
+  active             Boolean     @default(false)
+  sortOrder          Int         @default(0)
+  revision           Int         @default(1)
+  deletedAt          DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  @@index([subcategoryId])
+}
+
+model SubscriptionPlan {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  title          String
+  description    String   @default("")
+  durationDays   Int
+  durationMonths Int
+  price          Int
+  badge          String?
+  active         Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  revision       Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id           String             @id @default(uuid())
+  customerId   String
+  customer     Customer           @relation(fields: [customerId], references: [id])
+  planId       String
+  plan         SubscriptionPlan   @relation(fields: [planId], references: [id])
+  /// Plan title at purchase time (plans may be renamed later).
+  planTitle    String
+  orderId      String             @unique
+  order        Order              @relation(fields: [orderId], references: [id])
+  startsAt     DateTime
+  expiresAt    DateTime
+  status       SubscriptionStatus @default(ACTIVE)
+  /// SHA-256 of the random QR token. The raw token is never stored server side.
+  qrTokenHash  String             @unique
+  qrIssuedAt   DateTime           @default(now())
+  /// true when the period was appended after the member's existing coverage (renewal).
+  extended     Boolean            @default(false)
+  cancelledAt  DateTime?
+  cancelReason String?
+  /// Monotonic change counter for kiosk cache pulls.
+  rev          Int
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  accessLogs AccessLog[]
+
+  @@index([customerId])
+  @@index([rev])
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  orderNumber        String      @unique
+  deviceId           String
+  device             Device      @relation(fields: [deviceId], references: [id])
+  /// Kiosk generated UUID (idempotency key of order creation).
+  localId            String
+  kind               OrderKind
+  customerId         String
+  customer           Customer    @relation(fields: [customerId], references: [id])
+  subtotal           Int
+  discountTotal      Int
+  total              Int
+  status             OrderStatus @default(LOCKED)
+  offline            Boolean     @default(false)
+  catalogRevision    Int
+  /// Subscription orders: hash of the kiosk-generated QR token, activated on PAID.
+  pendingQrTokenHash String?
+  conflictFlag       Boolean     @default(false)
+  conflictNote       String?
+  printStatus        PrintStatus @default(NOT_PRINTED)
+  printDetail        String?
+  lockedAt           DateTime    @default(now())
+  paidAt             DateTime?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  items        OrderItem[]
+  payments     PaymentAttempt[]
+  subscription Subscription?
+
+  @@unique([deviceId, localId])
+  @@index([status, paidAt])
+  @@index([createdAt])
+  @@index([customerId])
+}
+
+model OrderItem {
+  id                    String   @id @default(uuid())
+  orderId               String
+  order                 Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemType              ItemType
+  itemId                String
+  codeSnapshot          String
+  titleSnapshot         String
+  unitSnapshot          String
+  categoryIdSnapshot    String?
+  categoryTitleSnapshot String?
+  unitPriceSnapshot     Int
+  quantity              Int
+  discountIdSnapshot    String?
+  discountTitleSnapshot String?
+  unitDiscountSnapshot  Int
+  lineTotal             Int
+  sortOrder             Int      @default(0)
+
+  @@index([orderId])
+  @@index([itemId])
+}
+
+model PaymentAttempt {
+  /// Kiosk generated UUID.
+  id               String               @id
+  orderId          String
+  order            Order                @relation(fields: [orderId], references: [id])
+  idempotencyKey   String               @unique
+  amount           Int
+  status           PaymentStatus        @default(INITIATED)
+  terminalRef      String?
+  rrn              String?
+  traceNo          String?
+  resultSource     PaymentResultSource?
+  resultMessage    String?
+  initiatedAt      DateTime             @default(now())
+  resolvedAt       DateTime?
+  reconciledById   String?
+  reconcileReason  String?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model Discount {
+  id        String       @id @default(uuid())
+  title     String
+  type      DiscountType
+  value     Int
+  priority  Int          @default(100)
+  active    Boolean      @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  targets DiscountTarget[]
+}
+
+model DiscountTarget {
+  id         String             @id @default(uuid())
+  discountId String
+  discount   Discount           @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  targetType DiscountTargetType
+  targetId   String
+
+  @@unique([discountId, targetType, targetId])
+}
+
+model AccessLog {
+  id             String        @id @default(uuid())
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  deviceId       String
+  device         Device        @relation(fields: [deviceId], references: [id])
+  checkedAt      DateTime
+  result         AccessResult
+  offline        Boolean       @default(false)
+  /// Device event id for idempotent offline sync.
+  eventId        String?       @unique
+  createdAt      DateTime      @default(now())
+
+  @@index([subscriptionId])
+  @@index([checkedAt])
+}
+
+model Device {
+  id                 String    @id
+  name               String
+  apiKeyHash         String
+  active             Boolean   @default(true)
+  lastSeenAt         DateTime?
+  appVersion         String?
+  catalogRevision    Int?
+  subRev             Int?
+  hardware           Json?
+  outbox             Json?
+  unresolvedPayments Int       @default(0)
+  lastSyncAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  orders     Order[]
+  accessLogs AccessLog[]
+  syncEvents SyncEvent[]
+  commands   DeviceCommand[]
+}
+
+model DeviceCommand {
+  id          String              @id @default(uuid())
+  deviceId    String
+  device      Device              @relation(fields: [deviceId], references: [id])
+  type        DeviceCommandType
+  payload     Json
+  status      DeviceCommandStatus @default(PENDING)
+  createdById String?
+  createdAt   DateTime            @default(now())
+  deliveredAt DateTime?
+  completedAt DateTime?
+  result      Json?
+
+  @@index([deviceId, status])
+}
+
+model SyncEvent {
+  /// Device generated event UUID — the dedup key.
+  id          String          @id
+  deviceId    String
+  device      Device          @relation(fields: [deviceId], references: [id])
+  type        String
+  payload     Json
+  status      SyncEventStatus
+  error       String?
+  result      Json?
+  retryCount  Int             @default(0)
+  receivedAt  DateTime        @default(now())
+  appliedAt   DateTime?
+
+  @@index([deviceId, status])
+  @@index([receivedAt])
+}
+
+model AuditLog {
+  id         String     @id @default(uuid())
+  actorId    String?
+  actor      AdminUser? @relation(fields: [actorId], references: [id])
+  actorName  String?
+  action     String
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  reason     String?
+  ip         String?
+  createdAt  DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// Named monotonic counters: catalogRevision, subscriptionRev, orderSeq.
+model Counter {
+  key   String @id
+  value Int    @default(0)
+}

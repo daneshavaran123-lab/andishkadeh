@@ -1,0 +1,13 @@
+packages:
+  - packages/*
+  - apps/*
+  - e2e
+
+onlyBuiltDependencies:
+  - "@prisma/client"
+  - "@prisma/engines"
+  - prisma
+  - better-sqlite3
+  - esbuild
+  - "@swc/core"
+  - electron
