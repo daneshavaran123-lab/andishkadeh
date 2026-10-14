@@ -220,6 +220,21 @@
                             "memberSubtitle": {
                               "type": "string",
                               "maxLength": 160
+                            },
+                            "servicesMediaId": {
+                              "type": "string",
+                              "nullable": true,
+                              "default": null
+                            },
+                            "subscriptionMediaId": {
+                              "type": "string",
+                              "nullable": true,
+                              "default": null
+                            },
+                            "memberMediaId": {
+                              "type": "string",
+                              "nullable": true,
+                              "default": null
                             }
                           },
                           "required": [
@@ -4272,6 +4287,21 @@
                                 "memberSubtitle": {
                                   "type": "string",
                                   "maxLength": 160
+                                },
+                                "servicesMediaId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
+                                },
+                                "subscriptionMediaId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
+                                },
+                                "memberMediaId": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "default": null
                                 }
                               },
                               "required": [
@@ -12307,6 +12337,21 @@
                         "memberSubtitle": {
                           "type": "string",
                           "maxLength": 160
+                        },
+                        "servicesMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
+                        },
+                        "subscriptionMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
+                        },
+                        "memberMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
                         }
                       },
                       "required": [
@@ -12605,6 +12650,21 @@
                       "memberSubtitle": {
                         "type": "string",
                         "maxLength": 160
+                      },
+                      "servicesMediaId": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                      },
+                      "subscriptionMediaId": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
+                      },
+                      "memberMediaId": {
+                        "type": "string",
+                        "nullable": true,
+                        "default": null
                       }
                     },
                     "required": [
@@ -12745,6 +12805,21 @@
                         "memberSubtitle": {
                           "type": "string",
                           "maxLength": 160
+                        },
+                        "servicesMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
+                        },
+                        "subscriptionMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
+                        },
+                        "memberMediaId": {
+                          "type": "string",
+                          "nullable": true,
+                          "default": null
                         }
                       },
                       "required": [

@@ -418,6 +418,99 @@ button:focus-visible,
   min-width: 0;
 }
 
+/* Photo cards (approved home mockup): neon border, photo on the left fading into the card. */
+.home-card.has-art {
+  position: relative;
+  overflow: hidden;
+  min-height: 380px;
+  /* text may run over the faded half of the photo, never over the figure itself */
+  padding-inline-end: 330px;
+  border: 3px solid color-mix(in srgb, var(--theme) 80%, transparent);
+  box-shadow:
+    0 0 32px color-mix(in srgb, var(--theme) 32%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--theme) 25%, transparent) inset,
+    0 24px 60px rgba(0, 0, 0, 0.4);
+  background:
+    radial-gradient(120% 140% at 100% 50%, color-mix(in srgb, var(--theme) 14%, transparent), transparent 60%),
+    linear-gradient(180deg, rgba(11, 24, 48, 0.94), rgba(6, 13, 28, 0.96));
+}
+
+.home-card.has-art .icon-ring,
+.home-card.has-art .grow {
+  position: relative;
+  z-index: 1;
+}
+
+.home-card.has-art .icon-ring {
+  width: 164px !important;
+  height: 164px !important;
+  border-width: 6px;
+  box-shadow:
+    0 0 36px color-mix(in srgb, var(--theme) 60%, transparent),
+    0 0 0 10px color-mix(in srgb, var(--theme) 10%, transparent);
+}
+
+.home-card.has-art h2 {
+  font-size: 48px;
+  white-space: nowrap;
+}
+
+.home-card.has-art p {
+  font-size: 26px;
+  color: var(--text-soft, var(--muted));
+}
+
+/* The photo keeps its own aspect ratio so the chevron lands on the spot left free for it. */
+.home-art {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  aspect-ratio: 405 / 326;
+  height: 100%;
+  background-size: cover;
+  background-position: left center;
+  -webkit-mask-image: linear-gradient(to right, #000 58%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 58%, transparent 100%);
+}
+
+.home-art .chevron-circle {
+  position: absolute;
+  left: 14.3%;
+  top: 54%;
+  transform: translate(-50%, -50%);
+  width: 104px;
+  height: 104px;
+  border-width: 4px;
+  border-color: var(--theme);
+  background: rgba(5, 11, 24, 0.72);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--theme) 55%, transparent);
+}
+
+.home-art .chevron-circle svg {
+  width: 46px;
+  height: 46px;
+}
+
+/* Wrestling mat under the home cards: decoration only, never scrolls or takes input. */
+.home-floor {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 360px;
+  background-size: cover;
+  background-position: center bottom;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%);
+  mask-image: linear-gradient(to bottom, transparent, #000 40%);
+}
+
+.screen:has(.home-floor) .body {
+  position: relative;
+  z-index: 1;
+}
+
 /* Categories (K03) — reference image 2 */
 .cat-grid {
   display: grid;
@@ -573,9 +666,19 @@ button:focus-visible,
   min-height: 168px;
 }
 
+.svc-card.in-cart {
+  border-color: var(--green);
+  background:
+    linear-gradient(90deg, rgba(34, 197, 139, 0.1), transparent 55%),
+    linear-gradient(180deg, rgba(14, 31, 52, 0.95), rgba(9, 21, 40, 0.95));
+  box-shadow:
+    0 0 0 1px var(--green) inset,
+    0 0 34px rgba(34, 197, 139, 0.3);
+}
+
 .svc-card .thumb {
-  width: 120px;
-  height: 120px;
+  width: 132px;
+  height: 132px;
   flex: none;
   border-radius: 22px;
   background-size: cover;
@@ -752,6 +855,21 @@ button:focus-visible,
   overflow: hidden;
   margin-bottom: var(--s4);
   border: 2px solid color-mix(in srgb, var(--theme) 35%, transparent);
+}
+
+/* Small service thumbnail shown as a tile on the domain photo (never stretched). */
+.detail-tile {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: var(--s4);
+  bottom: var(--s4);
+  width: 200px;
+  height: 200px;
+  border-radius: 32px;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid color-mix(in srgb, var(--theme) 70%, transparent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), 0 0 24px color-mix(in srgb, var(--theme) 35%, transparent);
 }
 
 .detail-hero::after {

@@ -558,7 +558,9 @@ export class AdminCatalogController {
   updateContent(@CurrentAdmin() admin: AdminPrincipal, @Body(new ZodPipe(ContentUpdate)) body: KioskContent) {
     return this.mutate(async (tx) => {
       const before = await this.settingsService.content(tx);
-      await this.assertMedia(tx, body.welcome.heroMediaId);
+      for (const id of [body.welcome.heroMediaId, body.home.servicesMediaId, body.home.subscriptionMediaId, body.home.memberMediaId]) {
+        await this.assertMedia(tx, id);
+      }
       await this.settingsService.save(tx, 'content', body);
       await this.audit.log(tx, admin, { action: 'content.updated', entityType: 'Setting', entityId: 'content', before, after: body });
       return body;

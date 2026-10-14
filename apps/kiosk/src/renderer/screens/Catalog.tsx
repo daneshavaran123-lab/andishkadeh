@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { formatNumberFa, toPersianDigits, type CategoryDto } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
 import { CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
-import { indexServices, mediaUrl, servicePrice, useApp, useSession, type ServiceRef } from '../store';
+import { indexServices, mediaUrl, mediaWidth, servicePrice, useApp, useSession, type ServiceRef } from '../store';
 
 function categoryById(id?: string): CategoryDto | undefined {
   return useApp.getState().bootstrap?.categories.find((c) => c.id === id);
@@ -171,7 +171,7 @@ function ServiceRow({ refx, index }: { refx: ServiceRef; index: number }) {
   const p = servicePrice(bootstrap, refx);
   const thumb = mediaUrl(refx.service.mediaId) ?? mediaUrl(refx.category.mediaId);
   return (
-    <div className="card svc-card enter" data-theme={refx.category.theme} style={{ ['--i' as string]: Math.min(index, 8) }} data-testid={`svc-${refx.service.code}`}>
+    <div className={`card svc-card enter${inCart ? ' in-cart' : ''}`} data-theme={refx.category.theme} style={{ ['--i' as string]: Math.min(index, 8) }} data-testid={`svc-${refx.service.code}`}>
       <button
         style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 0, textAlign: 'start' }}
         onClick={() => go('serviceDetail', { serviceId: refx.service.id })}
@@ -270,7 +270,11 @@ export function ServiceDetail({ serviceId }: { serviceId?: string }) {
   if (!ref || !bootstrap) return <Missing />;
   const p = servicePrice(bootstrap, ref);
   const line = cart.find((c) => c.serviceId === ref.service.id);
-  const img = mediaUrl(ref.service.mediaId) ?? mediaUrl(ref.category.mediaId);
+  // A small service thumbnail is shown as a tile on the domain photo instead of being stretched.
+  const ownImg = mediaUrl(ref.service.mediaId);
+  const ownIsLarge = (mediaWidth(ref.service.mediaId) ?? 0) >= 600;
+  const img = (ownIsLarge ? ownImg : null) ?? mediaUrl(ref.category.mediaId) ?? ownImg;
+  const tile = ownImg && !ownIsLarge && img !== ownImg ? ownImg : null;
   const max = bootstrap.settings.maxItemQuantity;
 
   return (
@@ -305,7 +309,9 @@ export function ServiceDetail({ serviceId }: { serviceId?: string }) {
       <div
         className="detail-hero"
         style={{ backgroundImage: img ? `url("${img}")` : `radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--theme) 40%, transparent), transparent 70%)` }}
-      />
+      >
+        {tile && <span className="detail-tile" style={{ backgroundImage: `url("${tile}")` }} />}
+      </div>
       <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16 }}>
         <span className="code-chip">{ref.service.code}</span>
         {line && <span className="badge" style={{ ['--theme' as string]: 'var(--green)' }}>در سبد خرید شماست</span>}

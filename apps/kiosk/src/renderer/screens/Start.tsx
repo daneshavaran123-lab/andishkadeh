@@ -1,6 +1,7 @@
 import { OrderKind } from '@andishkadeh/shared';
 import { Icon } from '../components/Icon';
 import { Notice, Screen } from '../components/ui';
+import matFloor from '../assets/img/mat-floor.jpg';
 import { mediaUrl, useApp, useSession } from '../store';
 
 /** K01 — welcome. No inactivity timeout on this screen (PRD K01). */
@@ -68,6 +69,7 @@ export function Home() {
   const cards = [
     {
       key: 'services',
+      art: mediaUrl(c?.servicesMediaId),
       theme: 'blue',
       icon: 'cart' as const,
       title: c?.servicesTitle ?? 'خرید خدمات',
@@ -80,6 +82,7 @@ export function Home() {
     },
     {
       key: 'subscription',
+      art: mediaUrl(c?.subscriptionMediaId),
       theme: 'red',
       icon: 'crown' as const,
       title: c?.subscriptionTitle ?? 'خرید اشتراک کامل',
@@ -92,6 +95,7 @@ export function Home() {
     },
     {
       key: 'member',
+      art: mediaUrl(c?.memberMediaId),
       theme: 'cyan',
       icon: 'qr' as const,
       title: c?.memberTitle ?? 'ورود اعضا با QR',
@@ -107,7 +111,7 @@ export function Home() {
         {cards.map((card, i) => (
           <button
             key={card.key}
-            className="card home-card enter"
+            className={`card home-card enter${card.art ? ' has-art' : ''}`}
             data-theme={card.theme}
             style={{ ['--i' as string]: i, opacity: card.enabled ? 1 : 0.45 }}
             onClick={card.enabled ? card.onClick : undefined}
@@ -121,9 +125,17 @@ export function Home() {
               <h2>{card.title}</h2>
               <p>{card.subtitle}</p>
             </span>
-            <span className="chevron-circle">
-              <Icon name="chevron" />
-            </span>
+            {card.art ? (
+              <span className="home-art" style={{ backgroundImage: `url("${card.art}")` }}>
+                <span className="chevron-circle">
+                  <Icon name="chevron" />
+                </span>
+              </span>
+            ) : (
+              <span className="chevron-circle">
+                <Icon name="chevron" />
+              </span>
+            )}
           </button>
         ))}
         {!salesOk && (
@@ -139,6 +151,7 @@ export function Home() {
           </Notice>
         )}
       </div>
+      <div className="home-floor" style={{ backgroundImage: `url("${matFloor}")` }} aria-hidden />
     </Screen>
   );
 }

@@ -63,6 +63,10 @@ export const KioskContent = z.object({
     subscriptionSubtitle: z.string().max(160),
     memberTitle: z.string().max(80),
     memberSubtitle: z.string().max(160),
+    /** Photo behind each home card (K02); null → plain themed card. Older saved content has none. */
+    servicesMediaId: z.string().nullable().default(null),
+    subscriptionMediaId: z.string().nullable().default(null),
+    memberMediaId: z.string().nullable().default(null),
   }),
   subscriptionIntro: z.object({
     title: z.string().max(120),

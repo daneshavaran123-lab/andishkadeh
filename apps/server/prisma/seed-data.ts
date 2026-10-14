@@ -387,6 +387,9 @@ export const DEFAULT_CONTENT = {
     subscriptionSubtitle: 'دسترسی کامل به حوزه‌های تحت پوشش در مدت اعتبار',
     memberTitle: 'ورود اعضا با QR',
     memberSubtitle: 'بررسی اعتبار اشتراک با اسکن کد QR',
+    servicesMediaId: null as string | null,
+    subscriptionMediaId: null as string | null,
+    memberMediaId: null as string | null,
   },
   subscriptionIntro: {
     title: 'اشتراک کامل اندیشکده',
@@ -404,4 +407,31 @@ export const DEFAULT_CONTENT = {
     // Module titles (M-01..M-10) are not in the approved lists yet; fill them from the admin panel.
     modules: [] as string[],
   },
+};
+
+/** Photos behind the three home cards (K02), cropped from the approved mockups. */
+export const HOME_CARD_IMAGES = {
+  servicesMediaId: 'home-services.jpg',
+  subscriptionMediaId: 'home-subscription.jpg',
+  memberMediaId: 'home-member.jpg',
+} as const;
+
+/**
+ * Per-service thumbnails (assets/seed-media/services/<file>), cropped from the approved mockups.
+ * Services without one show their domain image; every image can be replaced in the admin panel.
+ */
+export const SERVICE_IMAGES: Record<string, string> = {
+  'P-101': 'services/P-101.jpg',
+  'P-102': 'services/P-102.jpg',
+  'P-201': 'services/P-201.jpg',
+  'P-406': 'services/P-406.jpg',
+  'PS-101': 'services/PS-101.jpg',
+  'PS-102': 'services/PS-102.jpg',
+  'PS-103': 'services/PS-103.jpg',
+  'PS-104': 'services/PS-104.jpg',
+  'PS-105': 'services/PS-105.jpg',
+  'PS-106': 'services/PS-106.jpg',
+  'PS-201': 'services/PS-201.jpg',
+  'PS-301': 'services/PS-301.jpg',
+  'PS-401': 'services/PS-401.jpg',
 };

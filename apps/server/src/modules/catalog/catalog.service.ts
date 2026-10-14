@@ -152,6 +152,9 @@ export class CatalogService {
     const add = (id: string | null | undefined) => id && mediaIds.add(id);
     add(settings.logoMediaId);
     add(content.welcome.heroMediaId);
+    add(content.home.servicesMediaId);
+    add(content.home.subscriptionMediaId);
+    add(content.home.memberMediaId);
     for (const c of categoryDtos) {
       add(c.mediaId);
       for (const sc of c.subcategories) {

@@ -6,10 +6,10 @@ import 'dotenv/config';
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { sniffImage } from '../src/media/image-meta';
-import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, PLANS } from './seed-data';
+import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, HOME_CARD_IMAGES, PLANS, SERVICE_IMAGES } from './seed-data';
 
 const prisma = new PrismaClient();
 const SEED_MEDIA_DIR = resolve(__dirname, '../../../assets/seed-media');
@@ -53,13 +53,31 @@ async function main() {
   }
 
   const heroId = await seedMedia('hero.jpg');
+  const homeMedia: Record<string, string> = {};
+  for (const [field, file] of Object.entries(HOME_CARD_IMAGES)) homeMedia[field] = await seedMedia(file);
+  // Set when something seeded changes what kiosks must download (they pull on a new revision).
+  let catalogChanged = false;
 
   await prisma.setting.upsert({ where: { key: 'settings' }, update: {}, create: { key: 'settings', value: DEFAULT_SETTINGS } });
-  await prisma.setting.upsert({
-    where: { key: 'content' },
-    update: {},
-    create: { key: 'content', value: { ...DEFAULT_CONTENT, welcome: { ...DEFAULT_CONTENT.welcome, heroMediaId: heroId } } },
-  });
+  const existingContent = await prisma.setting.findUnique({ where: { key: 'content' } });
+  if (!existingContent) {
+    await prisma.setting.create({
+      data: {
+        key: 'content',
+        value: { ...DEFAULT_CONTENT, welcome: { ...DEFAULT_CONTENT.welcome, heroMediaId: heroId }, home: { ...DEFAULT_CONTENT.home, ...homeMedia } },
+      },
+    });
+  } else {
+    // Content saved before home photos existed: fill only the fields that were never set.
+    const value = existingContent.value as { home?: Record<string, unknown> };
+    const home = { ...(value.home ?? {}) };
+    const missing = Object.keys(homeMedia).filter((f) => home[f] === undefined);
+    if (missing.length) {
+      missing.forEach((f) => (home[f] = homeMedia[f]));
+      await prisma.setting.update({ where: { key: 'content' }, data: { value: { ...value, home } as Prisma.InputJsonObject } });
+      catalogChanged = true;
+    }
+  }
 
   let catOrder = 0;
   for (const c of CATEGORIES) {
@@ -96,7 +114,7 @@ async function main() {
       });
       let svcOrder = 0;
       for (const sv of sc.services) {
-        await prisma.service.upsert({
+        const service = await prisma.service.upsert({
           where: { code: sv.code },
           update: {},
           create: {
@@ -113,6 +131,12 @@ async function main() {
             sortOrder: ++svcOrder,
           },
         });
+        // Thumbnail only where none is set, so images chosen in the admin panel are kept.
+        const image = SERVICE_IMAGES[sv.code];
+        if (image && !service.mediaId) {
+          await prisma.service.update({ where: { id: service.id }, data: { mediaId: await seedMedia(image) } });
+          catalogChanged = true;
+        }
       }
     }
   }
@@ -145,6 +169,8 @@ async function main() {
     update: {},
     create: { id: deviceId, name: 'کیوسک لابی اصلی', apiKeyHash: deviceKeyHash },
   });
+
+  if (catalogChanged) await prisma.counter.update({ where: { key: 'catalogRevision' }, data: { value: { increment: 1 } } });
 
   const counts = {
     categories: await prisma.category.count(),

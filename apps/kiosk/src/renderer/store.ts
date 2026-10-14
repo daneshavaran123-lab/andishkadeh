@@ -193,6 +193,12 @@ export function cartPreview(b: Bootstrap | null, cart: SessionStore['cart']) {
   return { ...priced, missing, count: cart.reduce((s, c) => s + c.quantity, 0) };
 }
 
+/** Width in pixels of a cached image (null when unknown), to avoid stretching small thumbnails. */
+export function mediaWidth(mediaId: string | null | undefined): number | null {
+  const { bootstrap } = useApp.getState();
+  return bootstrap?.media.find((x) => x.id === mediaId)?.width ?? null;
+}
+
 export function mediaUrl(mediaId: string | null | undefined): string | null {
   const { bootstrap, mediaBase } = useApp.getState();
   if (!mediaId || !bootstrap) return null;

@@ -107,6 +107,15 @@ export function Content() {
               <Field label="توضیح">
                 <input className="input" value={c.home.memberSubtitle} disabled={ro} onChange={(e) => set('home', { memberSubtitle: e.target.value })} />
               </Field>
+              <Field label="تصویر کارت خرید خدمات" help="فوتورئال، بدون نوشته؛ در سمت چپ کارت نمایش داده می‌شود">
+                <MediaPicker value={c.home.servicesMediaId} disabled={ro} onChange={(servicesMediaId) => set('home', { servicesMediaId })} />
+              </Field>
+              <Field label="تصویر کارت خرید اشتراک">
+                <MediaPicker value={c.home.subscriptionMediaId} disabled={ro} onChange={(subscriptionMediaId) => set('home', { subscriptionMediaId })} />
+              </Field>
+              <Field label="تصویر کارت ورود اعضا">
+                <MediaPicker value={c.home.memberMediaId} disabled={ro} onChange={(memberMediaId) => set('home', { memberMediaId })} />
+              </Field>
             </div>
           </Card>
           <Card title="معرفی اشتراک (K11)">

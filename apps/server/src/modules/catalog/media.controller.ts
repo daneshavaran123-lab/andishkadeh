@@ -37,6 +37,9 @@ export class MediaController {
     [...cats, ...subs, ...svcs].forEach((r) => inc(r.mediaId));
     inc(settings.logoMediaId);
     inc(content.welcome.heroMediaId);
+    inc(content.home.servicesMediaId);
+    inc(content.home.subscriptionMediaId);
+    inc(content.home.memberMediaId);
     return counts;
   }
 
