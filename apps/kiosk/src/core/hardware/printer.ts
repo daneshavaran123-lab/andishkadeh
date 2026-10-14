@@ -53,8 +53,10 @@ export class KeyboardWedgeScanner implements ScannerAdapter {
 export class MockScanner implements ScannerAdapter {
   readonly name = 'mock-scanner';
   readonly isMock = true;
+  mode: 'ok' | 'offline' = 'ok';
   private listeners = new Set<(p: string) => void>();
   async status(): Promise<HardwareStatus> {
+    if (this.mode === 'offline') return { state: HardwareState.ERROR, adapter: this.name, detail: 'اسکنر در دسترس نیست' };
     return { state: HardwareState.OK, adapter: this.name, detail: 'اسکنر شبیه‌سازی‌شده' };
   }
   onScan(cb: (payload: string) => void): () => void {
@@ -62,6 +64,7 @@ export class MockScanner implements ScannerAdapter {
     return () => this.listeners.delete(cb);
   }
   emit(payload: string) {
+    if (this.mode === 'offline') return;
     this.listeners.forEach((l) => l(payload));
   }
 }

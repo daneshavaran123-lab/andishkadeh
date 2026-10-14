@@ -83,7 +83,7 @@ export class DevicesService {
   }
 
   async completeCommand(tx: Tx | PrismaService, deviceId: string, commandId: string, success: boolean, result: unknown) {
-    await tx.deviceCommand.updateMany({
+    const updated = await tx.deviceCommand.updateMany({
       where: { id: commandId, deviceId, status: { in: ['PENDING', 'DELIVERED'] } },
       data: {
         status: success ? 'DONE' : 'FAILED',
@@ -91,6 +91,14 @@ export class DevicesService {
         result: (result ?? null) as Prisma.InputJsonValue,
       },
     });
+    // A reprint requested from the admin panel that came out of the printer settles the receipt.
+    if (updated.count && success) {
+      const cmd = await tx.deviceCommand.findUnique({ where: { id: commandId } });
+      const orderId = (cmd?.payload as { orderId?: string } | null)?.orderId;
+      if (cmd?.type === 'PRINT_RECEIPT' && orderId) {
+        await tx.order.updateMany({ where: { id: orderId }, data: { printStatus: 'PRINTED', printDetail: null } });
+      }
+    }
   }
 
   complete(deviceId: string, commandId: string, success: boolean, result: unknown) {

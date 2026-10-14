@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-electron/
+dist-renderer/
 release/
 build/
 coverage/
@@ -17,3 +18,4 @@ e2e/playwright-report/
 .DS_Store
 .vite/
 *.tsbuildinfo
+e2e/.kiosk-data/

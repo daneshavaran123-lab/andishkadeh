@@ -1,7 +1,8 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import express from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exception.filter';
@@ -34,6 +35,18 @@ export async function createApp(opts: { logger?: boolean } = {}) {
     '/api/v1/media/files',
     express.static(cfg.mediaDirAbs, { immutable: true, maxAge: '365d', index: false, dotfiles: 'deny', fallthrough: false }),
   );
+
+  // Single-origin deployment: the built admin SPA under /admin (client-side routes fall back to index.html).
+  if (cfg.adminDistAbs && existsSync(join(cfg.adminDistAbs, 'index.html'))) {
+    const index = join(cfg.adminDistAbs, 'index.html');
+    app.use('/admin', express.static(cfg.adminDistAbs, { index: false, maxAge: '1h', dotfiles: 'deny' }));
+    app.use('/admin', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      // Only client-side routes fall back to the SPA; a missing asset stays a 404.
+      if (req.method !== 'GET' || /\.[a-z0-9]+$/i.test(req.path)) return next();
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(index);
+    });
+  }
 
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new AllExceptionsFilter());

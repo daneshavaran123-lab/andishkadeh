@@ -188,13 +188,22 @@ export class KioskCore {
         if (!printer) return { ok: false, message: 'printer is not simulated' };
         printer.mode = c.mode;
         break;
+      case 'scannerMode':
+        if (!(this.scanner instanceof MockScanner)) return { ok: false, message: 'scanner is not simulated' };
+        this.scanner.mode = c.mode;
+        break;
+      case 'replayOutbox':
+        this.outbox.replayDone();
+        await this.sync.push();
+        break;
       case 'scan':
         if (this.scanner instanceof MockScanner) this.scanner.emit(c.payload);
         else this.emit('scanner:scan', { payload: c.payload });
         break;
       case 'network':
         this.api.forcedOffline = !c.online;
-        if (c.online) await this.sync.cycle();
+        // Run a cycle either way so connectivity (and the UI banner) reflects the change at once.
+        await this.sync.cycle().catch(() => undefined);
         break;
       case 'syncNow':
         await this.sync.cycle();

@@ -70,6 +70,11 @@ export class Outbox {
     return this.db.prepare("UPDATE outbox SET status = 'PENDING', next_attempt_at = NULL WHERE status = 'FAILED'").run().changes;
   }
 
+  /** Test hook (dev controls only): re-send delivered events, as if their acknowledgements had been lost. */
+  replayDone(): number {
+    return this.db.prepare("UPDATE outbox SET status = 'PENDING', next_attempt_at = NULL WHERE status = 'DONE'").run().changes;
+  }
+
   stats(): { pending: number; failed: number; oldestPendingAt: string | null } {
     const row = this.db
       .prepare(

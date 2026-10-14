@@ -1,0 +1,20 @@
+{
+  "serverUrl": "https://kiosk-api.example.ir",
+  "deviceId": "KIOSK-01",
+  "deviceKey": "PASTE_THE_DEVICE_KEY_FROM_ADMIN_PANEL",
+  "adapters": {
+    "payment": "mock",
+    "printer": "windows",
+    "printerName": "POS-80C",
+    "scanner": "keyboard"
+  },
+  "intervals": {
+    "heartbeatSec": 30,
+    "pullSec": 60,
+    "pushSec": 10,
+    "recoverySec": 60
+  },
+  "requestTimeoutMs": 8000,
+  "kioskMode": true,
+  "devControls": false
+}

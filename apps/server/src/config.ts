@@ -14,10 +14,12 @@ const EnvSchema = z.object({
   MEDIA_DIR: z.string().default('./storage/media'),
   MEDIA_MAX_MB: z.coerce.number().positive().default(8),
   PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
+  /** Optional: built admin panel (apps/admin/dist) served at /admin from the same origin. */
+  ADMIN_DIST_DIR: z.string().default(''),
   NODE_ENV: z.string().default('development'),
 });
 
-export type AppConfig = z.infer<typeof EnvSchema> & { mediaDirAbs: string; corsOrigins: string[] };
+export type AppConfig = z.infer<typeof EnvSchema> & { mediaDirAbs: string; adminDistAbs: string | null; corsOrigins: string[] };
 
 let cached: AppConfig | null = null;
 
@@ -31,6 +33,7 @@ export function config(): AppConfig {
   cached = {
     ...parsed.data,
     mediaDirAbs: resolve(process.cwd(), parsed.data.MEDIA_DIR),
+    adminDistAbs: parsed.data.ADMIN_DIST_DIR ? resolve(process.cwd(), parsed.data.ADMIN_DIST_DIR) : null,
     corsOrigins: parsed.data.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
   };
   return cached;

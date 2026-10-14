@@ -69,7 +69,7 @@ export function Cart() {
                     <div className="sub">
                       <span className="code-chip">{ref.service.code}</span> · {ref.category.title} · {formatToman(line.unitPrice - line.unitDiscount)} / {ref.service.unit}
                     </div>
-                    <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800 }}>{formatToman(line.lineTotal)}</div>
+                    <div style={{ marginTop: 10, fontSize: 28, fontWeight: 800 }} data-testid={`line-${ref.service.code}`}>{formatToman(line.lineTotal)}</div>
                   </div>
                   <Stepper value={c.quantity} max={max} onChange={(v) => setQty(c.serviceId, v)} />
                   <button className="remove-btn" onClick={() => removeFromCart(c.serviceId)} aria-label="حذف از سبد" data-testid={`remove-${ref.service.code}`}>

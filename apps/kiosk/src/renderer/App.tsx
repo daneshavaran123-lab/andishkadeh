@@ -143,9 +143,10 @@ function useInactivity() {
   const last = useRef(Date.now());
 
   useEffect(() => {
+    // Only record activity here: closing the warning on pointerdown would let the same tap
+    // fall through to whatever lies under the modal. The interval below closes it instead.
     const touch = () => {
       last.current = Date.now();
-      setWarning(null);
     };
     window.addEventListener('pointerdown', touch, true);
     window.addEventListener('keydown', touch, true);
@@ -171,6 +172,8 @@ function useInactivity() {
         void endSession();
       } else if (idle >= timeout - warnFor) {
         setWarning(Math.ceil((timeout - idle) / 1000));
+      } else {
+        setWarning(null);
       }
     }, 500);
     return () => clearInterval(t);

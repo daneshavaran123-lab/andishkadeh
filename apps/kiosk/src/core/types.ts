@@ -96,6 +96,8 @@ export type DevControl =
   | { action: 'posScenario'; scenario: 'approve' | 'decline' | 'unknown' | 'timeout' | 'cancel' }
   | { action: 'inquiryMode'; mode: 'truth' | 'unknown' }
   | { action: 'printerMode'; mode: 'ok' | 'paper-out' | 'offline' }
+  | { action: 'scannerMode'; mode: 'ok' | 'offline' }
+  | { action: 'replayOutbox' }
   | { action: 'scan'; payload: string }
   | { action: 'network'; online: boolean }
   | { action: 'syncNow' };

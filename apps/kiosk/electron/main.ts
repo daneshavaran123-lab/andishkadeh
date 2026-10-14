@@ -20,7 +20,8 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-const dataDir = process.env.KIOSK_DATA_DIR ?? app.getPath('userData');
+// Fixed, documented location (kiosk.config.json, SQLite, media cache, receipts): %APPDATA%\AndishkadehKiosk
+const dataDir = process.env.KIOSK_DATA_DIR ?? join(app.getPath('appData'), 'AndishkadehKiosk');
 const cfg = loadConfig(dataDir, { appVersion: app.getVersion() });
 let core: KioskCore;
 let win: BrowserWindow | null = null;

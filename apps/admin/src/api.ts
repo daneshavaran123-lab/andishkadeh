@@ -2,7 +2,8 @@
  * Admin API client. The JWT lives in sessionStorage (gone when the browser closes);
  * every call is authorised server-side — hiding a button is never the only protection.
  */
-export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:3000').replace(/\/$/, '');
+// Production builds default to the same origin (panel served by the API at /admin); dev talks to :3000.
+export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? (import.meta.env.PROD ? '' : 'http://localhost:3000')).replace(/\/$/, '');
 
 const TOKEN_KEY = 'andishkadeh.admin.token';
 

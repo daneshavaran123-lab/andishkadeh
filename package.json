@@ -10,7 +10,7 @@
     "build": "pnpm -r run build",
     "build:shared": "pnpm --filter @andishkadeh/shared run build",
     "typecheck": "pnpm -r run typecheck",
-    "test": "pnpm -r run test",
+    "test": "pnpm -r --workspace-concurrency=1 --filter \"!@andishkadeh/e2e\" run test",
     "lint": "pnpm -r run typecheck",
     "db:migrate": "pnpm --filter @andishkadeh/server run db:migrate",
     "db:seed": "pnpm --filter @andishkadeh/server run db:seed",

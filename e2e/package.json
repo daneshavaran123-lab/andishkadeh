@@ -5,7 +5,7 @@
   "description": "تست‌های پذیرش E2E کیوسک و پنل مدیریت (Playwright)",
   "scripts": {
     "test": "playwright test",
-    "screens": "playwright test --project=screens"
+    "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "@playwright/test": "1.56.1",
