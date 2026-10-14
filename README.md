@@ -60,6 +60,7 @@ pnpm --filter @andishkadeh/shared build
 
 ## مستندات
 
+- [همه مستندات در یک صفحه HTML](docs/andishkadeh-docs.html) — در مرورگر باز کنید؛ قلم‌ها و نمودارها با اتصال اینترنت بارگذاری می‌شوند
 - [معماری، مدل داده و نمودارهای وضعیت](docs/architecture.md)
 - [راه‌اندازی سرور و پنل مدیریت](docs/server-setup.md)
 - [نصب و پیکربندی کیوسک ویندوز](docs/windows-kiosk-install.md)

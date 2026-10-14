@@ -1,0 +1,955 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>مستندات کیوسک اندیشکده</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: documentation reader — sticky RTL table of contents on the right, one 70ch reading column;
+   masthead carries the wrestling-mat blue/red split as the only flourish. */
+:root {
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --ink: #0d1a2d;
+  --muted: #55627a;
+  --line: #dbe2ee;
+  --blue: #1464d0;
+  --red: #d11c3f;
+  --green: #12805a;
+  --amber: #9a5c00;
+  --code-bg: #edf1f8;
+  --tint-blue: #e8f0fc;
+  --tint-red: #fcebee;
+  --tint-green: #e5f4ee;
+  --tint-amber: #fbf1e1;
+  --f-display: "Lalezar", "Vazirmatn", Tahoma, sans-serif;
+  --f-body: "Vazirmatn", Tahoma, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #050b18; --surface: #0b1830; --ink: #e6edf8; --muted: #93a2bd; --line: #1d2e4e;
+    --blue: #4ea3ff; --red: #ff5a75; --green: #3dd39c; --amber: #ffbe55; --code-bg: #091327;
+    --tint-blue: #0e2445; --tint-red: #2c1220; --tint-green: #0c2a24; --tint-amber: #2a2010;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #050b18; --surface: #0b1830; --ink: #e6edf8; --muted: #93a2bd; --line: #1d2e4e;
+  --blue: #4ea3ff; --red: #ff5a75; --green: #3dd39c; --amber: #ffbe55; --code-bg: #091327;
+  --tint-blue: #0e2445; --tint-red: #2c1220; --tint-green: #0c2a24; --tint-amber: #2a2010;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.9; }
+.page { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px; }
+
+/* masthead */
+.mast { max-width: 1180px; margin: 0 auto; padding-block: 40px 28px; display: grid; gap: 14px; }
+.mast .eyebrow { font-size: 13px; letter-spacing: .04em; color: var(--muted); font-weight: 500; }
+.mast h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(34px, 6vw, 54px); line-height: 1.25; margin: 0; text-wrap: balance; }
+.mast p { margin: 0; max-width: 68ch; color: var(--muted); font-size: 17px; }
+.mat { display: flex; height: 6px; width: min(260px, 60%); border-radius: 3px; overflow: hidden; }
+.mat span:first-child { flex: 1; background: var(--blue); }
+.mat span:last-child { flex: 1; background: var(--red); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 6px; }
+.fact { font-size: 13px; padding: 4px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); }
+.fact b { color: var(--ink); font-weight: 700; }
+
+/* shell */
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 48px; align-items: start; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; padding-block: 4px; }
+nav.toc h2 { font-size: 12px; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; counter-reset: toc; }
+nav.toc a { display: block; padding: 6px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 14.5px; border-inline-start: 3px solid transparent; }
+nav.toc a:hover { background: var(--tint-blue); }
+nav.toc a.active { border-inline-start-color: var(--blue); background: var(--tint-blue); font-weight: 700; }
+nav.toc a:focus-visible, a:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+main { min-width: 0; display: grid; gap: 56px; }
+section { min-width: 0; scroll-margin-top: 16px; }
+section > h2 { font-size: 26px; font-weight: 800; margin: 0 0 6px; line-height: 1.5; text-wrap: balance; display: flex; align-items: baseline; gap: 12px; }
+section > h2 .tag { font-size: 12px; font-weight: 500; color: var(--muted); font-family: var(--f-mono); direction: ltr; }
+section > .lede { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+h3 { font-size: 19px; font-weight: 800; margin: 30px 0 8px; line-height: 1.6; }
+h4 { font-size: 16px; font-weight: 700; margin: 20px 0 6px; }
+p, li { max-width: 72ch; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 14px; padding-inline-start: 22px; }
+li { margin-bottom: 4px; }
+li > ul { margin-top: 4px; }
+a { color: var(--blue); }
+strong { font-weight: 700; }
+code { font-family: var(--f-mono); font-size: .86em; background: var(--code-bg); padding: 1px 6px; border-radius: 5px; direction: ltr; unicode-bidi: isolate; overflow-wrap: anywhere; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* code blocks */
+.code { position: relative; margin: 10px 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--code-bg); min-width: 0; }
+.code pre { margin: 0; padding: 16px 18px; overflow-x: auto; direction: ltr; text-align: left; font-family: var(--f-mono); font-size: 13.5px; line-height: 1.7; color: var(--ink); }
+.code .lang { position: absolute; top: 6px; left: 10px; font-size: 11px; color: var(--muted); font-family: var(--f-mono); }
+.code button { position: absolute; top: 6px; right: 8px; font: 500 12px var(--f-body); color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+.code button:hover { color: var(--ink); }
+.code pre code { background: none; padding: 0; white-space: pre; font-size: inherit; }
+.code:has(.lang) pre { padding-top: 30px; }
+
+/* tables */
+.table-wrap { overflow-x: auto; margin: 10px 0 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.75; }
+th, td { text-align: start; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: 13px; color: var(--muted); font-weight: 700; background: var(--bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td:first-child { font-weight: 500; }
+td code { white-space: nowrap; }
+.matrix td:first-child { font-family: var(--f-mono); font-weight: 500; white-space: nowrap; direction: ltr; }
+
+/* callouts and chips */
+.note { border: 1px solid var(--line); border-inline-start: 4px solid var(--blue); background: var(--tint-blue); border-radius: 8px; padding: 12px 16px; margin: 12px 0 18px; max-width: 76ch; }
+.note.warn { border-inline-start-color: var(--amber); background: var(--tint-amber); }
+.note.risk { border-inline-start-color: var(--red); background: var(--tint-red); }
+.note p:last-child { margin: 0; }
+.chip { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 10px; border-radius: 999px; white-space: nowrap; }
+.chip.ok { color: var(--green); background: var(--tint-green); }
+.chip.open { color: var(--amber); background: var(--tint-amber); }
+.chip.off { color: var(--red); background: var(--tint-red); }
+
+/* diagrams */
+.diagram { overflow-x: auto; margin: 12px 0 22px; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); direction: ltr; text-align: center; }
+.diagram pre.mermaid { margin: 0; background: none; font-family: var(--f-body); white-space: pre; }
+.diagram figcaption { direction: rtl; text-align: start; font-size: 13px; color: var(--muted); margin-top: 8px; }
+
+/* steps */
+ol.steps { counter-reset: step; list-style: none; padding: 0; display: grid; gap: 10px; }
+ol.steps > li { counter-increment: step; position: relative; padding-inline-start: 40px; }
+ol.steps > li::before { content: counter(step, persian); position: absolute; inset-inline-start: 0; top: 1px; width: 28px; height: 28px; border-radius: 50%; background: var(--tint-blue); color: var(--blue); font-weight: 800; font-size: 14px; display: grid; place-items: center; line-height: 1; }
+
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.cols > div { min-width: 0; }
+.kv { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 8px 0 16px; font-size: 15px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+
+footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  nav.toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 12px; }
+  nav.toc ol { display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border-inline-start: 0; border: 1px solid var(--line); padding: 4px 12px; font-size: 13.5px; }
+  nav.toc a.active { border-color: var(--blue); }
+}
+@media (max-width: 520px) {
+  body { font-size: 15px; }
+  section > h2 { font-size: 22px; flex-wrap: wrap; }
+  th, td { padding: 8px 10px; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+<style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<div class="page" dir="rtl" lang="fa">
+
+<header class="mast">
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.0.0</span> · ۲۲ مهر ۱۴۰۵</div>
+  <h1>مستندات کیوسک سلف‌سرویس</h1>
+  <div class="mat" aria-hidden="true"><span></span><span></span></div>
+  <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (ویندوز، لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. راهنمای راه‌اندازی، نصب، نگهداری و گزارش تست در یک صفحه.</p>
+  <div class="facts">
+    <span class="fact">کیوسک: <b>Electron + React</b></span>
+    <span class="fact">سرور: <b>NestJS + PostgreSQL</b></span>
+    <span class="fact">تست پذیرش: <b class="num">۲۶ از ۲۶ موفق</b></span>
+    <span class="fact">بدون رزرو و نوبت‌دهی</span>
+  </div>
+</header>
+
+<div class="shell">
+<nav class="toc" aria-label="فهرست مطالب">
+  <h2>فهرست</h2>
+  <ol>
+    <li><a href="#overview">نمای کلی</a></li>
+    <li><a href="#dev">راه‌اندازی توسعه</a></li>
+    <li><a href="#architecture">معماری و مدل داده</a></li>
+    <li><a href="#server">راه‌اندازی سرور</a></li>
+    <li><a href="#kiosk">نصب کیوسک ویندوز</a></li>
+    <li><a href="#backup">پشتیبان‌گیری و بازیابی</a></li>
+    <li><a href="#tests">گزارش تست</a></li>
+    <li><a href="#open">موارد باز</a></li>
+    <li><a href="#changelog">تغییرات نسخه</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============================================================ overview -->
+<section id="overview">
+  <h2>نمای کلی</h2>
+  <p class="lede">سه بخش با قراردادهای مشترک: کیوسک برای مشتری، پنل برای مدیر و اپراتور، سرور به‌عنوان مرجع نهایی قیمت، سفارش و پرداخت.</p>
+
+  <div class="cols">
+    <div>
+      <h4>کیوسک</h4>
+      <ul>
+        <li>خرید یک یا چند خدمت از حوزه‌های مختلف با یک پرداخت</li>
+        <li>خرید اشتراک کامل و دریافت کارت عضویت QR</li>
+        <li>بررسی اعتبار اشتراک با اسکن QR</li>
+        <li>ادامه فروش خدمات در قطع شبکه و همگام‌سازی بعدی</li>
+      </ul>
+    </div>
+    <div>
+      <h4>پنل مدیریت</h4>
+      <ul>
+        <li>داشبورد، گزارش فروش و خروجی Excel/CSV</li>
+        <li>سفارش‌ها، پرداخت‌ها (استعلام و تطبیق دستی)، اشتراک‌ها</li>
+        <li>خدمات و تعرفه‌ها، حوزه‌ها، پلن‌ها، تخفیف‌ها با پیش‌نمایش</li>
+        <li>رسانه‌ها، محتوای کیوسک، دستگاه‌ها، همگام‌سازی، تنظیمات، کاربران، سوابق تغییرات</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note">
+    <p><strong>بدون رزرو:</strong> طبق سند، هیچ صفحه، لینک یا endpoint رزرو و نوبت‌دهی وجود ندارد. این موضوع در تست T15 روی همه صفحات کیوسک و پنل بررسی می‌شود.</p>
+  </div>
+
+  <h3>ساختار مخزن</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>مسیر</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td><code>packages/shared</code></td><td>قراردادهای مشترک (zod)، موتور قیمت‌گذاری و تخفیف، تقویم جلالی، قالب‌بندی پول و موبایل، QR</td></tr>
+      <tr><td><code>apps/server</code></td><td>سرور NestJS + Prisma + PostgreSQL: API کیوسک و پنل، احراز هویت، RBAC، همگام‌سازی، گزارش‌ها، OpenAPI</td></tr>
+      <tr><td><code>apps/kiosk</code></td><td>برنامه کیوسک Electron + React. هسته فروش و پرداخت در main process با SQLite محلی است و آداپترهای سخت‌افزار جدا هستند</td></tr>
+      <tr><td><code>apps/admin</code></td><td>پنل مدیریت React (SPA)</td></tr>
+      <tr><td><code>e2e</code></td><td>تست‌های پذیرش Playwright (ماتریس T01 تا T15 سند)</td></tr>
+      <tr><td><code>assets/seed-media</code></td><td>تصاویر اولیه حوزه‌ها و صفحه شروع</td></tr>
+      <tr><td><code>docs</code></td><td>مستندات فنی، راهنمای نصب، OpenAPI</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ dev -->
+<section id="dev">
+  <h2>راه‌اندازی توسعه</h2>
+  <p class="lede">پیش‌نیازها: Node.js 22، pnpm 10 (<code>corepack enable</code>) و PostgreSQL 14 یا بالاتر. برای ساخت نصب‌کننده کیوسک: ویندوز ۱۰/۱۱ x64.</p>
+
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm install
+cp apps/server/.env.example apps/server/.env   # مقادیر CHANGE_ME را پر کنید
+pnpm db:migrate                                # اعمال migrationها (غیرمخرب)
+pnpm db:seed                                   # داده اولیه: حوزه‌ها، خدمات، پلن‌ها، کاربران، دستگاه KIOSK-01
+pnpm --filter @andishkadeh/shared build</code></pre></div>
+
+  <p>سپس هر کدام را در یک ترمینال جدا اجرا کنید:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>دستور</th><th>آدرس</th></tr></thead>
+    <tbody>
+      <tr><td><code>pnpm dev:server</code></td><td>API: <code>http://localhost:3000/api/v1</code> · مستند API: <code>http://localhost:3000/api/docs</code></td></tr>
+      <tr><td><code>pnpm dev:admin</code></td><td>پنل مدیریت: <code>http://localhost:5173/admin/</code></td></tr>
+      <tr><td><code>pnpm dev:kiosk</code></td><td>کیوسک در مرورگر: <code>http://localhost:5174</code> · هسته کیوسک (bridge) روی پورت <span class="num">5175</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>در حالت توسعه، <code>pnpm dev:kiosk</code> همان هسته کیوسک (SQLite، صف همگام‌سازی، ژورنال پرداخت) را در Node اجرا می‌کند. کارتخوان، چاپگر و اسکنر شبیه‌سازی می‌شوند و نوار «حالت آزمایشی» همیشه روی صفحه دیده می‌شود. شبیه‌سازها هرگز اتصال واقعی معرفی نمی‌شوند.</p>
+  <p>نام کاربری و رمز ورود به پنل همان <code>SEED_ADMIN_*</code> و <code>SEED_OPERATOR_*</code> در فایل <code>.env</code> است. کلید دستگاه کیوسک توسعه در <code>SEED_DEVICE_KEY</code> تعریف می‌شود و باید با <code>KIOSK_DEVICE_KEY</code> یکی باشد. مقدار پیش‌فرض bridge توسعه <code>dev-kiosk-key-0123456789</code> است.</p>
+
+  <h3>دستورها</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>دستور</th><th>کار</th></tr></thead>
+    <tbody>
+      <tr><td><code>pnpm build</code></td><td>ساخت همه بسته‌ها</td></tr>
+      <tr><td><code>pnpm typecheck</code></td><td>بررسی نوع‌ها در همه بسته‌ها</td></tr>
+      <tr><td><code>pnpm test</code></td><td>تست‌های واحد و یکپارچه (shared، server روی پایگاه <code>*_test</code>، هسته کیوسک)</td></tr>
+      <tr><td><code>pnpm e2e</code></td><td>تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های <span class="num">3200 / 5283 / 5284 / 5285</span>)</td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/server openapi</code></td><td>تولید <code>docs/openapi.json</code></td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/kiosk dist:win</code></td><td>ساخت نصب‌کننده ویندوز کیوسک (NSIS)</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ architecture -->
+<section id="architecture">
+  <h2>معماری و مدل داده</h2>
+  <p class="lede">کیوسک و پنل هر دو از یک سرور تغذیه می‌شوند؛ کیوسک با کلید دستگاه و پنل با JWT. هسته کیوسک در main process اجرا می‌شود و رابط فقط از راه IPC مجاز به آن دسترسی دارد.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+  subgraph Kiosk["کیوسک ویندوز (Electron)"]
+    UI["Renderer: React&lt;br/&gt;(sandbox، بدون Node)"]
+    Core["Main process: هسته کیوسک&lt;br/&gt;SQLite (WAL) · ژورنال پرداخت · صف رویداد · کش رسانه"]
+    HW["آداپترها: کارتخوان · چاپگر · اسکنر"]
+    UI -- "IPC (فهرست مجاز)" --> Core
+    Core --> HW
+  end
+  subgraph Server["سرور مرکزی"]
+    API["NestJS API /api/v1"]
+    DB[("PostgreSQL")]
+    Media[("پوشه رسانه&lt;br/&gt;آدرس‌دهی با sha256")]
+    API --> DB
+    API --> Media
+  end
+  Admin["پنل مدیریت (React SPA)"] -- "JWT + RBAC" --> API
+  Core -- "Device key (HTTPS)" --> API
+</pre>
+    <figcaption>نمای کلی اجزا و مسیرهای ارتباطی</figcaption>
+  </figure>
+
+  <ul>
+    <li><strong>قراردادها در یک جا:</strong> همه درخواست‌ها و پاسخ‌ها در <code>packages/shared/src/contracts</code> با zod تعریف شده‌اند. سرور ورودی را با همین schemaها اعتبارسنجی می‌کند، کلاینت‌ها نوع‌ها را از همان‌جا می‌گیرند و OpenAPI هم از همین تعریف‌ها تولید می‌شود.</li>
+    <li><strong>پول:</strong> همه مبالغ عدد صحیح تومان هستند. قیمت و تخفیف هر قلم در لحظه قفل سفارش در <code>OrderItem</code> به‌صورت snapshot ذخیره می‌شود؛ تغییر بعدی تعرفه یا تخفیف، سفارش‌های قبلی را تغییر نمی‌دهد.</li>
+    <li><strong>موتور قیمت</strong> (<code>pricing.ts</code>) هم در سرور و هم در کیوسک اجرا می‌شود:
+      <ul>
+        <li>تخفیف به ازای هر واحد اعمال می‌شود و هدف آن می‌تواند خدمت، زیرگروه، حوزه یا پلن باشد.</li>
+        <li>سیاست انتخاب تخفیف <code>BEST</code> (پیش‌فرض) یا <code>PRIORITY</code> است و تساوی‌ها به‌صورت قطعی شکسته می‌شوند.</li>
+        <li>مرجع نهایی همیشه سرور است: اگر مبلغ پیش‌نمایش با مبلغ سرور فرق کند، مشتری پیش از پرداخت مطلع می‌شود.</li>
+      </ul>
+    </li>
+    <li><strong>تقویم:</strong> نمایش تاریخ‌ها جلالی است و مرز روز با منطقه زمانی <code>Asia/Tehran</code> محاسبه می‌شود.</li>
+  </ul>
+
+  <h3>سرور</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>ماژول</th><th>مسئولیت</th></tr></thead>
+    <tbody>
+      <tr><td><code>auth</code></td><td>ورود مدیر (JWT HS256 با <code>tokenVersion</code>)، قفل موقت پس از ۵ تلاش ناموفق به مدت ۱۵ دقیقه، محدودیت نرخ ورود برای هر IP، تغییر رمز و کاربران</td></tr>
+      <tr><td><code>catalog</code></td><td>حوزه، زیرگروه، خدمت، پلن، تخفیف، رسانه، محتوا و تنظیمات. هر تغییر <code>catalogRevision</code> را افزایش می‌دهد</td></tr>
+      <tr><td><code>sales</code></td><td>سفارش، پرداخت، فعال‌سازی اشتراک، بررسی اعتبار QR، دستگاه‌ها و فرمان‌ها، همگام‌سازی push/pull</td></tr>
+      <tr><td><code>admin</code></td><td>داشبورد، گزارش‌ها و خروجی CSV/XLSX، عملیات پشتیبانی (تطبیق، چاپ مجدد، ابطال، تمدید، صدور مجدد QR)، سوابق تغییرات</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>احراز هویت دستگاه:</strong> هدر <code>Authorization: Device &lt;id&gt;:&lt;key&gt;</code>. سرور فقط sha256 کلید را نگه می‌دارد و کلید از پنل قابل تعویض است.</li>
+    <li><strong>RBAC در سرور:</strong> دسترسی با <code>@Roles(ADMIN)</code> کنترل می‌شود. اپراتور فقط مشاهده، استعلام پرداخت و چاپ مجدد دارد. پنهان کردن دکمه در رابط تنها لایه حفاظت نیست (تست T10).</li>
+    <li><strong>خطاها:</strong> قالب یکسان <code>{ error: { code, message, details }, requestId }</code> با هدر <code>X-Request-Id</code> در همه پاسخ‌ها.</li>
+    <li><strong>سوابق تغییرات:</strong> تغییر قیمت، تخفیف، تنظیمات، تطبیق پرداخت، ابطال و تمدید اشتراک، صدور مجدد QR و کاربران با مقادیر قبل و بعد و دلیل ثبت می‌شود و قابل ویرایش نیست.</li>
+    <li><strong>تراکنش‌ها:</strong> عملیات مالی در تراکنش <code>Serializable</code> با تکرار خودکار هنگام تداخل انجام می‌شوند.</li>
+  </ul>
+
+  <h3>کیوسک</h3>
+  <ul>
+    <li><strong>فرایند اصلی (main):</strong> کاتالوگ و کش رسانه با بررسی sha256؛ سفارش و پرداخت با ژورنال پیش از استفاده از کارتخوان؛ صف رویداد و همگام‌سازی؛ بررسی اعتبار QR آنلاین و آفلاین؛ اجرای فرمان‌های پنل. پایگاه محلی SQLite با <code>journal_mode=WAL</code> و <code>synchronous=FULL</code>.</li>
+    <li><strong>رابط (renderer):</strong> React با <code>contextIsolation</code> و <code>sandbox</code>، بدون دسترسی به Node. کلید دستگاه هرگز به رابط نمی‌رسد.</li>
+    <li><strong>بازیابی:</strong> پس از قطع برق یا بسته شدن برنامه، تلاش‌های <code>IN_FLIGHT</code> یا <code>UNKNOWN</code> ژورنال از کارتخوان استعلام و نتیجه گزارش می‌شود. اگر رابط از کار بیفتد دوباره بارگذاری می‌شود. برنامه تک‌نمونه است و از خواب رفتن سیستم جلوگیری می‌کند.</li>
+  </ul>
+  <div class="table-wrap"><table>
+    <thead><tr><th>تجهیز</th><th>آداپترها</th></tr></thead>
+    <tbody>
+      <tr><td>کارتخوان</td><td><code>mock</code> (شبیه‌ساز با سناریو) یا <code>none</code> (SDK پیکربندی نشده؛ فروش متوقف می‌شود). SDK واقعی بانک هنوز در دست نیست</td></tr>
+      <tr><td>چاپگر</td><td><code>mock</code> (ذخیره رسید در پوشه) یا <code>windows</code> (چاپ بی‌صدا با درایور ویندوز)</td></tr>
+      <tr><td>اسکنر</td><td><code>keyboard</code> (USB HID در حالت keyboard-wedge) یا <code>mock</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>مدل داده (خلاصه)</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+erDiagram
+  Category ||--o{ Subcategory : contains
+  Subcategory ||--o{ Service : contains
+  Media |o--o{ Category : image
+  Media |o--o{ Service : image
+  Customer ||--o{ Order : places
+  Device ||--o{ Order : sells
+  Order ||--|{ OrderItem : "price snapshot"
+  Order ||--o{ PaymentAttempt : attempts
+  Order ||--o| Subscription : activates
+  SubscriptionPlan ||--o{ Subscription : plan
+  Customer ||--o{ Subscription : owns
+  Subscription ||--o{ AccessLog : "QR checks"
+  Device ||--o{ AccessLog : logs
+  Device ||--o{ DeviceCommand : receives
+  Device ||--o{ SyncEvent : pushes
+  Discount ||--|{ DiscountTarget : targets
+  AdminUser ||--o{ AuditLog : acts
+  Order {
+    string orderNumber UK
+    string localId
+    enum status
+    int total
+    bool offline
+    bool conflictFlag
+    enum printStatus
+  }
+  OrderItem {
+    int unitPrice
+    int unitDiscount
+    string discountTitle
+    int lineTotal
+  }
+  PaymentAttempt {
+    string idempotencyKey UK
+    enum status
+    enum source
+    string terminalRef
+    string rrn
+  }
+  Subscription {
+    string qrTokenHash UK
+    datetime startsAt
+    datetime expiresAt
+    enum status
+    int rev
+  }
+</pre>
+    <figcaption>شماره سفارش: <code>AK-000123</code> (آنلاین) یا <code>OFF-KIOSK-01-00001</code> (آفلاین). یکتایی همگام‌سازی آفلاین با <code>(deviceId, localId)</code>. از QR فقط sha256 نگهداری می‌شود.</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>جدول تکمیلی</th><th>کاربرد</th></tr></thead>
+    <tbody>
+      <tr><td><code>Setting</code></td><td>سیاست‌ها و تنظیمات قابل تغییر در پنل</td></tr>
+      <tr><td><code>Counter</code></td><td>شماره سفارش، <code>catalogRevision</code> و <code>subscriptionRev</code></td></tr>
+      <tr><td><code>SyncEvent</code></td><td>ثبت یکتای رویدادهای دستگاه با <code>eventId</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>وضعیت سفارش و پرداخت</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> LOCKED: ثبت سفارش و قفل مبلغ
+  LOCKED --> PAYMENT_PENDING: شروع پرداخت (یک تلاش فعال)
+  PAYMENT_PENDING --> PAID: کارتخوان تأیید کرد
+  PAYMENT_PENDING --> FAILED: رد یا لغو روی کارتخوان
+  PAYMENT_PENDING --> UNKNOWN: قطع ارتباط یا پایان مهلت
+  FAILED --> PAYMENT_PENDING: تلاش مجدد روی همان سفارش
+  UNKNOWN --> PAID: استعلام یا تطبیق دستی مستند
+  UNKNOWN --> FAILED: استعلام یا تطبیق دستی مستند
+  LOCKED --> CANCELLED: ویرایش، انصراف یا پایان نشست
+  FAILED --> CANCELLED: انصراف مشتری
+  PAID --> [*]
+</pre>
+  </figure>
+  <ul>
+    <li>تا وقتی وضعیت <code>UNKNOWN</code> است، تلاش جدید ممنوع است و این وضعیت هرگز موفق یا ناموفق نمایش داده نمی‌شود. فروش قطعی فقط شامل <code>PAID</code> است.</li>
+    <li><code>PAID</code> هرگز بازنویسی نمی‌شود. گزارش متناقض بعدی فقط <code>conflictFlag</code> را فعال می‌کند تا در پنل بررسی شود.</li>
+    <li>چاپ نشدن رسید سفارش را لغو نمی‌کند. وضعیت چاپ جدا نگه داشته می‌شود و چاپ مجدد از کیوسک یا پنل ممکن است.</li>
+  </ul>
+
+  <h3>اشتراک و QR</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --> Pending: سفارش اشتراک
+  Pending --> Active: فقط پس از PAID و صدور QR
+  Active --> NotStarted: تمدید از پایان اشتراک فعلی
+  NotStarted --> Active: رسیدن تاریخ شروع
+  Active --> Expired: گذشت expiresAt
+  Active --> Revoked: ابطال در پنل با دلیل
+  Active --> Active: صدور مجدد QR و ابطال توکن قبلی
+</pre>
+  </figure>
+  <ul>
+    <li>توکن QR (<code>AKQ1.</code> و ۳۲ نویسه تصادفی) روی کیوسک ساخته می‌شود و سرور فقط sha256 آن را نگه می‌دارد. در QR نه شماره موبایل هست و نه اطلاعات کارت.</li>
+    <li>نتیجه بررسی یکی از <code>ACTIVE</code>، <code>EXPIRED</code>، <code>NOT_STARTED</code>، <code>REVOKED</code> یا <code>INVALID</code> است. نمایش عضو فقط به ۴ رقم آخر موبایل محدود است.</li>
+    <li>بررسی آفلاین از کش محلی کیوسک انجام می‌شود (سیاست <code>offlineQrValidation</code>) و کش با دلتای <code>rev</code> به‌روز می‌شود.</li>
+  </ul>
+
+  <h3>همگام‌سازی کیوسک</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  participant K as کیوسک (outbox)
+  participant S as سرور
+  loop هر pushSec
+    K->>S: POST /sync/push (events با eventId)
+    S-->>K: accepted / duplicate / rejected
+  end
+  loop هر pullSec
+    K->>S: GET /sync/pull?since=rev
+    S-->>K: کاتالوگ (اگر revision تغییر کرده) + دلتای اشتراک‌ها
+  end
+  loop هر heartbeatSec
+    K->>S: POST /devices/heartbeat (تجهیزات، صف)
+    S-->>K: فرمان‌ها PAYMENT_INQUIRY · PRINT_RECEIPT · SYNC_NOW
+    K->>S: نتیجه فرمان
+  end
+</pre>
+  </figure>
+  <ul>
+    <li><strong>انواع رویداد:</strong> <code>ORDER_OFFLINE</code>، <code>PAYMENT_RESULT</code>، <code>ACCESS_LOG</code>، <code>RECEIPT_PRINT</code> و <code>COMMAND_RESULT</code>.</li>
+    <li><strong>یکتایی:</strong> هر رویداد با <code>eventId</code> و هر سفارش آفلاین با <code>(deviceId, localId)</code> یکتا ثبت می‌شود. ارسال دوباره هرگز سفارش تکراری نمی‌سازد (تست T11).</li>
+    <li>خطاهای قابل تکرار با تأخیر دوباره ارسال می‌شوند. خطاهای غیرقابل تکرار در پنل «همگام‌سازی» برای بررسی و اعمال مجدد نمایش داده می‌شوند.</li>
+  </ul>
+
+  <h3>امنیت</h3>
+  <div class="cols">
+    <div>
+      <h4>کیوسک</h4>
+      <ul>
+        <li>IPC محدود به فهرست مجاز؛ ناوبری و پنجره جدید مسدود</li>
+        <li>CSP در بیلد تولید</li>
+        <li>کلید دستگاه فقط در main process</li>
+        <li>پاک شدن QR خام و ماسک شدن موبایل در پایان نشست</li>
+      </ul>
+    </div>
+    <div>
+      <h4>سرور و پنل</h4>
+      <ul>
+        <li>هش رمز با bcrypt و قفل موقت حساب</li>
+        <li>اعتبارسنجی همه ورودی‌ها با zod</li>
+        <li>هدرهای امنیتی و CORS محدود</li>
+        <li>توکن پنل در <code>sessionStorage</code>؛ تغییر رمز همه نشست‌های قبلی را باطل می‌کند</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ server -->
+<section id="server">
+  <h2>راه‌اندازی سرور مرکزی و پنل</h2>
+  <p class="lede">سرور یک فرایند Node.js است، پایگاه داده PostgreSQL، و تصاویر در یک پوشه روی دیسک. خود سرور می‌تواند پنل را روی <code>/admin</code> ارائه کند؛ در این حالت پنل و API روی یک دامنه‌اند و به CORS نیازی نیست.</p>
+
+  <h3>پیش‌نیازها</h3>
+  <dl class="kv">
+    <dt>سیستم‌عامل</dt><dd>Windows Server 2019+ یا Ubuntu 22.04+</dd>
+    <dt>Node.js / pnpm</dt><dd>22 LTS / 10 (<code>corepack enable</code>)</dd>
+    <dt>PostgreSQL</dt><dd>14 یا بالاتر، با encoding <code>UTF8</code></dd>
+    <dt>گواهی TLS</dt><dd>برای دامنه API؛ کیوسک و پنل باید با HTTPS به سرور وصل شوند</dd>
+  </dl>
+
+  <h3>پایگاه داده</h3>
+  <div class="code"><span class="lang">sql</span><button type="button" data-copy>کپی</button><pre><code>CREATE ROLE andishkadeh LOGIN PASSWORD 'رمز-قوی';
+CREATE DATABASE andishkadeh OWNER andishkadeh ENCODING 'UTF8';</code></pre></div>
+
+  <h3>نصب و پیکربندی</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git clone &lt;repo&gt; andishkadeh &amp;&amp; cd andishkadeh
+pnpm install --frozen-lockfile
+cp apps/server/.env.example apps/server/.env</code></pre></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>متغیر</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td><code>DATABASE_URL</code></td><td>رشته اتصال PostgreSQL</td></tr>
+      <tr><td><code>PORT</code></td><td>پورت داخلی سرور (پیش‌فرض 3000)</td></tr>
+      <tr><td><code>JWT_SECRET</code></td><td>رشته تصادفی بلند (حداقل ۳۲ نویسه). تعویض آن همه مدیران را خارج می‌کند</td></tr>
+      <tr><td><code>ADMIN_SESSION_HOURS</code></td><td>طول نشست مدیر (ساعت)</td></tr>
+      <tr><td><code>LOGIN_MAX_ATTEMPTS</code> · <code>LOGIN_LOCK_MINUTES</code></td><td>قفل موقت پس از ورود ناموفق</td></tr>
+      <tr><td><code>MEDIA_DIR</code></td><td>پوشه تصاویر؛ باید در پشتیبان‌گیری باشد</td></tr>
+      <tr><td><code>PUBLIC_BASE_URL</code></td><td>آدرس عمومی سرور که کیوسک تصاویر را از آن دانلود می‌کند</td></tr>
+      <tr><td><code>TRUST_PROXY</code></td><td>پشت IIS/nginx مقدار <code>1</code> بگذارید تا IP واقعی ثبت شود</td></tr>
+      <tr><td><code>CORS_ORIGINS</code></td><td>فقط اگر پنل روی دامنه دیگری میزبانی می‌شود</td></tr>
+      <tr><td><code>ADMIN_DIST_DIR</code></td><td>مسیر بیلد پنل (<code>apps/admin/dist</code>) برای ارائه روی <code>/admin</code></td></tr>
+      <tr><td><code>SEED_*</code></td><td>فقط برای نصب اول: نام کاربری و رمز مدیر و اپراتور، شناسه و کلید دستگاه کیوسک</td></tr>
+    </tbody>
+  </table></div>
+  <p>تولید رشته‌های تصادفی:</p>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"</code></pre></div>
+
+  <h3>ساخت، migration و داده اولیه</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm --filter @andishkadeh/shared build
+pnpm --filter @andishkadeh/server build
+pnpm --filter @andishkadeh/admin build          # خروجی: apps/admin/dist
+pnpm db:migrate                                  # prisma migrate deploy — غیرمخرب
+pnpm db:seed                                     # فقط نصب اول؛ اجرای دوباره چیزی را بازنویسی نمی‌کند</code></pre></div>
+  <p>داده اولیه این موارد را می‌سازد:</p>
+  <ul>
+    <li>۴ حوزه (عملکرد، تغذیه، روان‌شناسی، مانیتورینگ) با زیرگروه‌ها</li>
+    <li>خدمات دارای تعرفه معلوم، فعال؛ خدمات بدون تعرفه، غیرفعال و با قیمت خالی</li>
+    <li>۴ پلن اشتراک</li>
+    <li>تنظیمات پیش‌فرض سیاست‌ها، تصاویر اولیه، کاربران مدیر و اپراتور، و دستگاه <code>KIOSK-01</code></li>
+  </ul>
+  <div class="note warn"><p>پس از اولین ورود، رمز کاربران seed را از پنل عوض کنید و مقادیر <code>SEED_*_PASSWORD</code> را از <code>.env</code> پاک کنید.</p></div>
+
+  <h3>اجرا به‌عنوان سرویس</h3>
+  <h4>ویندوز (NSSM)</h4>
+  <div class="code"><span class="lang">powershell</span><button type="button" data-copy>کپی</button><pre><code>nssm install AndishkadehApi "C:\Program Files\nodejs\node.exe" "dist\main.js"
+nssm set AndishkadehApi AppDirectory C:\andishkadeh\apps\server
+nssm set AndishkadehApi Start SERVICE_AUTO_START
+nssm set AndishkadehApi AppStdout C:\andishkadeh\logs\api.log
+nssm set AndishkadehApi AppStderr C:\andishkadeh\logs\api.err.log
+nssm start AndishkadehApi</code></pre></div>
+  <h4>لینوکس (systemd)</h4>
+  <div class="code"><span class="lang">/etc/systemd/system/andishkadeh-api.service</span><button type="button" data-copy>کپی</button><pre><code>[Unit]
+Description=Andishkadeh kiosk API
+After=network.target postgresql.service
+
+[Service]
+WorkingDirectory=/opt/andishkadeh/apps/server
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+User=andishkadeh
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target</code></pre></div>
+
+  <h3>پراکسی معکوس و TLS</h3>
+  <div class="code"><span class="lang">nginx</span><button type="button" data-copy>کپی</button><pre><code>server {
+  listen 443 ssl http2;
+  server_name kiosk-api.example.ir;
+  ssl_certificate     /etc/ssl/kiosk-api.crt;
+  ssl_certificate_key /etc/ssl/kiosk-api.key;
+  client_max_body_size 10m;            # بارگذاری تصویر (MEDIA_MAX_MB)
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+  }
+}</code></pre></div>
+  <p>در IIS از ماژول‌های URL Rewrite و ARR با همین الگو استفاده کنید.</p>
+
+  <h3>بررسی سلامت</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
+      <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>ثبت کیوسک جدید</h3>
+  <ol class="steps">
+    <li>در پنل به «کیوسک و تجهیزات» بروید و «ثبت کیوسک جدید» را بزنید. شناسه را مثلاً <code>KIOSK-02</code> بگذارید.</li>
+    <li>کلید دستگاه فقط یک بار نمایش داده می‌شود. آن را در <code>kiosk.config.json</code> همان کیوسک قرار دهید.</li>
+    <li>اگر کلید لو رفت یا دستگاه تعویض شد، از دکمه «کلید جدید» در ردیف همان دستگاه استفاده کنید. کلید قبلی بلافاصله باطل می‌شود.</li>
+  </ol>
+
+  <h3>به‌روزرسانی نسخه</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git pull
+pnpm install --frozen-lockfile
+pnpm build
+pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
+# راه‌اندازی مجدد سرویس</code></pre></div>
+  <p>پیش از هر به‌روزرسانی از پایگاه داده پشتیبان بگیرید.</p>
+</section>
+
+<!-- ============================================================ kiosk -->
+<section id="kiosk">
+  <h2>نصب و پیکربندی کیوسک ویندوز</h2>
+  <p class="lede">دستگاه ۴۳ اینچ عمودی با ویندوز ۱۰/۱۱ x64، نمایشگر لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی ۸۰ میلی‌متری.</p>
+
+  <h3>ساخت نصب‌کننده</h3>
+  <div class="code"><span class="lang">powershell</span><button type="button" data-copy>کپی</button><pre><code>pnpm install --frozen-lockfile
+pnpm --filter @andishkadeh/shared build
+pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
+  <p>خروجی <code>apps\kiosk\release\AndishkadehKiosk-Setup-&lt;نسخه&gt;.exe</code> است؛ نصب‌کننده NSIS برای همه کاربران.</p>
+  <ul>
+    <li>ماژول بومی <code>better-sqlite3</code> هنگام ساخت برای Electron بازسازی می‌شود.</li>
+    <li>آیکون اختصاصی را در <code>apps/kiosk/build-resources/icon.ico</code> قرار دهید (اختیاری).</li>
+    <li>برای امضای دیجیتال، متغیرهای <code>CSC_LINK</code> و <code>CSC_KEY_PASSWORD</code> را تنظیم کنید.</li>
+  </ul>
+
+  <h3>آماده‌سازی ویندوز</h3>
+  <ol class="steps">
+    <li><strong>حساب کاربری محلی</strong> مثلاً <code>kiosk</code> بسازید. حساب مدیر جدا بماند.</li>
+    <li><strong>ورود خودکار</strong> برای حساب <code>kiosk</code> با <code>netplwiz</code> یا Sysinternals Autologon.</li>
+    <li><strong>برق و نمایشگر:</strong> Power plan روی High performance؛ خاموش شدن نمایشگر، Sleep و Hibernate روی Never.</li>
+    <li><strong>جهت نمایشگر:</strong> Portrait با وضوح 1080×1920. رابط برای همین بوم طراحی شده و به اندازه صفحه مقیاس می‌گیرد.</li>
+    <li><strong>لمس:</strong> Edge swipe را از Group Policy غیرفعال کنید (Windows Components → Edge UI → Allow edge swipe = Disabled) و صفحه‌کلید لمسی خودکار را خاموش کنید؛ کیوسک صفحه‌کلید عددی خودش را دارد.</li>
+    <li><strong>به‌روزرسانی ویندوز:</strong> راه‌اندازی مجدد خودکار را به بیرون از ساعت کاری منتقل کنید.</li>
+    <li><strong>ساعت سیستم:</strong> همگام‌سازی خودکار زمان روشن و منطقه زمانی Tehran.</li>
+  </ol>
+
+  <h3>نصب برنامه و پوشه داده</h3>
+  <p>نصب‌کننده را با حساب مدیر اجرا کنید. برنامه در اجرای اول خودش را در Startup حساب جاری ثبت می‌کند؛ برای حساب <code>kiosk</code> یک بار با همان حساب اجرا کنید.</p>
+  <div class="code"><button type="button" data-copy>کپی</button><pre><code>%APPDATA%\AndishkadehKiosk\
+  kiosk.config.json     ← پیکربندی (شما می‌سازید)
+  kiosk.sqlite          ← سفارش‌ها، ژورنال پرداخت، صف همگام‌سازی، کش اشتراک‌ها
+  media\                ← کش تصاویر (بررسی‌شده با sha256)
+  receipts\             ← فقط در حالت چاپگر شبیه‌سازی‌شده</code></pre></div>
+  <p>برای مسیر دیگر، متغیر محیطی سیستمی <code>KIOSK_DATA_DIR</code> را تنظیم کنید.</p>
+
+  <h3>پیکربندی kiosk.config.json</h3>
+  <div class="code"><span class="lang">json</span><button type="button" data-copy>کپی</button><pre><code>{
+  "serverUrl": "https://kiosk-api.example.ir",
+  "deviceId": "KIOSK-01",
+  "deviceKey": "PASTE_THE_DEVICE_KEY_FROM_ADMIN_PANEL",
+  "adapters": { "payment": "mock", "printer": "windows", "printerName": "POS-80C", "scanner": "keyboard" },
+  "intervals": { "heartbeatSec": 30, "pullSec": 60, "pushSec": 10, "recoverySec": 60 },
+  "requestTimeoutMs": 8000,
+  "kioskMode": true,
+  "devControls": false
+}</code></pre></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>کلید</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td><code>serverUrl</code></td><td>آدرس سرور مرکزی (HTTPS)</td></tr>
+      <tr><td><code>deviceId</code> · <code>deviceKey</code></td><td>از صفحه «کیوسک و تجهیزات» پنل. کلید فقط در main process خوانده می‌شود</td></tr>
+      <tr><td><code>adapters.payment</code></td><td><code>mock</code>: کارتخوان شبیه‌سازی‌شده با نوار «حالت آزمایشی». <code>none</code>: بدون SDK؛ فروش متوقف و وضعیت کارتخوان «نامشخص»</td></tr>
+      <tr><td><code>adapters.printer</code></td><td><code>windows</code>: چاپ بی‌صدا با درایور. <code>mock</code>: ذخیره رسید در پوشه <code>receipts</code></td></tr>
+      <tr><td><code>adapters.printerName</code></td><td>نام دقیق چاپگر در Devices and Printers</td></tr>
+      <tr><td><code>adapters.scanner</code></td><td><code>keyboard</code>: اسکنر USB HID در حالت keyboard-wedge. <code>mock</code>: فقط برای آزمون</td></tr>
+      <tr><td><code>intervals</code></td><td>فاصله ضربان، دریافت کاتالوگ، ارسال رویدادها و بازیابی پرداخت‌ها (ثانیه)</td></tr>
+      <tr><td><code>kioskMode</code></td><td>تمام‌صفحه بدون قاب، منو و ابزار توسعه؛ در تولید <code>true</code></td></tr>
+      <tr><td><code>devControls</code></td><td>کنترل‌های شبیه‌سازی؛ در تولید باید <code>false</code> باشد</td></tr>
+    </tbody>
+  </table></div>
+  <p>همین مقادیر با متغیرهای محیطی هم قابل تنظیم‌اند و اولویت بالاتری دارند: <code>KIOSK_SERVER_URL</code>، <code>KIOSK_DEVICE_ID</code>، <code>KIOSK_DEVICE_KEY</code>، <code>KIOSK_PAYMENT_ADAPTER</code>، <code>KIOSK_PRINTER_ADAPTER</code>، <code>KIOSK_PRINTER_NAME</code>، <code>KIOSK_SCANNER_ADAPTER</code>، <code>KIOSK_KIOSK_MODE</code>، <code>KIOSK_DEV_CONTROLS</code>.</p>
+  <p>پس از ذخیره فایل، برنامه را دوباره اجرا کنید. در پنل، دستگاه باید «آنلاین» شود و وضعیت تجهیزاتش نمایش داده شود.</p>
+
+  <h3>تجهیزات</h3>
+  <h4>چاپگر حرارتی</h4>
+  <ul>
+    <li>درایور سازنده را نصب کنید. عرض کاغذ ۸۰ میلی‌متر و حاشیه صفر؛ رسید برای عرض چاپی ۷۲ میلی‌متر چیده شده است. برش خودکار کاغذ را فعال کنید.</li>
+    <li>درایورهای ویندوز معمولاً «تمام شدن کاغذ» را پیش از چاپ گزارش نمی‌کنند. برنامه نتیجه چاپ را از درایور می‌گیرد و در صورت خطا پیام روشن نشان می‌دهد. سفارش پرداخت‌شده هرگز به خاطر چاپ لغو نمی‌شود و چاپ مجدد از کیوسک یا پنل ممکن است.</li>
+    <li>اگر مدل چاپگر SDK وضعیت (ESC/POS) داشته باشد، آداپتر اختصاصی آن پشت همان رابط اضافه می‌شود.</li>
+  </ul>
+  <h4>اسکنر QR</h4>
+  <ul>
+    <li>اسکنر USB را در حالت <strong>HID Keyboard</strong> با پسوند <strong>Enter</strong> تنظیم کنید (معمولاً با بارکد تنظیمات سازنده).</li>
+    <li>زبان صفحه‌کلید ویندوز برای حساب <code>kiosk</code> روی English (US) باشد تا نویسه‌های کد درست تایپ شوند.</li>
+    <li>برنامه ورودی سریع اسکنر را از تایپ انسان تشخیص می‌دهد (کمتر از ۳۰۰ میلی‌ثانیه بین کلیدها).</li>
+  </ul>
+  <h4>کارتخوان بانکی</h4>
+  <div class="note risk"><p><strong>SDK یا پروتکل کارتخوان هنوز تحویل نشده است.</strong> تا آن زمان حالت <code>mock</code> فقط برای آزمون و نمایش است (نوار زرد «حالت آزمایشی» همیشه دیده می‌شود) و حالت <code>none</code> فروش را آغاز نمی‌کند.</p></div>
+  <p>افزودن آداپتر واقعی یعنی پیاده‌سازی رابط <code>PaymentAdapter</code> (<code>initiate</code>، <code>inquire</code>، <code>status</code>). شناسه یکتای تلاش (<code>attemptId</code>) باید به‌عنوان شماره مرجع به پایانه داده شود تا استعلام بعدی ممکن باشد، و هر پاسخ مبهم یا پایان مهلت باید <code>UNKNOWN</code> برگرداند، نه <code>FAILED</code>.</p>
+
+  <h3>حالت کیوسک قفل‌شده</h3>
+  <ul>
+    <li><strong>Windows Enterprise / Pro:</strong> Shell Launcher یا Assigned Access؛ حساب <code>kiosk</code> فقط <code>AndishkadehKiosk.exe</code> را اجرا کند.</li>
+    <li><strong>Pro بدون Assigned Access:</strong> با Group Policy، Task Manager، تغییر کاربر و قفل را برای حساب <code>kiosk</code> غیرفعال کنید. برنامه با <code>kioskMode: true</code> تمام‌صفحه و بدون قاب اجرا می‌شود.</li>
+    <li>برای پشتیبانی از ریموت امن روی حساب مدیر استفاده کنید.</li>
+  </ul>
+
+  <h3>عیب‌یابی و بازیابی</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>وضعیت</th><th>اقدام</th></tr></thead>
+    <tbody>
+      <tr><td>نوار «ارتباط با مرکز برقرار نیست»</td><td>شبکه و <code>serverUrl</code> را بررسی کنید. فروش خدمات با کاتالوگ ذخیره‌شده تا <code>offlineCatalogMaxAgeHours</code> ادامه دارد. اشتراک آفلاین فروخته نمی‌شود (سیاست پیش‌فرض)</td></tr>
+      <tr><td>نوار «حالت آزمایشی»</td><td>دست‌کم یک آداپتر شبیه‌سازی‌شده است. پیش از بهره‌برداری <code>adapters</code> را بررسی کنید</td></tr>
+      <tr><td>پرداخت نامشخص (UNKNOWN)</td><td>کیوسک در هر <code>recoverySec</code> از کارتخوان استعلام می‌کند. از پنل هم «استعلام» یا «تطبیق دستی» ممکن است. مبلغ تا تعیین وضعیت در فروش قطعی شمرده نمی‌شود</td></tr>
+      <tr><td>قطع برق هنگام پرداخت</td><td>ژورنال پیش از استفاده از کارتخوان ثبت شده است. پس از روشن شدن، تلاش ناتمام استعلام و نتیجه گزارش می‌شود</td></tr>
+      <tr><td>رویداد همگام‌سازی ردشده</td><td>پنل ← «همگام‌سازی»: علت را ببینید و «اعمال مجدد» یا «همگام‌سازی کیوسک» را بزنید</td></tr>
+      <tr><td>دستگاه در پنل «قطع ارتباط» با خطای 401</td><td><code>deviceId</code> و <code>deviceKey</code> را بررسی کنید یا «کلید جدید» بسازید</td></tr>
+      <tr><td>انتقال به دستگاه جدید</td><td>صبر کنید صف رویدادهای دستگاه در پنل صفر شود، سپس از پوشه داده پشتیبان بگیرید</td></tr>
+    </tbody>
+  </table></div>
+  <p>وضعیت لحظه‌ای هر کیوسک (آخرین ارتباط، صف رویدادها، تجهیزات، نسخه برنامه) در پنل ← «کیوسک و تجهیزات» دیده می‌شود. برای به‌روزرسانی برنامه، نصب‌کننده نسخه جدید را اجرا کنید؛ پوشه داده حفظ می‌شود. پیش از آن مطمئن شوید پرداخت نامشخص یا رویداد ارسال‌نشده‌ای نمانده است.</p>
+</section>
+
+<!-- ============================================================ backup -->
+<section id="backup">
+  <h2>پشتیبان‌گیری و بازیابی</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>داده</th><th>محل</th><th>اهمیت</th></tr></thead>
+    <tbody>
+      <tr><td>پایگاه داده مرکزی</td><td>PostgreSQL (<code>DATABASE_URL</code>)</td><td><span class="chip off">حیاتی</span> سفارش‌ها، پرداخت‌ها، اشتراک‌ها، کاتالوگ، تنظیمات، سوابق</td></tr>
+      <tr><td>تصاویر</td><td>پوشه <code>MEDIA_DIR</code></td><td>تصاویر حوزه‌ها و خدمات (نام فایل = sha256 محتوا)</td></tr>
+      <tr><td>داده محلی کیوسک</td><td><code>%APPDATA%\AndishkadehKiosk\</code></td><td>تا وقتی صف همگام‌سازی خالی نشده حیاتی است</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>پشتیبان روزانه پایگاه داده</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pg_dump --format=custom --no-owner --file=andishkadeh-$(date +%F).dump "$DATABASE_URL"</code></pre></div>
+  <div class="code"><span class="lang">powershell · Task Scheduler</span><button type="button" data-copy>کپی</button><pre><code>$stamp = Get-Date -Format yyyy-MM-dd
+&amp; "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" --format=custom --no-owner `
+  --file="D:\backup\andishkadeh-$stamp.dump" "postgresql://andishkadeh:***@localhost:5432/andishkadeh"
+Get-ChildItem D:\backup\andishkadeh-*.dump | Where-Object LastWriteTime -lt (Get-Date).AddDays(-30) | Remove-Item</code></pre></div>
+  <ul>
+    <li>حداقل ۳۰ نسخه روزانه نگه دارید و یک نسخه هفتگی را خارج از سرور ذخیره کنید.</li>
+    <li>فایل پشتیبان شامل شماره موبایل مشتریان است؛ رمزگذاری‌شده و با دسترسی محدود نگه دارید.</li>
+  </ul>
+
+  <h3>بازیابی</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>createdb -O andishkadeh andishkadeh_restore
+pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkadeh-2026-10-14.dump</code></pre></div>
+  <ol class="steps">
+    <li>سرویس API را متوقف کنید.</li>
+    <li><code>DATABASE_URL</code> را به پایگاه بازیابی‌شده تغییر دهید یا نام پایگاه‌ها را جابه‌جا کنید.</li>
+    <li><code>pnpm db:migrate</code> را اجرا کنید تا اگر نسخه برنامه جدیدتر است، migrationها اعمال شوند.</li>
+    <li>سرویس را راه‌اندازی کنید.</li>
+  </ol>
+  <div class="note warn"><p>بازیابی نسخه قدیمی‌تر یعنی سفارش‌های پس از آن در سرور نیستند. سفارش‌هایی که کیوسک‌ها هنوز در صف دارند پس از اتصال دوباره ارسال می‌شوند، اما سفارش‌هایی که قبلاً تأیید و از صف کیوسک پاک شده‌اند برنمی‌گردند. فاصله پشتیبان‌ها را کوتاه نگه دارید و هر ماه یک بار بازیابی را روی پایگاه جداگانه آزمون کنید.</p></div>
+
+  <h3>تصاویر</h3>
+  <p>فایل‌ها هرگز بازنویسی نمی‌شوند، چون نام هر فایل همان sha256 محتواست:</p>
+  <div class="code"><span class="lang">powershell</span><button type="button" data-copy>کپی</button><pre><code>robocopy C:\andishkadeh\apps\server\storage\media D:\backup\media /E /XO</code></pre></div>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>rsync -a /opt/andishkadeh/apps/server/storage/media/ /backup/media/</code></pre></div>
+
+  <h3>داده محلی کیوسک</h3>
+  <ul>
+    <li>در کارکرد عادی همه سفارش‌ها در سرور هستند و داده محلی فقط صف و کش است.</li>
+    <li>پیش از تعویض یا نصب مجدد ویندوز: در پنل «در انتظار» و «ناموفق» آن دستگاه صفر و پرداخت نامشخصی نمانده باشد. برنامه را ببندید و پوشه را کپی کنید؛ <code>kiosk.sqlite</code>، <code>kiosk.sqlite-wal</code> و <code>kiosk.sqlite-shm</code> باید با هم کپی شوند.</li>
+    <li>روی دستگاه جدید پوشه را در همان مسیر قرار دهید؛ رویدادهای باقی‌مانده ارسال می‌شوند و ثبت یکتا مانع سفارش تکراری است.</li>
+    <li>اگر داده محلی از دست رفت و صف خالی بود، کافی است <code>kiosk.config.json</code> را دوباره بسازید.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ tests -->
+<section id="tests">
+  <h2>گزارش تست <span class="tag">2026-10-14</span></h2>
+  <p class="lede">Node 22 · PostgreSQL 16 · Chromium (Playwright 1.56.1). همه لایه‌ها موفق.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
+    <tbody>
+      <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک</td><td>Vitest</td><td class="num">۳۵</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۱۸</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه هسته کیوسک (SQLite واقعی + سرور واقعی)</td><td>Vitest</td><td class="num">۸</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور)</td><td>Playwright</td><td class="num">۲۶</td><td><span class="chip ok">همه موفق</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <ul>
+    <li><strong>آماده‌سازی:</strong> تست‌ها به جای پاک کردن پایگاه، روی پایگاه <code>_test</code> با <code>migrate deploy</code> و seed تکرارپذیر اجرا می‌شوند. داده هر تست یکتاست و تغییرات کاتالوگ در پایان برگردانده می‌شوند.</li>
+    <li><strong>پشته E2E:</strong> API با پایگاه آزمون، هسته کیوسک (همان کد main process) با SQLite تازه و تجهیزات شبیه‌سازی‌شده، رابط کیوسک در قاب 540×960 و پنل مدیریت.</li>
+    <li><strong>کنترل‌های آزمون</strong> (سناریوی کارتخوان، کاغذ و قطع چاپگر، قطع اسکنر، قطع شبکه، ارسال دوباره صف) فقط در bridge آزمون فعال‌اند و در نسخه تولید غیرفعال هستند.</li>
+  </ul>
+
+  <h3>ماتریس پذیرش سند (I-04)</h3>
+  <div class="table-wrap"><table class="matrix">
+    <thead><tr><th>شناسه</th><th>انتظار سند</th><th>آنچه تست بررسی می‌کند</th><th>وضعیت</th></tr></thead>
+    <tbody>
+      <tr><td>T01</td><td>خرید ۳ خدمت از حوزه‌های مختلف: یک سفارش، سه قلم، یک پرداخت</td><td>سه حوزه، سبد، موبایل ماسک‌شده، مبلغ قفل‌شده، پرداخت، رسید؛ در سرور یک سفارش PAID با سه قلم و یک تلاش؛ پاک شدن سبد</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T02</td><td>حذف خدمت: جمع کل دوباره محاسبه شود</td><td>جمع دقیقاً به اندازه آن قلم کم می‌شود و مبلغ قفل‌شده همان است</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T03</td><td>تخفیف ادمین: قیمت نهایی صحیح و snapshot</td><td>تخفیف ۲۰٪، قیمت خط‌خورده و نهایی در کیوسک؛ پس از حذف تخفیف، قلم سفارش همان snapshot را دارد</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T04</td><td>دوبار لمس پرداخت: فقط یک تلاش فعال</td><td>دابل‌کلیک روی پرداخت و دقیقاً یک تلاش</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T05</td><td>پرداخت موفق و چاپگر بی‌کاغذ: PAID و چاپ مجدد</td><td>پیام «کاغذ»، سفارش PAID، چاپ FAILED، سپس چاپ مجدد و PRINTED</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T06</td><td>قطع ارتباط هنگام پاسخ POS: UNKNOWN تا استعلام</td><td>صفحه نامشخص؛ خروج پیش از اولین استعلام ممکن نیست؛ استعلام قطعی و PAID با همان یک تلاش</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T07</td><td>خرید پلن: فعال‌سازی بعد از PAID و صدور QR</td><td>QR با قالب <code>AKQ1.</code>، اسکن با شبیه‌ساز و keyboard-wedge، ACTIVE با ۴ رقم آخر؛ تمدید از پایان اشتراک فعلی</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T08</td><td>QR فعال، منقضی یا نامعتبر: پیام صحیح بدون افشای اطلاعات</td><td>INVALID، REVOKED پس از ابطال، EXPIRED با تاریخ پایان و پیشنهاد خرید؛ شماره عضو نمایش داده نمی‌شود</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T09</td><td>تغییر قیمت در ادمین: کاتالوگ جدید، سفارش تاریخی ثابت</td><td>تغییر تعرفه در پنل، قیمت جدید در کیوسک پس از همگام‌سازی، snapshot سفارش قبلی، ثبت در سوابق</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T10</td><td>اپراتور درخواست تغییر قیمت API بفرستد: HTTP 403</td><td>رابط فقط‌خواندنی؛ API برای قیمت، تنظیمات، کاربران و سوابق 403 و برای مشاهده سفارش‌ها 200</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T11</td><td>ارسال دوباره رویداد آفلاین: عدم ایجاد سفارش تکراری</td><td>فروش با کد OFF در قطع شبکه، اتصال، یک سفارش؛ دو بار ارسال دوباره همه رویدادها همان یک سفارش و یک پرداخت</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T12</td><td>بازگشت خودکار از صفحه موبایل: پاک شدن داده شخصی</td><td>هشدار شمارش معکوس، بازگشت به شروع، سبد و موبایل نفر بعد خالی؛ «ادامه می‌دهم» نشست را حفظ می‌کند</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T13</td><td>قطع چاپگر یا اسکنر: خطای قابل فهم، بازیابی بدون از دست رفتن سفارش</td><td>پیام روشن، سفارش PAID؛ چاپ مجدد از پنل پس از رفع؛ پیام «اسکنر در دسترس نیست»</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T14</td><td>داشبورد با پرداخت UNKNOWN: در فروش قطعی شمرده نشود</td><td>KPI ثابت، هشدار داشبورد، نمایش جدا در گزارش، تطبیق دستی با دلیل و شمارش یک‌باره</td><td><span class="chip ok">موفق</span></td></tr>
+      <tr><td>T15</td><td>هیچ صفحه یا لینک رزرو</td><td>جست‌وجوی صفحات کیوسک و منو و صفحات پنل</td><td><span class="chip ok">موفق</span></td></tr>
+    </tbody>
+  </table></div>
+  <p>تست‌های تکمیلی: ورود، خطای رمز و خروج پنل؛ خروجی CSV و Excel؛ رد کارت و تلاش مجدد روی همان سفارش؛ انصراف پس از لغو بدون دریافت وجه.</p>
+
+  <h3>اشکال‌هایی که تست‌ها پیدا کردند و رفع شد</h3>
+  <ul>
+    <li><strong>هشدار پایان مهلت:</strong> لمس «ادامه می‌دهم» از زیر هشدار رد می‌شد و می‌توانست دکمه زیر آن را بزند. اکنون لمس فقط زمان فعالیت را ثبت می‌کند و هشدار در چرخه بعدی بسته می‌شود.</li>
+    <li><strong>چاپ مجدد از پنل:</strong> پس از چاپ موفق، وضعیت رسید «چاپ‌شده» نمی‌شد و هشدار داشبورد باقی می‌ماند. اکنون <code>PRINTED</code> ثبت می‌شود.</li>
+    <li><strong>نوار قطع ارتباط:</strong> با تأخیر ظاهر می‌شد؛ اکنون بلافاصله.</li>
+  </ul>
+
+  <h3>محدودیت‌های آزمون</h3>
+  <ul>
+    <li>کارتخوان، چاپگر و اسکنر واقعی در دسترس نبودند؛ همه سناریوهای سخت‌افزاری با شبیه‌ساز و از همان رابط آداپتر آزمون شدند و پس از تحویل SDK باید روی دستگاه واقعی تکرار شوند.</li>
+    <li>برنامه Electron روی لینوکس اجرا و بررسی شد. ساخت نصب‌کننده و چاپ با درایور ویندوز باید روی ویندوز آزمون شود.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ open -->
+<section id="open">
+  <h2>موارد باز و فرض‌ها</h2>
+
+  <h3>وابستگی‌های خارجی (پیش‌نیاز بهره‌برداری)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>مورد</th><th>وضعیت فعلی</th><th>اقدام لازم</th></tr></thead>
+    <tbody>
+      <tr><td>SDK یا پروتکل کارتخوان (PSP، مدل، روش اتصال)</td><td><span class="chip open">باز</span> فقط پشت رابط <code>PaymentAdapter</code>؛ <code>mock</code> با نوار آزمایشی، <code>none</code> فروش را متوقف می‌کند</td><td>تحویل SDK و مستند PSP، پیاده‌سازی و آزمون با پایانه واقعی</td></tr>
+      <tr><td>مدل چاپگر حرارتی</td><td><span class="chip open">باز</span> چاپ با درایور ویندوز؛ گزارش «بی‌کاغذ» به درایور وابسته است</td><td>اعلام مدل؛ اگر SDK وضعیت دارد، آداپتر دقیق اضافه می‌شود</td></tr>
+      <tr><td>مدل اسکنر QR</td><td><span class="chip open">باز</span> HID keyboard-wedge با پسوند Enter</td><td>اعلام مدل و تأیید تنظیمات</td></tr>
+      <tr><td>تعرفه‌های ناقص</td><td><span class="chip open">باز</span> <span class="num">۲۸</span> خدمت عملکرد و <span class="num">۱۰</span> ماژول مانیتورینگ بدون قیمت؛ غیرفعال و در کیوسک پنهان</td><td>ورود قیمت در پنل ← «خدمات و تعرفه‌ها» (فیلتر «بدون تعرفه»)</td></tr>
+      <tr><td>دامنه، گواهی TLS و سرور</td><td><span class="chip open">باز</span></td><td>تعیین آدرس نهایی (<code>serverUrl</code> و <code>PUBLIC_BASE_URL</code>)</td></tr>
+    </tbody>
+  </table></div>
+  <p>کدهای بدون تعرفه: <strong>عملکرد</strong> P-103، P-202 تا P-205، P-301 تا P-303، P-401 تا P-405، P-501 تا P-505، P-601 تا P-605، P-701 تا P-705. <strong>مانیتورینگ</strong> M-01 تا M-10 (حوزه مانیتورینگ با «فروش مستقل» خاموش، فقط در پوشش اشتراک).</p>
+
+  <h3>سیاست‌های باز سند (پیش‌فرض، قابل تغییر در پنل)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>سیاست</th><th>پیش‌فرض</th><th>محل تغییر</th></tr></thead>
+    <tbody>
+      <tr><td>هم‌پوشانی چند تخفیف</td><td><code>BEST</code>: بیشترین تخفیف. گزینه دیگر <code>PRIORITY</code></td><td>تنظیمات ← «تخفیف‌های هم‌پوشان»</td></tr>
+      <tr><td>تمدید اشتراک دارای اعتبار</td><td><code>EXTEND_FROM_END</code>. گزینه دیگر <code>START_NOW</code></td><td>تنظیمات ← «تمدید اشتراک فعال»</td></tr>
+      <tr><td>بررسی QR در قطع شبکه</td><td><span class="chip ok">مجاز</span> از آخرین کش</td><td>تنظیمات</td></tr>
+      <tr><td>فروش خدمات در قطع شبکه</td><td><span class="chip ok">مجاز</span> با کاتالوگ حداکثر ۷۲ ساعته</td><td>تنظیمات</td></tr>
+      <tr><td>فروش اشتراک در قطع شبکه</td><td><span class="chip off">غیرمجاز</span> (در سند باز است)</td><td>تنظیمات</td></tr>
+      <tr><td>فروش مستقل ماژول‌های مانیتورینگ</td><td><span class="chip off">خاموش</span> فقط در پوشش اشتراک</td><td>حوزه‌ها ← «فروش مستقل خدمات این حوزه»</td></tr>
+      <tr><td>مهلت نشست کیوسک</td><td><span class="num">۹۰</span> ثانیه، هشدار <span class="num">۱۵</span> ثانیه پیش از پایان</td><td>تنظیمات</td></tr>
+      <tr><td>مهلت پاسخ کارتخوان</td><td><span class="num">۱۲۰</span> ثانیه، پس از آن UNKNOWN</td><td>تنظیمات</td></tr>
+      <tr><td>حداکثر تعداد هر قلم</td><td><span class="num">۵</span></td><td>تنظیمات</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>تصمیم‌هایی که تأیید کسب‌وکار لازم دارند</h3>
+  <ol class="steps">
+    <li><strong>احراز هویت برای صدور مجدد QR:</strong> فقط مدیر اصلی با ثبت دلیل، و QR قبلی بلافاصله باطل می‌شود. روش احراز هویت مشتری در پذیرش باید در دستورالعمل پذیرش مشخص شود.</li>
+    <li><strong>ارسال QR یا رسید با پیامک:</strong> در نسخه اول نیست؛ کارت عضویت روی صفحه نمایش داده و روی رسید چاپ می‌شود.</li>
+    <li><strong>استرداد وجه:</strong> سامانه برگشت تراکنش انجام نمی‌دهد؛ تطبیق دستی فقط وضعیت را بر اساس مستند بانکی ثبت می‌کند.</li>
+    <li><strong>سیاست نگهداری داده:</strong> مدت نگهداری شماره موبایل مشتریان باید طبق سیاست حریم خصوصی مرکز تعیین شود.</li>
+  </ol>
+
+  <h3>فرض‌های پیاده‌سازی</h3>
+  <ul>
+    <li>مبالغ به تومان و عدد صحیح هستند؛ اگر PSP ریال بخواهد، تبدیل در آداپتر کارتخوان انجام می‌شود.</li>
+    <li>شماره سفارش آنلاین <code>AK-000123</code> و آفلاین <code>OFF-&lt;دستگاه&gt;-00001</code>؛ اگر شماره آفلاین تکراری باشد، سرور پسوند یکتا اضافه می‌کند.</li>
+    <li>اعتبار اشتراک از لحظه پرداخت (یا پایان اشتراک فعلی) به تعداد روز پلن محاسبه می‌شود؛ مرز روز <code>Asia/Tehran</code>.</li>
+    <li>رسید چاپی فارسی با قلم Vazirmatn و برای عرض ۷۲ میلی‌متر چیده شده است.</li>
+    <li>تصاویر اولیه از تصاویر مرجع تأییدشده، بدون متن، بریده شده‌اند و از پنل ← «رسانه‌ها» قابل جایگزینی‌اند.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ changelog -->
+<section id="changelog">
+  <h2>تغییرات نسخه <span class="tag">1.0.0</span></h2>
+  <p class="lede">اولین نسخه کامل بر اساس PRD v1، PRD پنل مدیریت v2.1 و Master PRD v3.1 — ۲۲ مهر ۱۴۰۵.</p>
+
+  <h3>کیوسک</h3>
+  <ul>
+    <li><strong>صفحه‌ها:</strong> شروع با تصویر قهرمان و دکمه «شروع»، انتخاب مسیر، چهار حوزه با تم رنگی، زیرگروه‌ها، فهرست خدمات با جست‌وجو و جزئیات خدمت.</li>
+    <li><strong>خرید:</strong> سبد چندحوزه‌ای، موبایل با صفحه‌کلید عددی، تأیید نهایی با مبلغ قفل‌شده، پرداخت، نتیجه موفق، ناموفق یا نامشخص، چاپ رسید و بازگشت خودکار.</li>
+    <li><strong>اشتراک:</strong> پلن‌های ۱، ۳، ۶ و ۱۲ ماهه، تمدید از پایان اشتراک فعلی، صدور QR پس از پرداخت قطعی؛ ورود اعضا با اسکن QR.</li>
+    <li><strong>آفلاین:</strong> فروش خدمات با کد <code>OFF-…</code>، صف رویداد با ارسال یکتا، بررسی QR از کش.</li>
+    <li><strong>پرداخت امن:</strong> ژورنال پیش از کارتخوان، یک تلاش فعال، استعلام برای UNKNOWN، بازیابی پس از قطع برق، اجرای فرمان‌های پنل.</li>
+    <li><strong>پوسته Electron:</strong> تمام‌صفحه، تک‌نمونه، جلوگیری از خواب، اجرای خودکار با ورود، sandbox و فهرست مجاز IPC، نصب‌کننده NSIS.</li>
+  </ul>
+  <h3>سرور</h3>
+  <ul>
+    <li>NestJS + Prisma + PostgreSQL با migrationها و داده اولیه تکرارپذیر (<span class="num">۱۴۲</span> خدمت که <span class="num">۱۰۴</span> مورد قیمت دارند، <span class="num">۴</span> پلن).</li>
+    <li>JWT مدیر با قفل موقت، احراز هویت دستگاه با کلید هش‌شده، RBAC در سرور، سوابق تغییرات غیرقابل ویرایش.</li>
+    <li>موتور قیمت مشترک، snapshot قیمت، ماشین وضعیت پرداخت با پرچم مغایرت، فعال‌سازی اشتراک فقط پس از PAID.</li>
+    <li>همگام‌سازی push/pull/heartbeat با ثبت یکتا؛ داشبورد و گزارش بدون پرداخت نامشخص؛ CSV و XLSX؛ OpenAPI؛ ارائه اختیاری پنل روی <code>/admin</code>.</li>
+  </ul>
+  <h3>پنل مدیریت</h3>
+  <ul>
+    <li>همه صفحات A01 تا A18، تاریخ جلالی، رابط کاملاً راست‌به‌چپ؛ اپراتور فقط‌خواندنی و همان محدودیت در API.</li>
+  </ul>
+</section>
+
+</main>
+</div>
+
+<footer class="end">مخزن: <code>daneshavaran123-lab/andishkadeh</code> · شاخه <code>claude/cool-goldberg-0916n3</code> · نسخه Markdown همین مستندات در پوشه <code>docs</code> مخزن است.</footer>
+</div>
+
+<script>
+(function () {
+  // Copy buttons on code blocks (clipboard where allowed, otherwise select the text).
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var code = btn.parentElement.querySelector('pre');
+      var text = code.innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = 'کپی'; }, 1600); };
+      var select = function () {
+        var r = document.createRange(); r.selectNodeContents(code);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        done('انتخاب شد');
+      };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done('کپی شد'); }, select);
+      } catch (e) { select(); }
+    });
+  });
+
+  // Highlight the section currently being read in the table of contents.
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  if (!('IntersectionObserver' in window)) return;
+  var byId = {};
+  links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (!e.isIntersecting) return;
+      links.forEach(function (a) { a.classList.remove('active'); });
+      var a = byId[e.target.id];
+      if (a) a.classList.add('active');
+    });
+  }, { rootMargin: '0px 0px -70% 0px' });
+  document.querySelectorAll('main > section').forEach(function (s) { obs.observe(s); });
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  // Standalone copy: render the diagrams with the theme matching the reader's system setting.
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default', fontFamily: 'Vazirmatn, Tahoma, sans-serif' });
+  }
+</script>
+</body>
+</html>
