@@ -1,0 +1,57 @@
+/* Design tokens — PRD appendix F (Dark Cinematic Sports-Tech). Base canvas 1080×1920. */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../assets/fonts/Vazirmatn-wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+
+:root {
+  --bg: #050b18;
+  --surface-1: #0b1830;
+  --surface-2: #112342;
+  --surface-3: #18305a;
+  --line: rgba(169, 189, 213, 0.16);
+  --line-strong: rgba(169, 189, 213, 0.32);
+  --text: #f8faff;
+  --muted: #a9bdd5;
+  --faint: #6f86a5;
+
+  --blue: #1689ff;
+  --red: #ff284c;
+  --purple: #a34bff;
+  --cyan: #00d6d1;
+  --green: #22c58b;
+  --amber: #ffbe55;
+
+  --theme: var(--blue);
+
+  --radius-card: 28px;
+  --radius-btn: 20px;
+  --radius-pill: 999px;
+  --touch: 64px;
+
+  --fs-hero: 64px;
+  --fs-page: 40px;
+  --fs-card: 30px;
+  --fs-body: 26px;
+  --fs-help: 22px;
+  --fs-price: 38px;
+
+  --s1: 8px;
+  --s2: 16px;
+  --s3: 24px;
+  --s4: 32px;
+  --s5: 48px;
+  --s6: 64px;
+
+  --dur-card: 240ms;
+  --dur-page: 300ms;
+  --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+
+[data-theme='blue'] { --theme: var(--blue); }
+[data-theme='red'] { --theme: var(--red); }
+[data-theme='purple'] { --theme: var(--purple); }
+[data-theme='cyan'] { --theme: var(--cyan); }

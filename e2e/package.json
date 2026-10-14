@@ -1,0 +1,15 @@
+{
+  "name": "@andishkadeh/e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "تست‌های پذیرش E2E کیوسک و پنل مدیریت (Playwright)",
+  "scripts": {
+    "test": "playwright test",
+    "screens": "playwright test --project=screens"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.15.30",
+    "typescript": "5.9.3"
+  }
+}

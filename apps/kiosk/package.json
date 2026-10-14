@@ -1,0 +1,45 @@
+{
+  "name": "@andishkadeh/kiosk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "کیوسک سلف‌سرویس ۴۳ اینچ عمودی اندیشکده کشتی ایران (Electron + React)",
+  "author": "Andishkadeh Koshti Iran",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev:web": "concurrently -k -n bridge,ui \"pnpm run bridge\" \"vite --port 5174\"",
+    "bridge": "tsx src/dev-bridge/server.ts",
+    "build:renderer": "vite build",
+    "build:electron": "node scripts/build-electron.mjs",
+    "build": "pnpm run build:renderer && pnpm run build:electron",
+    "start:electron": "electron .",
+    "dist:win": "pnpm run build && electron-builder --win --x64",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@andishkadeh/shared": "workspace:*",
+    "better-sqlite3": "12.4.1",
+    "qrcode": "1.5.4",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/node": "22.15.30",
+    "@types/qrcode": "1.5.5",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.7.0",
+    "concurrently": "9.2.1",
+    "electron": "36.9.5",
+    "electron-builder": "25.1.8",
+    "esbuild": "0.25.10",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vazirmatn": "33.0.3",
+    "vite": "6.4.1",
+    "vitest": "3.2.4",
+    "zustand": "5.0.8"
+  }
+}

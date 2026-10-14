@@ -1,0 +1,28 @@
+# Windows installer for the 43" kiosk (NSIS, per-machine). See docs/windows-kiosk-install.md.
+appId: ir.andishkadeh.kiosk
+productName: Andishkadeh Kiosk
+copyright: Andishkadeh Koshti Iran
+directories:
+  output: release
+  buildResources: build-resources
+files:
+  - dist-electron/**
+  - dist-renderer/**
+  - package.json
+  - "!**/*.map"
+asarUnpack:
+  - "**/node_modules/better-sqlite3/**"
+npmRebuild: true
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: "AndishkadehKiosk-Setup-${version}.${ext}"
+nsis:
+  oneClick: false
+  perMachine: true
+  allowToChangeInstallationDirectory: false
+  createDesktopShortcut: false
+  runAfterFinish: true
+linux:
+  target: dir
