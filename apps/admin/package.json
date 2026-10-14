@@ -1,0 +1,29 @@
+{
+  "name": "@andishkadeh/admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "پنل مدیریت اندیشکده کشتی ایران",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --port 5173",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"admin: covered by e2e\""
+  },
+  "dependencies": {
+    "@andishkadeh/shared": "workspace:*",
+    "@tanstack/react-query": "5.90.2",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.30.1"
+  },
+  "devDependencies": {
+    "@types/qrcode": "1.5.5",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.7.0",
+    "typescript": "5.9.3",
+    "vite": "6.4.1"
+  }
+}
