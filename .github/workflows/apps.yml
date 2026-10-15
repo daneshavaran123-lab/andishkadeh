@@ -97,7 +97,7 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      # The runner image ships the Android SDK (ANDROID_HOME); Gradle installs a missing platform itself.
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:shared
       - name: Build web app and copy it into the Android project
