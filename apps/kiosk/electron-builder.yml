@@ -13,7 +13,10 @@ files:
 asarUnpack:
   - "**/node_modules/better-sqlite3/**"
 npmRebuild: true
+# Installers are distributed by the centre (or as CI artifacts); no auto-update feed.
+publish: null
 win:
+  icon: build-resources/icon.ico
   target:
     - target: nsis
       arch: [x64]

@@ -1,6 +1,6 @@
 {
   "name": "@andishkadeh/kiosk",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "description": "کیوسک سلف‌سرویس ۴۳ اینچ عمودی اندیشکده کشتی ایران (Electron + React)",
   "author": "Andishkadeh Koshti Iran",
@@ -14,19 +14,20 @@
     "build:electron": "node scripts/build-electron.mjs",
     "build": "pnpm run build:renderer && pnpm run build:electron",
     "start:electron": "electron .",
-    "dist:win": "pnpm run build && electron-builder --win --x64",
+    "dist:win": "pnpm run build && electron-builder --win --x64 --publish never",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "android:sync": "pnpm run build:web && cap sync android",
+    "android:apk": "pnpm run android:sync && cd android && ./gradlew assembleDebug"
   },
   "dependencies": {
-    "@andishkadeh/shared": "workspace:*",
-    "@capacitor/core": "8.5.2",
-    "better-sqlite3": "12.4.1",
-    "qrcode": "1.5.4",
-    "sql.js": "1.14.2",
-    "zod": "3.25.76"
+    "better-sqlite3": "12.4.1"
   },
   "devDependencies": {
+    "@andishkadeh/shared": "workspace:*",
+    "@capacitor/android": "8.5.2",
+    "@capacitor/cli": "8.5.2",
+    "@capacitor/core": "8.5.2",
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "22.15.30",
     "@types/qrcode": "1.5.5",
@@ -39,13 +40,16 @@
     "electron": "36.9.5",
     "electron-builder": "25.1.8",
     "esbuild": "0.25.10",
+    "qrcode": "1.5.4",
     "react": "18.3.1",
     "react-dom": "18.3.1",
+    "sql.js": "1.14.2",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vazirmatn": "33.0.3",
     "vite": "6.4.1",
     "vitest": "3.2.4",
+    "zod": "3.25.76",
     "zustand": "5.0.8"
   }
 }

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">کیوسک اندیشکده</string>
+    <string name="title_activity_main">کیوسک اندیشکده</string>
+    <string name="package_name">ir.andishkadeh.kiosk</string>
+    <string name="custom_url_scheme">ir.andishkadeh.kiosk</string>
+</resources>

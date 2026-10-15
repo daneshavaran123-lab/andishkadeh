@@ -115,7 +115,17 @@ def main():
             out.save(os.path.join(d, 'ic_launcher_round.png'))
             # adaptive icon foreground: motif inside the 66dp safe zone of 108dp
             icon(fg[dpi], scale=0.5, transparent=True).save(os.path.join(d, 'ic_launcher_foreground.png'))
-        print('wrote android mipmaps in', os.path.relpath(res, ROOT))
+        # launch screen: every splash.png of the template, regenerated at its own size
+        for dirpath, _dirs, files in os.walk(res):
+            if 'splash.png' in files:
+                path = os.path.join(dirpath, 'splash.png')
+                w, h = Image.open(path).size
+                splash = background(max(w, h), rounded=False).resize((w, h), Image.LANCZOS)
+                m = round(min(w, h) * 0.42)
+                motif = mat(S, 0.9).resize((m, m), Image.LANCZOS)
+                splash.alpha_composite(motif, ((w - m) // 2, (h - m) // 2))
+                splash.convert('RGB').save(path)
+        print('wrote android mipmaps and splash screens in', os.path.relpath(res, ROOT))
 
 
 if __name__ == '__main__':

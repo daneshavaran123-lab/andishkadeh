@@ -1,0 +1,156 @@
+# Builds and checks every deliverable on each push:
+#   test     — typecheck + unit/integration tests (shared, server, kiosk core on both SQLite drivers)
+#   web      — kiosk web app (PWA, served by the server at /kiosk/) + admin panel
+#   android  — Android kiosk app (Capacitor): debug APK, plus a signed release APK when the keystore secrets exist
+#   windows  — Windows kiosk installer (Electron, NSIS)
+name: Apps
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: apps-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Electron itself is only needed by the Windows packaging job (electron-builder downloads it there).
+  ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+
+jobs:
+  test:
+    name: Typecheck and tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: andishkadeh
+          POSTGRES_PASSWORD: andishkadeh
+          POSTGRES_DB: andishkadeh_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U andishkadeh"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://andishkadeh:andishkadeh@localhost:5432/andishkadeh_test?schema=public
+      TEST_DATABASE_URL: postgresql://andishkadeh:andishkadeh@localhost:5432/andishkadeh_test?schema=public
+      JWT_SECRET: ci-only-secret-0123456789abcdefghijkl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:shared
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  web:
+    name: Web app (PWA) and admin panel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:shared
+      - run: pnpm --filter @andishkadeh/kiosk run build:web
+      - run: pnpm --filter @andishkadeh/admin run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kiosk-web-app
+          path: apps/kiosk/dist-web
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-panel
+          path: apps/admin/dist
+          if-no-files-found: error
+
+  android:
+    name: Android app (APK)
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:shared
+      - name: Build web app and copy it into the Android project
+        working-directory: apps/kiosk
+        run: pnpm run android:sync
+      - name: Debug APK
+        working-directory: apps/kiosk/android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Signed release APK
+        if: env.KEYSTORE_BASE64 != ''
+        working-directory: apps/kiosk/android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.keystore" ./gradlew assembleRelease --no-daemon --stacktrace
+      - name: Collect APKs
+        run: |
+          version=$(node -p "require('./apps/kiosk/package.json').version")
+          mkdir -p out
+          cp apps/kiosk/android/app/build/outputs/apk/debug/app-debug.apk "out/AndishkadehKiosk-${version}-debug.apk"
+          if [ -f apps/kiosk/android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp apps/kiosk/android/app/build/outputs/apk/release/app-release.apk "out/AndishkadehKiosk-${version}.apk"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: out/*.apk
+          if-no-files-found: error
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:shared
+      - name: Build and package (NSIS, x64)
+        working-directory: apps/kiosk
+        run: pnpm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: apps/kiosk/release/*.exe
+          if-no-files-found: error
