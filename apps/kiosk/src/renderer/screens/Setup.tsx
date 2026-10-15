@@ -84,21 +84,21 @@ export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
           <label>
             کارتخوان
             <select value={f.payment} onChange={(e) => set('payment', e.target.value as WebSetup['payment'])} data-testid="setup-payment">
-              <option value="mock">شبیه‌ساز (فقط آزمایشی)</option>
-              <option value="none">متصل نشده (فروش متوقف)</option>
+              <option value="mock">شبیه‌ساز (آزمایشی)</option>
+              <option value="none">متصل نشده</option>
             </select>
           </label>
           <label>
             چاپگر
             <select value={f.printer} onChange={(e) => set('printer', e.target.value as WebSetup['printer'])} data-testid="setup-printer">
               <option value="browser">چاپگر دستگاه</option>
-              <option value="mock">شبیه‌ساز (بدون چاپ)</option>
+              <option value="mock">شبیه‌ساز</option>
             </select>
           </label>
           <label>
             اسکنر QR
             <select value={f.scanner} onChange={(e) => set('scanner', e.target.value as WebSetup['scanner'])} data-testid="setup-scanner">
-              <option value="keyboard">اسکنر USB (حالت صفحه‌کلید)</option>
+              <option value="keyboard">اسکنر USB</option>
               <option value="mock">شبیه‌ساز</option>
             </select>
           </label>
