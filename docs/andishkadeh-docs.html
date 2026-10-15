@@ -177,6 +177,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <li><a href="#kiosk">نصب کیوسک ویندوز</a></li>
     <li><a href="#platforms">وب‌اپ و اندروید</a></li>
     <li><a href="#device-settings">تنظیمات دستگاه</a></li>
+    <li><a href="#uml">نمودارهای فعالیت UML</a></li>
     <li><a href="#backup">پشتیبان‌گیری و بازیابی</a></li>
     <li><a href="#tests">گزارش تست</a></li>
     <li><a href="#open">موارد باز</a></li>
@@ -1120,6 +1121,87 @@ flowchart TD
   </table></div>
 </section>
 
+
+<!-- ============================================================ uml -->
+<section id="uml">
+  <h2>نمودارهای فعالیت UML</h2>
+  <p class="lede">نه فرایند اصلی سامانه با نمودار فعالیت استاندارد UML. هر ستون یک بازیگر است: مشتری، کیوسک، سرور، کارتخوان، مدیر یا تکنسین.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>نماد</th><th>معنی در UML</th></tr></thead>
+    <tbody>
+      <tr><td>دایره توپر</td><td>گره آغاز</td></tr>
+      <tr><td>دایره توپر با حلقه</td><td>گره پایان فعالیت</td></tr>
+      <tr><td>مستطیل با گوشه گرد</td><td>کنش (action)</td></tr>
+      <tr><td>لوزی</td><td>تصمیم یا ادغام مسیرها؛ شرط هر مسیر روی خودش نوشته شده</td></tr>
+      <tr><td>میله ضخیم</td><td>انشعاب (fork) یا پیوند (join) کارهای هم‌زمان</td></tr>
+      <tr><td>ستون با عنوان</td><td>بخش‌بندی (swimlane) بر اساس بازیگر</td></tr>
+    </tbody>
+  </table></div>
+  <p>منبع PlantUML همه نمودارها در <code>docs/uml</code> است و با <code>pnpm docs:uml</code> دوباره ساخته می‌شوند (Java 11 یا بالاتر و قلم Vazirmatn لازم است).</p>
+
+  <h3>۱. خرید خدمات</h3>
+  <p>از انتخاب خدمت تا رسید. سرور مبلغ را قفل می‌کند، یا در قطع شبکه سفارش آفلاین ساخته می‌شود. پرداخت ناموفق قابل تکرار است. نامشخص فقط استعلام می‌شود. پس از پرداخت موفق، چاپ و گزارش هم‌زمان‌اند.</p>
+  <figure class="diagram">
+    <img src="uml/01-service-purchase.png" alt="نمودار فعالیت UML: خرید خدمات" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/01-service-purchase.puml</code> · <a href="uml/01-service-purchase.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۲. خرید اشتراک و صدور کارت عضویت QR</h3>
+  <p>توکن QR روی کیوسک ساخته می‌شود و فقط هش آن به سرور می‌رود. اشتراک فقط پس از PAID فعال می‌شود. توکن خام در پایان نشست پاک می‌شود.</p>
+  <figure class="diagram">
+    <img src="uml/02-subscription-purchase.png" alt="نمودار فعالیت UML: خرید اشتراک و صدور کارت عضویت QR" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/02-subscription-purchase.puml</code> · <a href="uml/02-subscription-purchase.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۳. پرداخت با کارتخوان، ژورنال و بازیابی</h3>
+  <p>ژورنال IN_FLIGHT پیش از کارتخوان و نتیجه پس از آن قطعاً ذخیره می‌شوند. اگر سرور تلاش را رد کند، کارتخوان استفاده نمی‌شود. نتیجه نامشخص خودکار استعلام می‌شود.</p>
+  <figure class="diagram">
+    <img src="uml/03-card-payment.png" alt="نمودار فعالیت UML: پرداخت با کارتخوان، ژورنال و بازیابی" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/03-card-payment.puml</code> · <a href="uml/03-card-payment.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۴. ورود اعضا و بررسی کارت QR</h3>
+  <p>بررسی در سرور، یا در قطع شبکه از کش اشتراک‌ها با همان قواعد. فقط تاریخ‌ها و ۴ رقم آخر موبایل نمایش داده می‌شود.</p>
+  <figure class="diagram">
+    <img src="uml/04-member-qr-check.png" alt="نمودار فعالیت UML: ورود اعضا و بررسی کارت QR" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/04-member-qr-check.puml</code> · <a href="uml/04-member-qr-check.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۵. همگام‌سازی پس‌زمینه کیوسک</h3>
+  <p>پس از بازیابی و چرخه اول، چهار حلقه هم‌زمان: ارسال صف، دریافت کاتالوگ، heartbeat و فرمان‌ها، استعلام پرداخت‌های نامشخص.</p>
+  <figure class="diagram">
+    <img src="uml/05-background-sync.png" alt="نمودار فعالیت UML: همگام‌سازی پس‌زمینه کیوسک" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/05-background-sync.puml</code> · <a href="uml/05-background-sync.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۶. راه‌اندازی و ثبت دستگاه کیوسک</h3>
+  <p>ثبت در پنل، کلید یک‌باره، پیکربندی روی دستگاه و تکرار تا پذیرش کلید، سپس آنلاین شدن.</p>
+  <figure class="diagram">
+    <img src="uml/06-device-provisioning.png" alt="نمودار فعالیت UML: راه‌اندازی و ثبت دستگاه کیوسک" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/06-device-provisioning.puml</code> · <a href="uml/06-device-provisioning.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۷. تغییر در پنل تا رسیدن به کیوسک</h3>
+  <p>ذخیره در تراکنش با سوابق تغییرات، افزایش catalogRevision و دریافت در heartbeat بعدی. تصویر فقط پس از دانلود سالم جایگزین می‌شود.</p>
+  <figure class="diagram">
+    <img src="uml/07-admin-change-to-kiosk.png" alt="نمودار فعالیت UML: تغییر در پنل تا رسیدن به کیوسک" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/07-admin-change-to-kiosk.puml</code> · <a href="uml/07-admin-change-to-kiosk.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۸. پیگیری پرداخت نامشخص در پنل</h3>
+  <p>استعلام از همان کیوسک با فرمان PAYMENT_INQUIRY، یا تطبیق دستی با دلیل (فقط مدیر اصلی). PAID هرگز بازنویسی نمی‌شود.</p>
+  <figure class="diagram">
+    <img src="uml/08-unknown-payment-followup.png" alt="نمودار فعالیت UML: پیگیری پرداخت نامشخص در پنل" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/08-unknown-payment-followup.puml</code> · <a href="uml/08-unknown-payment-followup.svg">نسخه SVG</a></figcaption>
+  </figure>
+
+  <h3>۹. مهلت بی‌فعالیتی و پایان نشست</h3>
+  <p>شمارش معکوس پیش از پایان مهلت (به‌جز پرداخت، چاپ و پایان). لغو سفارش پرداخت‌نشده، پاک شدن QR خام و ماسک موبایل.</p>
+  <figure class="diagram">
+    <img src="uml/09-session-timeout.png" alt="نمودار فعالیت UML: مهلت بی‌فعالیتی و پایان نشست" loading="lazy">
+    <figcaption>منبع: <code>docs/uml/09-session-timeout.puml</code> · <a href="uml/09-session-timeout.svg">نسخه SVG</a></figcaption>
+  </figure>
+</section>
 
 <!-- ============================================================ backup -->
 <section id="backup">

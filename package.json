@@ -17,6 +17,7 @@
     "dev:server": "pnpm --filter @andishkadeh/server run dev",
     "dev:admin": "pnpm --filter @andishkadeh/admin run dev",
     "dev:kiosk": "pnpm --filter @andishkadeh/kiosk run dev:web",
-    "e2e": "pnpm --filter @andishkadeh/e2e run test"
+    "e2e": "pnpm --filter @andishkadeh/e2e run test",
+    "docs:uml": "bash tools/uml/render.sh"
   }
 }
