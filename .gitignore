@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-electron/
 dist-renderer/
+dist-web/
 release/
 build/
 coverage/

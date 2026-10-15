@@ -48,6 +48,27 @@ export async function createApp(opts: { logger?: boolean } = {}) {
     });
   }
 
+  // Kiosk web app (PWA) under /kiosk/. Hashed assets are immutable; the entry page, manifest and
+  // service worker are revalidated so a new release reaches the kiosks on their next start.
+  if (cfg.kioskWebDistAbs && existsSync(join(cfg.kioskWebDistAbs, 'index.html'))) {
+    app.use('/kiosk', (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (req.method === 'GET' && req.originalUrl === '/kiosk') return res.redirect(301, '/kiosk/');
+      next();
+    });
+    app.use(
+      '/kiosk',
+      express.static(cfg.kioskWebDistAbs, {
+        index: 'index.html',
+        dotfiles: 'deny',
+        fallthrough: false,
+        setHeaders: (res, path) => {
+          if (/[\\/]assets[\\/]/.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          else res.setHeader('Cache-Control', 'no-cache');
+        },
+      }),
+    );
+  }
+
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new AllExceptionsFilter());
   setupOpenApi(app);

@@ -8,7 +8,9 @@
   "scripts": {
     "dev:web": "concurrently -k -n bridge,ui \"pnpm run bridge\" \"vite --port 5174\"",
     "bridge": "tsx src/dev-bridge/server.ts",
+    "dev:app": "vite --mode web --port 5176",
     "build:renderer": "vite build",
+    "build:web": "vite build --mode web",
     "build:electron": "node scripts/build-electron.mjs",
     "build": "pnpm run build:renderer && pnpm run build:electron",
     "start:electron": "electron .",
@@ -18,6 +20,7 @@
   },
   "dependencies": {
     "@andishkadeh/shared": "workspace:*",
+    "@capacitor/core": "8.5.2",
     "better-sqlite3": "12.4.1",
     "qrcode": "1.5.4",
     "sql.js": "1.14.2",

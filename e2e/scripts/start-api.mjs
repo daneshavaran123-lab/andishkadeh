@@ -1,10 +1,12 @@
 // E2E API: dedicated test database, non-destructive migrate + idempotent seed, then start the server.
+// The server also hosts the freshly built kiosk web app at /kiosk/ (webapp-*.spec.ts).
 import { execSync, spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const serverDir = resolve(root, 'apps/server');
+const kioskDir = resolve(root, 'apps/kiosk');
 // Resolved once in playwright.config.ts (TEST_DATABASE_URL or DATABASE_URL + "_test").
 const databaseUrl = process.env.E2E_DATABASE_URL;
 if (!databaseUrl) throw new Error('E2E_DATABASE_URL missing — start through playwright.config.ts');
@@ -21,10 +23,12 @@ const env = {
   SEED_OPERATOR_PASSWORD: 'Operator@12345',
   SEED_DEVICE_ID: 'KIOSK-01',
   SEED_DEVICE_KEY: 'test-device-key-0123456789',
+  KIOSK_WEB_DIST_DIR: resolve(kioskDir, 'dist-web'),
 };
 execSync('npx prisma migrate deploy', { cwd: serverDir, env, stdio: 'inherit' });
 execSync('npx tsx prisma/seed.ts', { cwd: serverDir, env, stdio: 'inherit' });
 execSync('npx tsc -p tsconfig.build.json', { cwd: serverDir, env, stdio: 'inherit' });
+execSync('npx vite build --mode web', { cwd: kioskDir, stdio: 'inherit' });
 const child = spawn(process.execPath, ['dist/main.js'], { cwd: serverDir, env, stdio: 'inherit' });
 process.on('SIGTERM', () => child.kill());
 process.on('SIGINT', () => child.kill());

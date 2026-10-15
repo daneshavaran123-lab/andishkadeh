@@ -199,9 +199,16 @@ export function mediaWidth(mediaId: string | null | undefined): number | null {
   return bootstrap?.media.find((x) => x.id === mediaId)?.width ?? null;
 }
 
+/** Web/Android target: cached images are object URLs held by the in-page core. */
+let mediaResolver: ((checksum: string) => string | null) | null = null;
+export function setMediaResolver(fn: (checksum: string) => string | null) {
+  mediaResolver = fn;
+}
+
 export function mediaUrl(mediaId: string | null | undefined): string | null {
   const { bootstrap, mediaBase } = useApp.getState();
   if (!mediaId || !bootstrap) return null;
   const m = bootstrap.media.find((x) => x.id === mediaId);
-  return m ? `${mediaBase}/${m.checksum}` : null;
+  if (!m) return null;
+  return mediaResolver ? mediaResolver(m.checksum) : `${mediaBase}/${m.checksum}`;
 }

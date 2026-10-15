@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 /**
  * PRD acceptance tests (I-04, §20) against an isolated stack:
  *   API :3200 (test DB) · kiosk core bridge :5285 (fresh SQLite, simulated hardware)
- *   kiosk UI :5284 · admin UI :5283
+ *   kiosk UI :5284 · admin UI :5283 · kiosk web app (PWA) http://localhost:3200/kiosk/ (core in the page)
  */
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 
@@ -42,6 +42,7 @@ export default defineConfig({
   projects: [
     { name: 'kiosk', testMatch: /kiosk-.*\.spec\.ts/, use: { ...devices['Desktop Chrome'], viewport: { width: 540, height: 960 }, baseURL: 'http://localhost:5284' } },
     { name: 'admin', testMatch: /admin-.*\.spec\.ts/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, baseURL: 'http://localhost:5283' } },
+    { name: 'webapp', testMatch: /webapp-.*\.spec\.ts/, use: { ...devices['Desktop Chrome'], viewport: { width: 540, height: 960 }, baseURL: 'http://localhost:3200' } },
   ],
   webServer: [
     { command: 'node scripts/start-api.mjs', url: 'http://localhost:3200/api/v1/health', timeout: 180_000, reuseExistingServer: false, stdout: 'ignore', stderr: 'pipe' },
