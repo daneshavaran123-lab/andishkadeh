@@ -154,14 +154,14 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.1.0</span> · ۲۳ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.0</span> · ۲۳ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
-  <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (ویندوز، لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. راهنمای راه‌اندازی، نصب، نگهداری و گزارش تست در یک صفحه.</p>
+  <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
   <div class="facts">
-    <span class="fact">کیوسک: <b>Electron + React</b></span>
+    <span class="fact">کیوسک: <b>ویندوز · وب‌اپ · اندروید</b></span>
     <span class="fact">سرور: <b>NestJS + PostgreSQL</b></span>
-    <span class="fact">تست پذیرش: <b class="num">۲۶ از ۲۶ موفق</b></span>
+    <span class="fact">تست پذیرش: <b class="num">۲۷ از ۲۷ موفق</b></span>
     <span class="fact">بدون رزرو و نوبت‌دهی</span>
   </div>
 </header>
@@ -176,6 +176,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <li><a href="#server">راه‌اندازی سرور</a></li>
     <li><a href="#kiosk">نصب کیوسک ویندوز</a></li>
     <li><a href="#platforms">وب‌اپ و اندروید</a></li>
+    <li><a href="#device-settings">تنظیمات دستگاه</a></li>
     <li><a href="#backup">پشتیبان‌گیری و بازیابی</a></li>
     <li><a href="#tests">گزارش تست</a></li>
     <li><a href="#open">موارد باز</a></li>
@@ -235,7 +236,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <!-- ============================================================ dev -->
 <section id="dev">
   <h2>راه‌اندازی توسعه</h2>
-  <p class="lede">پیش‌نیازها: Node.js 22، pnpm 10 (<code>corepack enable</code>) و PostgreSQL 14 یا بالاتر. برای ساخت نصب‌کننده کیوسک: ویندوز ۱۰/۱۱ x64.</p>
+  <p class="lede">پیش‌نیازها: Node.js 22، pnpm 10 (<code>corepack enable</code>) و PostgreSQL 14 یا بالاتر. نصب‌کننده ویندوز: ویندوز ۱۰/۱۱ x64، یا لینوکس با wine، یا CI. APK اندروید: JDK 21 و Android SDK، یا CI.</p>
 
   <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm install
 cp apps/server/.env.example apps/server/.env   # مقادیر CHANGE_ME را پر کنید
@@ -250,6 +251,7 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
       <tr><td><code>pnpm dev:server</code></td><td>API: <code>http://localhost:3000/api/v1</code> · مستند API: <code>http://localhost:3000/api/docs</code></td></tr>
       <tr><td><code>pnpm dev:admin</code></td><td>پنل مدیریت: <code>http://localhost:5173/admin/</code></td></tr>
       <tr><td><code>pnpm dev:kiosk</code></td><td>کیوسک در مرورگر: <code>http://localhost:5174</code> · هسته کیوسک (bridge) روی پورت <span class="num">5175</span></td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/kiosk dev:app</code></td><td>نسخه وب‌اپ/اندروید (هسته داخل صفحه، صفحه راه‌اندازی): <code>http://localhost:5176</code></td></tr>
     </tbody>
   </table></div>
 
@@ -262,10 +264,13 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
     <tbody>
       <tr><td><code>pnpm build</code></td><td>ساخت همه بسته‌ها</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td>بررسی نوع‌ها در همه بسته‌ها</td></tr>
-      <tr><td><code>pnpm test</code></td><td>تست‌های واحد و یکپارچه (shared، server روی پایگاه <code>*_test</code>، هسته کیوسک)</td></tr>
+      <tr><td><code>pnpm test</code></td><td>تست‌های واحد و یکپارچه (shared، server روی پایگاه <code>*_test</code>، هسته کیوسک روی هر دو درایور SQLite)</td></tr>
       <tr><td><code>pnpm e2e</code></td><td>تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های <span class="num">3200 / 5283 / 5284 / 5285</span>)</td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/server openapi</code></td><td>تولید <code>docs/openapi.json</code></td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/kiosk dist:win</code></td><td>ساخت نصب‌کننده ویندوز کیوسک (NSIS)</td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/kiosk build:web</code></td><td>ساخت وب‌اپ کیوسک (<code>apps/kiosk/dist-web</code>، برای <code>KIOSK_WEB_DIST_DIR</code> سرور)</td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/kiosk android:apk</code></td><td>ساخت APK اندروید (debug)</td></tr>
+      <tr><td><code>python3 tools/icons/generate.py</code></td><td>تولید دوباره آیکون‌ها و صفحه آغاز همه نسخه‌ها</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -273,29 +278,58 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
 <!-- ============================================================ architecture -->
 <section id="architecture">
   <h2>معماری و مدل داده</h2>
-  <p class="lede">کیوسک و پنل هر دو از یک سرور تغذیه می‌شوند؛ کیوسک با کلید دستگاه و پنل با JWT. هسته کیوسک در main process اجرا می‌شود و رابط فقط از راه IPC مجاز به آن دسترسی دارد.</p>
+  <p class="lede">کیوسک‌ها و پنل هر دو از یک سرور تغذیه می‌شوند؛ کیوسک با کلید دستگاه و پنل با JWT. هسته کیوسک مستقل از سکوست و در ویندوز، وب‌اپ و اندروید یکسان اجرا می‌شود؛ رابط فقط از راه کانال‌های IPC مجاز به آن دسترسی دارد.</p>
 
   <figure class="diagram">
 <pre class="mermaid">
 flowchart LR
-  subgraph Kiosk["کیوسک ویندوز (Electron)"]
-    UI["Renderer: React&lt;br/&gt;(sandbox، بدون Node)"]
-    Core["Main process: هسته کیوسک&lt;br/&gt;SQLite (WAL) · ژورنال پرداخت · صف رویداد · کش رسانه"]
-    HW["آداپترها: کارتخوان · چاپگر · اسکنر"]
-    UI -- "IPC (فهرست مجاز)" --> Core
-    Core --> HW
+  subgraph Devices["کیوسک‌ها"]
+    W["ویندوز&lt;br/&gt;Electron"]
+    B["وب‌اپ&lt;br/&gt;مرورگر"]
+    A["اندروید&lt;br/&gt;Capacitor"]
   end
   subgraph Server["سرور مرکزی"]
-    API["NestJS API /api/v1"]
+    API["NestJS API&lt;br/&gt;/api/v1"]
     DB[("PostgreSQL")]
-    Media[("پوشه رسانه&lt;br/&gt;آدرس‌دهی با sha256")]
-    API --> DB
-    API --> Media
+    MEDIA[("پوشه رسانه&lt;br/&gt;آدرس‌دهی با sha256")]
+    WEB["فایل‌های وب‌اپ&lt;br/&gt;/kiosk/"]
+    ADM["فایل‌های پنل&lt;br/&gt;/admin/"]
   end
-  Admin["پنل مدیریت (React SPA)"] -- "JWT + RBAC" --> API
-  Core -- "Device key (HTTPS)" --> API
+  Admin["مدیر و اپراتور&lt;br/&gt;پنل مدیریت"]
+  W -- "Device id:key" --&gt; API
+  B -- "Device id:key" --&gt; API
+  A -- "Device id:key" --&gt; API
+  B -. "بارگذاری برنامه" .-&gt; WEB
+  Admin -- "JWT + نقش" --&gt; API
+  Admin -. "بارگذاری پنل" .-&gt; ADM
+  API --&gt; DB
+  API --&gt; MEDIA
 </pre>
     <figcaption>نمای کلی اجزا و مسیرهای ارتباطی</figcaption>
+  </figure>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TB
+  UI["رابط React مشترک&lt;br/&gt;صفحه‌های K01 تا K23"]
+  IPC{{"کانال‌های IPC&lt;br/&gt;فهرست مجاز"}}
+  CORE["هسته مشترک src/core&lt;br/&gt;سفارش · ژورنال پرداخت · صف رویداد&lt;br/&gt;کاتالوگ · QR آفلاین · فرمان‌های پنل"]
+  UI --&gt; IPC --&gt; CORE
+  subgraph Win["میزبان ویندوز: Electron main process"]
+    W1[("better-sqlite3&lt;br/&gt;فایل kiosk.sqlite")]
+    W2["تصاویر: پوشه media"]
+    W3["چاپ: درایور ویندوز"]
+  end
+  subgraph Web["میزبان وب و اندروید: داخل صفحه"]
+    B1[("sql.js در WebAssembly&lt;br/&gt;ذخیره در IndexedDB")]
+    B2["تصاویر: IndexedDB"]
+    B3["چاپ: مرورگر یا سرویس چاپ اندروید"]
+  end
+  CORE --&gt; Win
+  CORE --&gt; Web
+  CORE --&gt; HW["آداپترها&lt;br/&gt;کارتخوان · اسکنر"]
+</pre>
+    <figcaption>هسته مشترک کیوسک و محل ذخیره داده در هر نسخه</figcaption>
   </figure>
 
   <ul>
@@ -331,15 +365,16 @@ flowchart LR
 
   <h3>کیوسک</h3>
   <ul>
-    <li><strong>فرایند اصلی (main):</strong> کاتالوگ و کش رسانه با بررسی sha256؛ سفارش و پرداخت با ژورنال پیش از استفاده از کارتخوان؛ صف رویداد و همگام‌سازی؛ بررسی اعتبار QR آنلاین و آفلاین؛ اجرای فرمان‌های پنل. پایگاه محلی SQLite با <code>journal_mode=WAL</code> و <code>synchronous=FULL</code>.</li>
-    <li><strong>رابط (renderer):</strong> React با <code>contextIsolation</code> و <code>sandbox</code>، بدون دسترسی به Node. کلید دستگاه هرگز به رابط نمی‌رسد.</li>
+    <li><strong>هسته (<code>src/core</code>):</strong> کاتالوگ و کش رسانه با بررسی sha256؛ سفارش و پرداخت با ژورنال پیش از استفاده از کارتخوان؛ صف رویداد و همگام‌سازی؛ بررسی اعتبار QR آنلاین و آفلاین؛ اجرای فرمان‌های پنل. هیچ وابستگی به Node یا مرورگر ندارد؛ پایگاه داده، محل تصاویر و چاپگر را میزبان تزریق می‌کند.</li>
+    <li><strong>پایگاه محلی:</strong> ویندوز: فایل SQLite با <code>journal_mode=WAL</code> و <code>synchronous=FULL</code>. وب و اندروید: SQLite در WebAssembly که پس از هر تغییر یک نسخه کامل در IndexedDB ذخیره می‌کند؛ ثبت ژورنال پیش از کارتخوان و ثبت نتیجه پس از آن تا ذخیره قطعی صبر می‌کنند.</li>
+    <li><strong>رابط:</strong> در Electron، React با <code>contextIsolation</code> و <code>sandbox</code>، بدون دسترسی به Node؛ کلید دستگاه هرگز به رابط نمی‌رسد. در وب و اندروید همان کانال‌ها بدون مرز فرایند به هسته داخل صفحه وصل می‌شوند.</li>
     <li><strong>بازیابی:</strong> پس از قطع برق یا بسته شدن برنامه، تلاش‌های <code>IN_FLIGHT</code> یا <code>UNKNOWN</code> ژورنال از کارتخوان استعلام و نتیجه گزارش می‌شود. اگر رابط از کار بیفتد دوباره بارگذاری می‌شود. برنامه تک‌نمونه است و از خواب رفتن سیستم جلوگیری می‌کند.</li>
   </ul>
   <div class="table-wrap"><table>
     <thead><tr><th>تجهیز</th><th>آداپترها</th></tr></thead>
     <tbody>
       <tr><td>کارتخوان</td><td><code>mock</code> (شبیه‌ساز با سناریو) یا <code>none</code> (SDK پیکربندی نشده؛ فروش متوقف می‌شود). SDK واقعی بانک هنوز در دست نیست</td></tr>
-      <tr><td>چاپگر</td><td><code>mock</code> (ذخیره رسید در پوشه) یا <code>windows</code> (چاپ بی‌صدا با درایور ویندوز)</td></tr>
+      <tr><td>چاپگر</td><td><code>mock</code> (شبیه‌ساز)، <code>windows</code> (چاپ بی‌صدا با درایور ویندوز) یا <code>browser</code> (چاپ مرورگر در وب‌اپ، سرویس چاپ اندروید در اندروید)</td></tr>
       <tr><td>اسکنر</td><td><code>keyboard</code> (USB HID در حالت keyboard-wedge) یا <code>mock</code></td></tr>
     </tbody>
   </table></div>
@@ -406,6 +441,63 @@ erDiagram
     </tbody>
   </table></div>
 
+  <h3>مسیر مشتری در کیوسک</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+  K01["K01 شروع"] --&gt; K02{"K02 منوی اصلی"}
+  K02 -- "خرید خدمات" --&gt; CAT["حوزه‌ها ← زیرگروه‌ها ← خدمات"]
+  CAT --&gt; CART["سبد خرید"]
+  K02 -- "اشتراک کامل" --&gt; PLANS["معرفی ← پلن‌ها ← جزئیات پلن"]
+  K02 -- "ورود اعضا" --&gt; SCAN["اسکن QR"]
+  SCAN --&gt; ACC["نتیجه: فعال · منقضی · شروع‌نشده · باطل · نامعتبر"]
+  CART --&gt; MOB["شماره موبایل"]
+  PLANS --&gt; MOB
+  MOB --&gt; REV["تأیید نهایی&lt;br/&gt;مبلغ قفل‌شده در سرور"]
+  REV --&gt; PAY["پرداخت با کارتخوان"]
+  PAY -- "موفق" --&gt; OK{"نوع سفارش"}
+  PAY -- "ناموفق" --&gt; REV
+  PAY -- "نامشخص" --&gt; UNK["استعلام&lt;br/&gt;تلاش دوباره ممنوع"]
+  UNK -- "پرداخت شده" --&gt; OK
+  UNK -- "پرداخت نشده" --&gt; REV
+  OK -- "خدمات" --&gt; PRN["چاپ رسید"]
+  OK -- "اشتراک" --&gt; QR["کارت عضویت QR"] --&gt; PRN
+  PRN --&gt; END["پایان و بازگشت خودکار"] --&gt; K01
+  ACC --&gt; K01
+</pre>
+    <figcaption>از شروع تا پایان؛ مهلت بی‌فعالیتی نشست را پاک می‌کند (به‌جز هنگام پرداخت و چاپ)</figcaption>
+  </figure>
+
+  <h3>مراحل پرداخت امن</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant UI as رابط کیوسک
+  participant C as هسته کیوسک
+  participant DB as پایگاه محلی
+  participant P as کارتخوان
+  participant S as سرور
+  UI-&gt;&gt;C: payment:start
+  C-&gt;&gt;DB: ثبت ژورنال IN_FLIGHT
+  C-&gt;&gt;DB: flush (ذخیره قطعی)
+  opt سفارش آنلاین
+    C-&gt;&gt;S: payments/initiate
+  end
+  C-&gt;&gt;P: initiate (مبلغ، شماره سفارش، attemptId)
+  P--&gt;&gt;C: PAID / FAILED / UNKNOWN
+  C-&gt;&gt;DB: ثبت نتیجه + flush
+  alt سرور در دسترس
+    C-&gt;&gt;S: payments/{attemptId}/result
+    S--&gt;&gt;C: سفارش تأییدشده
+  else قطع شبکه
+    C-&gt;&gt;DB: رویداد PAYMENT_RESULT در صف
+  end
+  C--&gt;&gt;UI: نتیجه پرداخت
+</pre>
+    <figcaption>ژورنال پیش از کارتخوان؛ نتیجه پیش از هر کار دیگر ذخیره می‌شود؛ در قطع شبکه نتیجه در صف می‌ماند</figcaption>
+  </figure>
+
   <h3>وضعیت سفارش و پرداخت</h3>
   <figure class="diagram">
 <pre class="mermaid">
@@ -452,22 +544,27 @@ stateDiagram-v2
   <figure class="diagram">
 <pre class="mermaid">
 sequenceDiagram
-  participant K as کیوسک (outbox)
+  participant C as هسته کیوسک
   participant S as سرور
   loop هر pushSec
-    K->>S: POST /sync/push (events با eventId)
-    S-->>K: accepted / duplicate / rejected
+    C-&gt;&gt;S: sync/push (رویدادهای صف)
+    S--&gt;&gt;C: پذیرفته · تکرار با تأخیر · ردشده
   end
   loop هر pullSec
-    K->>S: GET /sync/pull?since=rev
-    S-->>K: کاتالوگ (اگر revision تغییر کرده) + دلتای اشتراک‌ها
+    C-&gt;&gt;S: sync/pull
+    S--&gt;&gt;C: کاتالوگ، تنظیمات، محتوا، تغییرات اشتراک‌ها
+    C-&gt;&gt;S: دانلود تصاویر جدید و بررسی sha256
   end
   loop هر heartbeatSec
-    K->>S: POST /devices/heartbeat (تجهیزات، صف)
-    S-->>K: فرمان‌ها PAYMENT_INQUIRY · PRINT_RECEIPT · SYNC_NOW
-    K->>S: نتیجه فرمان
+    C-&gt;&gt;S: devices/heartbeat (نسخه، تجهیزات، صف، پرداخت‌های نامشخص)
+    S--&gt;&gt;C: catalogRevision + فرمان‌های پنل
+    Note over C: اگر نسخه کاتالوگ جدیدتر بود، pull فوری
+  end
+  loop هر recoverySec
+    C-&gt;&gt;C: استعلام پرداخت‌های IN_FLIGHT و UNKNOWN
   end
 </pre>
+    <figcaption>ارسال همیشه پیش از دریافت؛ هر رویداد eventId یکتا دارد و ارسال دوباره سفارش تکراری نمی‌سازد</figcaption>
   </figure>
   <ul>
     <li><strong>انواع رویداد:</strong> <code>ORDER_OFFLINE</code>، <code>PAYMENT_RESULT</code>، <code>ACCESS_LOG</code>، <code>RECEIPT_PRINT</code> و <code>COMMAND_RESULT</code>.</li>
@@ -769,7 +866,260 @@ KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
     <li><strong>چاپ:</strong> سرویس چاپ اندروید (ممکن است پنجره چاپ باز شود). چاپ بی‌صدا به SDK سازنده چاپگر نیاز دارد.</li>
     <li><strong>به‌روزرسانی:</strong> برای دستگاه‌های عملیاتی فقط از APK امضاشده انتشار استفاده کنید تا نسخه‌های جدید روی قبلی نصب شوند.</li>
   </ul>
+
+  <h3>ساخت خودکار (CI)</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+  PUSH["push به مخزن"] --&gt; T["تست‌ها&lt;br/&gt;typecheck + واحد + یکپارچه&lt;br/&gt;با PostgreSQL"]
+  PUSH --&gt; WEB["وب‌اپ و پنل&lt;br/&gt;ubuntu"]
+  PUSH --&gt; AND["APK اندروید&lt;br/&gt;ubuntu + Android SDK"]
+  PUSH --&gt; WIN["نصب‌کننده ویندوز&lt;br/&gt;windows"]
+  WEB --&gt; A1["خروجی: kiosk-web-app&lt;br/&gt;و admin-panel"]
+  AND --&gt; A2["خروجی: android-apk"]
+  WIN --&gt; A3["خروجی: windows-installer"]
+</pre>
+    <figcaption>هر push در GitHub Actions؛ خروجی‌ها از صفحه همان اجرا (بخش Artifacts) دانلود می‌شوند</figcaption>
+  </figure>
 </section>
+
+<!-- ============================================================ device settings -->
+<section id="device-settings">
+  <h2>تنظیمات دستگاه</h2>
+  <p class="lede">تنظیمات کیوسک در سه لایه نگهداری می‌شود: پیکربندی محلی هر دستگاه، تنظیمات مرکز که برای همه کیوسک‌ها یکسان است، و ثبت و کلید هر دستگاه در پنل.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TB
+  subgraph Local["روی خود دستگاه (برای هر کیوسک جدا)"]
+    L1["آدرس سرور · شناسه و کلید دستگاه"]
+    L2["آداپترها: کارتخوان · چاپگر · اسکنر"]
+    L3["فواصل همگام‌سازی · حالت کیوسک"]
+  end
+  subgraph Panel["پنل مدیریت (برای همه کیوسک‌ها)"]
+    P1["تنظیمات: مهلت‌ها، سیاست‌های آفلاین، رسید"]
+    P2["محتوا، کاتالوگ، تعرفه و تخفیف"]
+  end
+  subgraph Reg["پنل ← کیوسک‌ها (برای هر کیوسک جدا)"]
+    R1["ثبت · کلید جدید · فعال یا غیرفعال · فرمان‌ها"]
+  end
+  Panel -- "sync/pull&lt;br/&gt;حداکثر یک heartbeatSec" --&gt; Local
+  Reg -- "احراز هویت و فرمان‌ها" --&gt; Local
+</pre>
+    <figcaption>لایه‌های تنظیمات و مسیر رسیدن هر لایه به دستگاه</figcaption>
+  </figure>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>لایه</th><th>کجا تغییر می‌کند</th><th>چه کسی</th><th>چه زمانی اعمال می‌شود</th></tr></thead>
+    <tbody>
+      <tr><td>پیکربندی محلی دستگاه</td><td>ویندوز: <code>kiosk.config.json</code>. وب و اندروید: صفحه راه‌اندازی</td><td>تکنسین</td><td>پس از اجرای دوباره برنامه</td></tr>
+      <tr><td>تنظیمات مرکز</td><td>پنل ← «تنظیمات»</td><td>فقط مدیر اصلی (ثبت در سوابق تغییرات)</td><td>همه کیوسک‌ها، در اولین heartbeat یا pull (به‌طور پیش‌فرض حداکثر ۳۰ ثانیه)</td></tr>
+      <tr><td>ثبت و کلید دستگاه</td><td>پنل ← «کیوسک‌ها»</td><td>فقط مدیر اصلی</td><td>فوری؛ کلید باطل‌شده درخواست بعدی را رد می‌کند</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>چرخه عمر یک دستگاه</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+  N["ثبت کیوسک در پنل&lt;br/&gt;شناسه، مثلاً KIOSK-02"] --&gt; K["کلید دستگاه&lt;br/&gt;فقط یک بار نمایش"]
+  K --&gt; C["پیکربندی روی دستگاه&lt;br/&gt;آدرس سرور · شناسه · کلید"]
+  C --&gt; H["اولین heartbeat"]
+  H --&gt; ON["آنلاین در پنل&lt;br/&gt;وضعیت تجهیزات و صف"]
+  ON -- "کلید جدید" --&gt; R["کلید قبلی باطل&lt;br/&gt;کیوسک قطع تا ورود کلید جدید"] --&gt; C
+  ON -- "غیرفعال‌سازی" --&gt; D["همه درخواست‌ها رد می‌شوند"]
+  D -- "فعال‌سازی" --&gt; ON
+</pre>
+    <figcaption>از ثبت در پنل تا آنلاین شدن؛ کلید جدید و غیرفعال‌سازی</figcaption>
+  </figure>
+  <ol class="steps">
+    <li>در پنل ← «کیوسک‌ها» گزینه «ثبت کیوسک جدید» را بزنید و شناسه (مثلاً <code>KIOSK-02</code>) و نام بدهید.</li>
+    <li><strong>کلید دستگاه فقط یک بار نمایش داده می‌شود.</strong> سرور فقط هش sha256 آن را نگه می‌دارد و مقایسه را با زمان ثابت انجام می‌دهد. اگر کلید گم شد، «کلید جدید» بسازید.</li>
+    <li>کلید را روی دستگاه وارد کنید: ویندوز در <code>kiosk.config.json</code>، وب‌اپ و اندروید در صفحه راه‌اندازی.</li>
+    <li>با اولین heartbeat دستگاه در پنل «آنلاین» می‌شود. دستگاهی که <span class="num">۲</span> دقیقه heartbeat نفرستد «قطع ارتباط» نمایش داده می‌شود.</li>
+  </ol>
+
+  <h3>ویندوز: kiosk.config.json</h3>
+  <p>فایل در پوشه داده برنامه است: <code>%APPDATA%\AndishkadehKiosk\kiosk.config.json</code> (یا مسیر متغیر <code>KIOSK_DATA_DIR</code>). نمونه کامل: <code>apps/kiosk/kiosk.config.example.json</code>.</p>
+  <div class="code"><span class="lang">json</span><button type="button" data-copy>کپی</button><pre><code>{
+  "serverUrl": "https://kiosk-api.example.ir",
+  "deviceId": "KIOSK-01",
+  "deviceKey": "کلید دستگاه از پنل مدیریت",
+  "adapters": { "payment": "mock", "printer": "windows", "printerName": "POS-80C", "scanner": "keyboard" },
+  "intervals": { "heartbeatSec": 30, "pullSec": 60, "pushSec": 10, "recoverySec": 60 },
+  "requestTimeoutMs": 8000,
+  "kioskMode": true,
+  "devControls": false
+}</code></pre></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>کلید</th><th>مقادیر مجاز</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td><code>serverUrl</code></td><td>آدرس کامل <code>http://</code> یا <code>https://</code></td><td><code>http://localhost:3000</code></td><td>آدرس سرور مرکزی، بدون <code>/api/v1</code>. در بهره‌برداری HTTPS باشد</td></tr>
+      <tr><td><code>deviceId</code></td><td>متن</td><td><code>KIOSK-01</code></td><td>دقیقاً همان شناسه ثبت‌شده در پنل</td></tr>
+      <tr><td><code>deviceKey</code></td><td>حداقل ۸ نویسه</td><td><strong>اجباری</strong></td><td>کلیدی که پنل یک بار نشان داده. بدون آن برنامه اجرا نمی‌شود. فقط در فرایند اصلی خوانده می‌شود و به رابط نمی‌رسد</td></tr>
+      <tr><td><code>adapters.payment</code></td><td><code>mock</code> · <code>none</code></td><td><code>mock</code></td><td><code>mock</code>: کارتخوان شبیه‌سازی‌شده با نوار «حالت آزمایشی». <code>none</code>: بدون SDK؛ فروش متوقف و وضعیت کارتخوان «نامشخص»</td></tr>
+      <tr><td><code>adapters.printer</code></td><td><code>windows</code> · <code>mock</code></td><td><code>mock</code></td><td><code>windows</code>: چاپ بی‌صدا با درایور. <code>mock</code>: رسید به‌صورت فایل در پوشه <code>receipts</code></td></tr>
+      <tr><td><code>adapters.printerName</code></td><td>نام چاپگر</td><td>—</td><td>نام دقیق چاپگر در Devices and Printers. برای <code>windows</code> لازم است؛ بدون آن وضعیت چاپگر «هشدار» است</td></tr>
+      <tr><td><code>adapters.scanner</code></td><td><code>keyboard</code> · <code>mock</code></td><td><code>keyboard</code></td><td><code>keyboard</code>: اسکنر USB HID در حالت صفحه‌کلید با پسوند Enter. <code>mock</code>: فقط برای آزمون</td></tr>
+      <tr><td><code>intervals.heartbeatSec</code></td><td>عدد صحیح، حداقل ۵</td><td><code>30</code></td><td>ارسال وضعیت به سرور و دریافت فرمان‌های پنل</td></tr>
+      <tr><td><code>intervals.pullSec</code></td><td>حداقل ۵</td><td><code>60</code></td><td>دریافت کاتالوگ، تنظیمات و اشتراک‌ها</td></tr>
+      <tr><td><code>intervals.pushSec</code></td><td>حداقل ۲</td><td><code>10</code></td><td>ارسال رویدادهای صف (فروش آفلاین، نتیجه پرداخت، چاپ، بررسی QR)</td></tr>
+      <tr><td><code>intervals.recoverySec</code></td><td>حداقل ۱۰</td><td><code>60</code></td><td>استعلام پرداخت‌های ناتمام یا نامشخص</td></tr>
+      <tr><td><code>requestTimeoutMs</code></td><td>حداقل ۱۰۰۰</td><td><code>8000</code></td><td>مهلت هر درخواست به سرور؛ پس از آن کیوسک آفلاین فرض می‌شود</td></tr>
+      <tr><td><code>kioskMode</code></td><td><code>true</code> · <code>false</code></td><td><code>true</code></td><td>تمام‌صفحه بدون قاب، منو و ابزار توسعه، اجرای خودکار با ورود به ویندوز</td></tr>
+      <tr><td><code>devControls</code></td><td><code>true</code> · <code>false</code></td><td><code>false</code></td><td>کنترل‌های شبیه‌سازی برای آزمون. <strong>در بهره‌برداری باید <code>false</code> باشد</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>ترتیب اولویت</strong> (پایین‌تر برنده است): مقادیر پیش‌فرض ← <code>kiosk.config.json</code> ← متغیرهای محیطی.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>متغیر محیطی</th><th>معادل</th></tr></thead>
+    <tbody>
+      <tr><td><code>KIOSK_DATA_DIR</code></td><td>مسیر پوشه داده (پیکربندی، پایگاه محلی، تصاویر، رسیدها)</td></tr>
+      <tr><td><code>KIOSK_SERVER_URL</code>، <code>KIOSK_DEVICE_ID</code>، <code>KIOSK_DEVICE_KEY</code></td><td><code>serverUrl</code>، <code>deviceId</code>، <code>deviceKey</code></td></tr>
+      <tr><td><code>KIOSK_PAYMENT_ADAPTER</code>، <code>KIOSK_PRINTER_ADAPTER</code>، <code>KIOSK_PRINTER_NAME</code>، <code>KIOSK_SCANNER_ADAPTER</code></td><td>کلیدهای <code>adapters</code></td></tr>
+      <tr><td><code>KIOSK_KIOSK_MODE</code>، <code>KIOSK_DEV_CONTROLS</code></td><td><code>kioskMode</code>، <code>devControls</code> (مقدار <code>1</code> یا <code>0</code>)</td></tr>
+      <tr><td><code>KIOSK_SQLITE_BINDING</code></td><td>فقط عیب‌یابی: مسیر نسخه دیگری از ماژول بومی SQLite</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><button type="button" data-copy>کپی</button><pre><code>%APPDATA%\AndishkadehKiosk\
+  kiosk.config.json   ← پیکربندی
+  kiosk.sqlite        ← سفارش‌ها، ژورنال پرداخت، صف رویداد، کش اشتراک‌ها
+  media\              ← تصاویر بررسی‌شده با sha256
+  receipts\           ← فقط با چاپگر شبیه‌سازی‌شده</code></pre></div>
+  <p>پس از تغییر فایل، برنامه را دوباره اجرا کنید.</p>
+
+  <h3>وب‌اپ و اندروید: صفحه راه‌اندازی</h3>
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+  O["باز شدن برنامه"] --&gt; Q{"پیکربندی ذخیره شده؟"}
+  Q -- "خیر" --&gt; S["صفحه راه‌اندازی کیوسک"]
+  S --&gt; V{"بررسی کلید&lt;br/&gt;با سرور"}
+  V -- "پذیرفته شد" --&gt; SAVE["ذخیره روی دستگاه"]
+  V -- "کلید نادرست" --&gt; E1["پیام: شناسه یا کلید&lt;br/&gt;دستگاه پذیرفته نشد"] --&gt; S
+  V -- "سرور در دسترس نیست" --&gt; E2["گزینه اختیاری&lt;br/&gt;ذخیره بدون بررسی"] --&gt; SAVE
+  Q -- "بله" --&gt; RUN
+  SAVE --&gt; RUN["اجرای هسته و نمایش کیوسک"]
+  RUN -- "هفت لمس در گوشه بالا-چپ" --&gt; G{"کلید دستگاه&lt;br/&gt;درست است؟"}
+  G -- "خیر" --&gt; RUN
+  G -- "بله" --&gt; SET["تنظیمات دستگاه"]
+  SET -- "ذخیره" --&gt; RL["ذخیره داده‌ها و اجرای دوباره"] --&gt; RUN
+  SET -- "پاک کردن داده‌ها" --&gt; CHK{"صف یا پرداخت نامشخص؟"}
+  CHK -- "دارد" --&gt; BLK["غیرفعال تا تعیین تکلیف"]
+  CHK -- "ندارد" --&gt; WIPE["پاک شدن همه داده محلی"] --&gt; S
+</pre>
+    <figcaption>اجرای اول، بررسی کلید با سرور، ورود دوباره به تنظیمات و شرط پاک کردن داده‌ها</figcaption>
+  </figure>
+  <div class="table-wrap"><table>
+    <thead><tr><th>فیلد</th><th>مقادیر</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
+    <tbody>
+      <tr><td>آدرس سرور</td><td><code>http(s)://…</code></td><td>وب‌اپ: آدرس همان سرور. اندروید: خالی</td><td>مثلاً <code>http://192.168.1.10:3000</code>. اسلش انتهایی حذف می‌شود</td></tr>
+      <tr><td>شناسه کیوسک</td><td>متن، حداکثر ۶۴ نویسه</td><td><code>KIOSK-01</code></td><td>همان شناسه پنل</td></tr>
+      <tr><td>کلید دستگاه</td><td>حداقل ۸ نویسه</td><td>—</td><td>در قالب رمز نمایش داده می‌شود</td></tr>
+      <tr><td>کارتخوان</td><td>شبیه‌ساز (آزمایشی) · متصل نشده</td><td>شبیه‌ساز</td><td>معادل <code>mock</code> و <code>none</code> نسخه ویندوز</td></tr>
+      <tr><td>چاپگر</td><td>چاپگر دستگاه · شبیه‌ساز</td><td>چاپگر دستگاه</td><td>وب‌اپ: چاپ مرورگر. اندروید: سرویس چاپ اندروید. شبیه‌ساز: بدون چاپ</td></tr>
+      <tr><td>اسکنر QR</td><td>اسکنر USB · شبیه‌ساز</td><td>اسکنر USB</td><td>اسکنر HID در حالت صفحه‌کلید</td></tr>
+      <tr><td>کنترل‌های آزمایشی</td><td>روشن · خاموش</td><td>خاموش</td><td>فقط برای آزمون</td></tr>
+    </tbody>
+  </table></div>
+  <p>مقادیر ثابت این دو نسخه: فواصل همگام‌سازی همان پیش‌فرض‌های جدول ویندوز، مهلت درخواست ۸ ثانیه و حالت کیوسک روشن.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>داده</th><th>محل نگهداری روی دستگاه</th></tr></thead>
+    <tbody>
+      <tr><td>پیکربندی (شامل کلید دستگاه)</td><td><code>localStorage</code> ← کلید <code>andishkadeh.kiosk.setup.v1</code></td></tr>
+      <tr><td>پایگاه محلی و تصاویر</td><td>IndexedDB ← پایگاه <code>andishkadeh-kiosk</code> (بخش‌های <code>sqlite</code> و <code>media</code>)</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li><strong>ورود دوباره به تنظیمات:</strong> ۷ لمس پشت سر هم در کمتر از ۴ ثانیه، در مربع ۹۰ پیکسلی گوشه بالا-چپ صفحه، و سپس وارد کردن کلید دستگاه. بدون کلید دستگاه، تنظیمات باز نمی‌شود.</li>
+    <li><strong>ذخیره تنظیمات:</strong> داده‌های در انتظار ذخیره می‌شوند و برنامه دوباره اجرا می‌شود.</li>
+    <li><strong>پاک کردن داده‌های دستگاه:</strong> پیکربندی، سفارش‌ها، کاتالوگ و تصاویر محلی پاک می‌شوند. تا وقتی رویداد ارسال‌نشده یا پرداخت نامشخص وجود دارد غیرفعال است.</li>
+    <li><strong>پاک کردن داده مرورگر</strong> یا <strong>حذف برنامه اندروید</strong> همین اثر را دارد. پیش از آن در پنل مطمئن شوید صف رویدادهای دستگاه صفر است.</li>
+    <li>در اندروید پشتیبان‌گیری ابری برنامه خاموش است، پس کلید دستگاه به حساب Google منتقل نمی‌شود.</li>
+    <li>برنامه اندروید از مبدأ <code>https://localhost</code> به سرور وصل می‌شود؛ آن را به <code>CORS_ORIGINS</code> سرور اضافه کنید.</li>
+  </ul>
+
+  <h3>آداپترهای سخت‌افزار در هر نسخه</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>تجهیز</th><th>مقدار</th><th>ویندوز</th><th>وب‌اپ</th><th>اندروید</th><th>رفتار</th></tr></thead>
+    <tbody>
+      <tr><td>کارتخوان</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>شبیه‌ساز با سناریوهای تأیید، رد، لغو و نامشخص. نوار «حالت آزمایشی» همیشه دیده می‌شود</td></tr>
+      <tr><td>کارتخوان</td><td><code>none</code></td><td>✓</td><td>✓</td><td>✓</td><td>SDK وصل نیست؛ فروش آغاز نمی‌شود</td></tr>
+      <tr><td>چاپگر</td><td><code>windows</code></td><td>✓</td><td></td><td></td><td>چاپ بی‌صدا با درایور ویندوز، رسید ۸۰ میلی‌متر</td></tr>
+      <tr><td>چاپگر</td><td><code>browser</code></td><td></td><td>✓</td><td>✓</td><td>وب: قاب پنهان و چاپ مرورگر. اندروید: سرویس چاپ اندروید</td></tr>
+      <tr><td>چاپگر</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>شبیه‌ساز. در ویندوز رسید به‌صورت فایل txt و html ذخیره می‌شود</td></tr>
+      <tr><td>اسکنر</td><td><code>keyboard</code></td><td>✓</td><td>✓</td><td>✓</td><td>ورودی سریع‌تر از تایپ انسان (فاصله کلیدها زیر ۳۰۰ میلی‌ثانیه) با Enter</td></tr>
+      <tr><td>اسکنر</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>اسکن فقط از کنترل‌های آزمون</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">
+    <p>وضعیت هر تجهیز «سالم»، «هشدار»، «خطا» یا «نامشخص» است. چاپگری که وضعیت کاغذ را گزارش نمی‌دهد (درایور ویندوز، مرورگر، اندروید) همیشه «نامشخص» نمایش داده می‌شود و هرگز «سالم» نوشته نمی‌شود. SDK کارتخوان بانکی هنوز تحویل نشده است و آداپتر واقعی پشت رابط <code>PaymentAdapter</code> اضافه می‌شود.</p>
+  </div>
+
+  <h3>تنظیمات مرکز (پنل ← «تنظیمات»)</h3>
+  <p>این مقادیر برای همه کیوسک‌ها یکسان است و با همگام‌سازی به آن‌ها می‌رسد. فقط مدیر اصلی تغییر می‌دهد و هر تغییر با مقدار قبل و بعد در سوابق تغییرات ثبت می‌شود.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>تنظیم</th><th>پیش‌فرض</th><th>بازه</th><th>اثر روی کیوسک</th></tr></thead>
+    <tbody>
+      <tr><td><code>centerName</code>، <code>centerSubtitle</code>، <code>logoMediaId</code></td><td>اندیشکده کشتی ایران</td><td>—</td><td>سربرگ کیوسک و رسید</td></tr>
+      <tr><td><code>receiptHeader</code>، <code>receiptFooter</code></td><td>رسید فروش خدمات · متن عدم تعیین نوبت</td><td>حداکثر ۵۰۰ نویسه</td><td>متن بالا و پایین رسید</td></tr>
+      <tr><td><code>supportText</code></td><td>«در صورت نیاز به راهنمایی به پذیرش مراجعه کنید.»</td><td>حداکثر ۳۰۰</td><td>متن راهنما در کیوسک</td></tr>
+      <tr><td><code>sessionTimeoutSec</code></td><td class="num">۹۰</td><td>۳۰ تا ۹۰۰ ثانیه</td><td>بی‌فعالیتی تا پاک شدن نشست</td></tr>
+      <tr><td><code>timeoutWarningSec</code></td><td class="num">۱۵</td><td>۵ تا ۶۰</td><td>شمارش معکوس پیش از پاک شدن نشست</td></tr>
+      <tr><td><code>endScreenSec</code></td><td class="num">۸</td><td>۳ تا ۶۰</td><td>ماندن صفحه پایان پیش از بازگشت به شروع</td></tr>
+      <tr><td><code>paymentTimeoutSec</code></td><td class="num">۱۲۰</td><td>۳۰ تا ۳۰۰</td><td>انتظار برای کارتخوان؛ پس از آن نتیجه «نامشخص» و استعلام</td></tr>
+      <tr><td><code>maxItemQuantity</code></td><td class="num">۵</td><td>۱ تا ۲۰</td><td>حداکثر تعداد هر خدمت در سبد</td></tr>
+      <tr><td><code>discountPolicy</code></td><td><code>BEST</code></td><td><code>BEST</code> · <code>PRIORITY</code></td><td>انتخاب بهترین تخفیف، یا تخفیف با بالاترین اولویت</td></tr>
+      <tr><td><code>renewalPolicy</code></td><td><code>EXTEND_FROM_END</code></td><td><code>EXTEND_FROM_END</code> · <code>START_NOW</code></td><td>شروع تمدید از پایان اشتراک فعلی یا از لحظه پرداخت</td></tr>
+      <tr><td><code>offlineQrValidation</code></td><td>روشن</td><td>—</td><td>بررسی QR از کش هنگام قطع شبکه</td></tr>
+      <tr><td><code>offlineSalesEnabled</code></td><td>روشن</td><td>—</td><td>فروش خدمات آفلاین با کد <code>OFF-…</code></td></tr>
+      <tr><td><code>offlineSubscriptionSales</code></td><td>خاموش</td><td>—</td><td>فروش اشتراک آفلاین (سیاست سند هنوز باز است)</td></tr>
+      <tr><td><code>offlineCatalogMaxAgeHours</code></td><td class="num">۷۲</td><td>۱ تا ۷۲۰ ساعت</td><td>پس از این مدت بدون تأیید سرور، فروش آفلاین متوقف می‌شود</td></tr>
+      <tr><td><code>timezone</code></td><td><code>Asia/Tehran</code></td><td>—</td><td>منطقه زمانی تاریخ‌های کیوسک و رسید</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>کیوسک در پنل مدیریت</h3>
+  <p>صفحه «کیوسک‌ها و تجهیزات» برای هر دستگاه نشان می‌دهد: آخرین ارتباط و وضعیت آنلاین (پنجره ۲ دقیقه)، نسخه برنامه و کاتالوگ، وضعیت کارتخوان، چاپگر و اسکنر، رویدادهای در صف و ردشده و قدیمی‌ترین رویداد ارسال‌نشده، پرداخت‌های نامشخص و آخرین همگام‌سازی.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>اقدام</th><th>اثر</th></tr></thead>
+    <tbody>
+      <tr><td>ثبت کیوسک جدید</td><td>ساخت شناسه و کلید (کلید یک بار نمایش داده می‌شود)</td></tr>
+      <tr><td>کلید جدید</td><td>کلید قبلی فوراً باطل می‌شود؛ کیوسک تا وارد کردن کلید جدید قطع است</td></tr>
+      <tr><td>غیرفعال‌سازی / فعال‌سازی</td><td>دستگاه غیرفعال هیچ درخواستی را نمی‌تواند انجام دهد</td></tr>
+      <tr><td>همگام‌سازی کیوسک</td><td>فرمان <code>SYNC_NOW</code>: رویدادهای ردشده دستگاه به صف برمی‌گردند، صف ارسال و کاتالوگ دریافت می‌شود (تکرار امن است؛ سرور رویداد تکراری را دوباره اعمال نمی‌کند)</td></tr>
+      <tr><td>استعلام پرداخت</td><td>فرمان <code>PAYMENT_INQUIRY</code> برای یک تلاش نامشخص</td></tr>
+      <tr><td>چاپ مجدد رسید</td><td>فرمان <code>PRINT_RECEIPT</code>؛ رسید بدون QR و با برچسب «چاپ مجدد»</td></tr>
+    </tbody>
+  </table></div>
+  <p>اقدام‌ها فقط برای مدیر اصلی است؛ اپراتور مشاهده می‌کند و فقط استعلام و چاپ مجدد دارد. فرمان‌ها با heartbeat بعدی به کیوسک می‌رسند؛ هر فرمان شناسه یکتا دارد و اجرای دوباره‌اش بی‌اثر است.</p>
+
+  <h3>فهرست بررسی پیش از بهره‌برداری</h3>
+  <ol class="steps">
+    <li><code>serverUrl</code> با HTTPS و <code>PUBLIC_BASE_URL</code> سرور از روی کیوسک در دسترس است.</li>
+    <li>کیوسک در پنل ثبت شده و کلید روی دستگاه وارد شده؛ دستگاه «آنلاین» است.</li>
+    <li><code>devControls</code> / «کنترل‌های آزمایشی» خاموش است.</li>
+    <li>نوار «حالت آزمایشی» دیده نمی‌شود، یعنی هیچ آداپتری شبیه‌سازی‌شده نیست. تا رسیدن SDK کارتخوان این شرط برقرار نمی‌شود.</li>
+    <li>چاپ آزمایشی رسید و اسکن یک QR معتبر روی همان دستگاه انجام شده است.</li>
+    <li>تنظیمات مرکز (مهلت‌ها و سیاست‌های آفلاین) تأیید شده‌اند.</li>
+    <li>ویندوز: <code>kioskMode</code> روشن و حساب کیوسک با Assigned Access یا Shell Launcher قفل شده. اندروید: Lock Task یا App pinning فعال است. وب‌اپ: Chrome با <code>--kiosk</code>.</li>
+  </ol>
+
+  <h3>عیب‌یابی سریع</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>نشانه</th><th>علت محتمل</th><th>اقدام</th></tr></thead>
+    <tbody>
+      <tr><td>نوار «ارتباط با مرکز برقرار نیست»</td><td>شبکه یا <code>serverUrl</code></td><td>شبکه و آدرس را بررسی کنید. فروش خدمات با کاتالوگ ذخیره‌شده تا <code>offlineCatalogMaxAgeHours</code> ادامه دارد</td></tr>
+      <tr><td>دستگاه در پنل «قطع ارتباط» ولی شبکه سالم</td><td>کلید نادرست، کلید جدید ساخته شده یا دستگاه غیرفعال (خطای 401)</td><td>کلید را دوباره وارد کنید یا دستگاه را فعال کنید</td></tr>
+      <tr><td>نوار «حالت آزمایشی»</td><td>دست‌کم یک آداپتر <code>mock</code> است</td><td>آداپترها را بررسی کنید</td></tr>
+      <tr><td>وب‌اپ: «کیوسک در زبانه یا پنجره دیگری باز است»</td><td>دو زبانه هم‌زمان</td><td>زبانه دیگر را ببندید و «تلاش دوباره» را بزنید</td></tr>
+      <tr><td>وب‌اپ بدون سرور بالا نمی‌آید</td><td>Service Worker فقط روی HTTPS فعال است</td><td>سرور را با HTTPS ارائه کنید</td></tr>
+      <tr><td>اندروید: «سرور در دسترس نیست» با آدرس درست</td><td>CORS سرور</td><td><code>https://localhost</code> را به <code>CORS_ORIGINS</code> اضافه کنید</td></tr>
+      <tr><td>پرداخت «نامشخص»</td><td>پاسخ کارتخوان نرسیده</td><td>کیوسک خودکار استعلام می‌کند؛ از پنل هم «استعلام» یا «تطبیق دستی» ممکن است</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
 
 <!-- ============================================================ backup -->
 <section id="backup">
