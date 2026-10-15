@@ -162,3 +162,18 @@ describe('qr tokens', () => {
     expect(hashQrToken(` ${t}\n`)).toBe(hashQrToken(t));
   });
 });
+
+describe('universal token helpers', async () => {
+  const { generateQrToken, hashQrToken, sha256Hex } = await import('./node');
+  const { newQrToken, qrTokenHash, sha256HexOf, newId } = await import('./token');
+  it('matches the Node implementations byte for byte', () => {
+    const t = generateQrToken();
+    expect(qrTokenHash(t)).toBe(hashQrToken(t));
+    expect(qrTokenHash(`  ${t}\n`)).toBe(hashQrToken(t));
+    expect(sha256HexOf('اندیشکده')).toBe(sha256Hex('اندیشکده'));
+  });
+  it('creates tokens of the same shape and v4 ids', () => {
+    expect(newQrToken()).toMatch(/^AKQ1\.[A-Za-z0-9_-]{32}$/);
+    expect(newId()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+});

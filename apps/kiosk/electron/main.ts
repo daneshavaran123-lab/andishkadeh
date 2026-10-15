@@ -7,9 +7,9 @@
 import { app, BrowserWindow, ipcMain, net, powerSaveBlocker, protocol, session } from 'electron';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { loadConfig } from '../src/core/config';
-import { KioskCore } from '../src/core/kiosk-core';
+import type { KioskCore } from '../src/core/kiosk-core';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../src/core/types';
+import { createNodeCore, loadConfig } from '../src/platform/node';
 import { WindowsDriverPrinter } from './printer-windows';
 
 protocol.registerSchemesAsPrivileged([
@@ -76,7 +76,7 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
   powerSaveBlocker.start('prevent-display-sleep');
 
-  core = new KioskCore(cfg, {
+  core = createNodeCore(cfg, {
     mediaBase: 'kiosk-media://media',
     printer: cfg.adapters.printer === 'windows' ? new WindowsDriverPrinter(cfg.adapters.printerName) : undefined,
   });

@@ -6,9 +6,8 @@
 import { createReadStream } from 'node:fs';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve } from 'node:path';
-import { loadConfig } from '../core/config';
-import { KioskCore } from '../core/kiosk-core';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../core/types';
+import { createNodeCore, loadConfig } from '../platform/node';
 
 const PORT = Number(process.env.KIOSK_BRIDGE_PORT ?? 5175);
 const dataDir = resolve(process.env.KIOSK_DATA_DIR ?? resolve(__dirname, '../../.kiosk-data'));
@@ -26,7 +25,7 @@ const cfg = loadConfig(dataDir, {
   },
 });
 
-const core = new KioskCore(cfg, { mediaBase: `http://localhost:${PORT}/media` });
+const core = createNodeCore(cfg, { mediaBase: `http://localhost:${PORT}/media` });
 core.start();
 
 function cors(req: IncomingMessage, res: ServerResponse) {

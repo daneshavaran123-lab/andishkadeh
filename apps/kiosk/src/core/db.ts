@@ -2,13 +2,11 @@
  * Local SQLite store of the kiosk (PRD §15): last good catalogue snapshot, local orders,
  * the payment journal (written BEFORE the card reader is used, so a power cut can be recovered),
  * the sync outbox and the subscription cache for offline QR validation.
- * synchronous=FULL + WAL: a committed journal row survives a power loss.
+ * The schema is shared by every platform; the driver (see ./sql) decides how it reaches disk.
  */
-import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type { SqlDatabase } from './sql';
 
-export type Db = Database.Database;
+export type Db = SqlDatabase;
 
 const MIGRATIONS: string[] = [
   `CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TEXT NOT NULL);
@@ -77,18 +75,13 @@ const MIGRATIONS: string[] = [
    CREATE TABLE IF NOT EXISTS counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);`,
 ];
 
-export function openDb(file: string): Db {
-  if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
-  // KIOSK_SQLITE_BINDING lets technicians point to a specific native build (troubleshooting only).
-  const nativeBinding = process.env.KIOSK_SQLITE_BINDING;
-  const db = new Database(file, nativeBinding ? { nativeBinding } : {});
-  db.pragma('journal_mode = WAL');
-  db.pragma('synchronous = FULL');
-  db.pragma('foreign_keys = ON');
-  const version = db.pragma('user_version', { simple: true }) as number;
-  for (let v = version; v < MIGRATIONS.length; v++) {
-    db.exec(MIGRATIONS[v]);
-    db.pragma(`user_version = ${v + 1}`);
+/** Applies pending schema migrations (tracked in PRAGMA user_version). */
+export function migrate(db: Db): Db {
+  for (let v = db.userVersion(); v < MIGRATIONS.length; v++) {
+    db.transaction(() => {
+      db.exec(MIGRATIONS[v]);
+      db.setUserVersion(v + 1);
+    })();
   }
   return db;
 }

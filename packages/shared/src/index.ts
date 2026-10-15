@@ -5,6 +5,7 @@ export * from './dates';
 export * from './pricing';
 export * from './subscription';
 export * from './qr';
+export * from './token';
 export * from './labels';
 export * from './contracts/common';
 export * from './contracts/catalog';

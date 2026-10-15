@@ -3,18 +3,19 @@
  * Offline: decided from the cached subscription list with exactly the same rules
  * (shared evaluateAccess), only if the centre allows it (PRD §15), and logged via the outbox.
  */
-import { randomUUID } from 'node:crypto';
 import {
   AccessResult,
   SubscriptionStatus,
   SyncEventType,
   evaluateAccess,
+  cleanScannedPayload,
   isQrTokenFormat,
+  newId,
+  qrTokenHash,
   type CoverageEntry,
   type SubscriptionCacheEntry,
   type ValidateAccessResponse,
 } from '@andishkadeh/shared';
-import { cleanScannedPayload, hashQrToken } from '@andishkadeh/shared/node';
 import { ApiClient, ApiResponseError, NetworkError } from './api-client';
 import type { CatalogStore } from './catalog';
 import type { Db } from './db';
@@ -54,7 +55,7 @@ export class AccessService {
     const del = this.db.prepare('DELETE FROM subscription_cache WHERE subscription_id = ? AND token_hash <> ?');
     const up = this.db.prepare(
       `INSERT INTO subscription_cache (token_hash, subscription_id, customer_key, starts_at, expires_at, status, plan_title, member_tail, rev)
-       VALUES (@tokenHash, @subscriptionId, @customerKey, @startsAt, @expiresAt, @status, @planTitle, @memberTail, @rev)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(token_hash) DO UPDATE SET subscription_id = excluded.subscription_id, customer_key = excluded.customer_key,
          starts_at = excluded.starts_at, expires_at = excluded.expires_at, status = excluded.status,
          plan_title = excluded.plan_title, member_tail = excluded.member_tail, rev = excluded.rev`,
@@ -63,7 +64,7 @@ export class AccessService {
       for (const e of entries) {
         // A re-issued QR replaces the old token hash of the same subscription.
         del.run(e.subscriptionId, e.tokenHash);
-        up.run(e);
+        up.run(e.tokenHash, e.subscriptionId, e.customerKey, e.startsAt, e.expiresAt, e.status, e.planTitle, e.memberTail, e.rev);
       }
     });
     tx();
@@ -71,7 +72,7 @@ export class AccessService {
 
   async validate(rawPayload: string): Promise<ValidateResult> {
     const token = cleanScannedPayload(rawPayload);
-    const eventId = randomUUID();
+    const eventId = newId();
     try {
       const result = await this.api.post<ValidateAccessResponse>('/access/validate', { token: token.slice(0, 256) || '-', eventId });
       return { ok: true, result };
@@ -92,7 +93,7 @@ export class AccessService {
     let result: ValidateAccessResponse = invalid(true);
     let tokenHash: string | null = null;
     if (isQrTokenFormat(token)) {
-      tokenHash = hashQrToken(token);
+      tokenHash = qrTokenHash(token);
       const row = this.db.prepare('SELECT * FROM subscription_cache WHERE token_hash = ?').get(tokenHash) as CacheRow | undefined;
       if (row) {
         const all = this.db.prepare('SELECT * FROM subscription_cache WHERE customer_key = ?').all(row.customer_key) as CacheRow[];

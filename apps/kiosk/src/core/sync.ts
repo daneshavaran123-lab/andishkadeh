@@ -23,7 +23,7 @@ import type { Outbox } from './outbox';
 import type { SalesService } from './sales';
 
 export class SyncWorker {
-  private timers: NodeJS.Timeout[] = [];
+  private timers: ReturnType<typeof setInterval>[] = [];
   private pushing = false;
   private pulling = false;
 

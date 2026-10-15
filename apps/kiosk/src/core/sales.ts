@@ -5,7 +5,6 @@
  *   → terminal result → reported to the server, or queued in the outbox if unreachable.
  * Rules: UNKNOWN is never shown as success; a PAID result is never dropped; no retry while UNKNOWN.
  */
-import { randomUUID } from 'node:crypto';
 import {
   ItemType,
   OrderKind,
@@ -16,8 +15,11 @@ import {
   TerminalOutcome,
   computePeriod,
   maskMobile,
+  newId,
+  newQrToken,
   normalizeMobile,
   priceItems,
+  qrTokenHash,
   type Bootstrap,
   type OfflineOrderLine,
   type OrderDto,
@@ -26,7 +28,6 @@ import {
   type PricingItem,
   type ReceiptData,
 } from '@andishkadeh/shared';
-import { generateQrToken, hashQrToken } from '@andishkadeh/shared/node';
 import { ApiClient, ApiResponseError, NetworkError } from './api-client';
 import type { CatalogStore } from './catalog';
 import type { KioskConfig } from './config';
@@ -180,9 +181,9 @@ export class SalesService {
     const bootstrap = this.catalog.current;
     if (!bootstrap) return { ok: false, code: 'NO_CATALOG', message: 'اطلاعات خدمات هنوز دریافت نشده است' };
 
-    const localOrderId = randomUUID();
-    const qrToken = input.kind === OrderKind.SUBSCRIPTION ? generateQrToken() : null;
-    const qrHash = qrToken ? hashQrToken(qrToken) : null;
+    const localOrderId = newId();
+    const qrToken = input.kind === OrderKind.SUBSCRIPTION ? newQrToken() : null;
+    const qrHash = qrToken ? qrTokenHash(qrToken) : null;
 
     try {
       const dto = await this.api.post<OrderDto>('/orders', {
@@ -401,7 +402,7 @@ export class SalesService {
     }
 
     const p = this.payloadOf(row);
-    const attemptId = randomUUID();
+    const attemptId = newId();
     // 1) Journal first: if power is lost while the card is on the reader, we know an attempt existed.
     this.db
       .prepare("INSERT INTO payment_journal (attempt_id, local_order_id, amount, state, started_at) VALUES (?, ?, ?, 'IN_FLIGHT', ?)")
@@ -410,6 +411,8 @@ export class SalesService {
     this.update(localId, { status: OrderStatus.PAYMENT_PENDING });
 
     try {
+      // Web/Android driver keeps the database in memory: the journal row must be stored before the card reader starts.
+      await this.db.flush();
       // 2) Make sure the server can attach the result to an order.
       if (row.offline === 1 && row.offline_enqueued === 0) {
         this.outbox.enqueue(SyncEventType.ORDER_OFFLINE, {
@@ -472,6 +475,7 @@ export class SalesService {
         'UPDATE payment_journal SET state = ?, terminal_ref = COALESCE(?, terminal_ref), rrn = COALESCE(?, rrn), trace_no = COALESCE(?, trace_no), message = ?, source = ?, resolved_at = ? WHERE attempt_id = ?',
       )
       .run(result.outcome, result.terminalRef, result.rrn, result.traceNo, result.message, source, final ? now : null, attemptId);
+    await this.db.flush(); // the terminal's answer must survive a power cut before anything else happens
     const journal = this.db.prepare('SELECT * FROM payment_journal WHERE attempt_id = ?').get(attemptId) as JournalRow;
     const row = this.row(localId)!;
     const p = this.payloadOf(row);
@@ -531,6 +535,7 @@ export class SalesService {
     } else {
       this.update(localId, { payload: { terminalRef: journal.terminal_ref, rrn: journal.rrn } });
     }
+    await this.db.flush();
     return this.outcomeView(localId, result.outcome, result.message);
   }
 

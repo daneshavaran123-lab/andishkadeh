@@ -1,19 +1,21 @@
 /**
  * Kiosk core: composes local DB, API client, hardware adapters, sales, access and sync.
- * Framework independent — hosted by the Electron main process (production) or by the
- * dev bridge (browser development / automated E2E tests).
+ * Platform independent (no Node or browser APIs here): hosted by the Electron main process,
+ * by the page itself in the web app / Android app, or by the dev bridge (development and E2E).
+ * Storage and printing are injected by the host — see src/platform/*.
  */
-import { EventEmitter } from 'node:events';
-import { join } from 'node:path';
 import { HardwareState, OrderKind } from '@andishkadeh/shared';
 import { AccessService } from './access';
 import { ApiClient } from './api-client';
 import { CatalogStore } from './catalog';
 import type { KioskConfig } from './config';
-import { type Db, openDb } from './db';
+import { type Db, migrate } from './db';
+import { Emitter } from './emitter';
 import { MockPaymentAdapter, UnconfiguredPaymentAdapter } from './hardware/payment';
 import { KeyboardWedgeScanner, MockPrinterAdapter, MockScanner } from './hardware/printer';
+import type { MediaStore } from './media';
 import type { PaymentAdapter, PrinterAdapter, ScannerAdapter } from './hardware/types';
+import type { SqlDatabase } from './sql';
 import { Outbox } from './outbox';
 import { SalesService } from './sales';
 import { SyncWorker } from './sync';
@@ -22,9 +24,14 @@ import type { AppState, DevControl, IpcChannel, IpcChannels, IpcEvent, IpcEvents
 export interface CoreOptions {
   /** Base URL the UI uses to load cached media (`kiosk-media://media` in Electron). */
   mediaBase: string;
-  /** Override printer (Electron injects the Windows-driver printer). */
-  printer?: PrinterAdapter;
-  dbFile?: string;
+  /** Open local database (migrated by the core). */
+  db: SqlDatabase;
+  /** Storage for verified catalogue images. */
+  media: MediaStore;
+  /** Receipt printer of the platform (simulated, Windows driver, browser print…). */
+  printer: PrinterAdapter;
+  /** Card reader; defaults to the simulator or "not configured" according to cfg.adapters.payment. */
+  payment?: PaymentAdapter;
 }
 
 export class KioskCore {
@@ -38,7 +45,7 @@ export class KioskCore {
   readonly sales: SalesService;
   readonly access: AccessService;
   readonly sync: SyncWorker;
-  private readonly emitter = new EventEmitter();
+  private readonly emitter = new Emitter<IpcEvents>();
   private online = false;
   private hardwareCache: KioskStatus['hardware'] | null = null;
 
@@ -46,17 +53,17 @@ export class KioskCore {
     readonly cfg: KioskConfig,
     private readonly opts: CoreOptions,
   ) {
-    this.db = openDb(opts.dbFile ?? join(cfg.dataDir, 'kiosk.sqlite'));
+    this.db = migrate(opts.db);
     this.api = new ApiClient(cfg, (online) => {
       if (online !== this.online) {
         this.online = online;
         this.emitStatus();
       }
     });
-    this.catalog = new CatalogStore(this.db, this.api, join(cfg.dataDir, 'media'));
+    this.catalog = new CatalogStore(this.db, this.api, opts.media);
     this.outbox = new Outbox(this.db);
-    this.payment = cfg.adapters.payment === 'mock' ? new MockPaymentAdapter() : new UnconfiguredPaymentAdapter();
-    this.printer = opts.printer ?? new MockPrinterAdapter(join(cfg.dataDir, 'receipts'));
+    this.payment = opts.payment ?? (cfg.adapters.payment === 'mock' ? new MockPaymentAdapter() : new UnconfiguredPaymentAdapter());
+    this.printer = opts.printer;
     this.scanner = cfg.adapters.scanner === 'mock' ? new MockScanner() : new KeyboardWedgeScanner();
     this.sales = new SalesService(this.db, this.api, this.catalog, this.outbox, this.payment, this.printer, cfg, () => this.emitStatus());
     this.access = new AccessService(this.db, this.api, this.catalog, this.outbox);
@@ -80,9 +87,13 @@ export class KioskCore {
     this.db.close();
   }
 
+  /** Waits until pending writes are stored (web/Android driver); call before the page is closed. */
+  flush(): Promise<void> {
+    return this.db.flush();
+  }
+
   on<E extends IpcEvent>(event: E, cb: (data: IpcEvents[E]) => void): () => void {
-    this.emitter.on(event, cb);
-    return () => this.emitter.off(event, cb);
+    return this.emitter.on(event, cb);
   }
 
   private emit<E extends IpcEvent>(event: E, data: IpcEvents[E]) {

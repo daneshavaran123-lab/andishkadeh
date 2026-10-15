@@ -1,5 +1,4 @@
-import { randomUUID } from 'node:crypto';
-import type { SyncEvent, SyncEventType, SyncPushResponse } from '@andishkadeh/shared';
+import { newId, type SyncEvent, type SyncEventType, type SyncPushResponse } from '@andishkadeh/shared';
 import type { Db } from './db';
 
 interface OutboxRow {
@@ -18,7 +17,7 @@ export class Outbox {
   constructor(private readonly db: Db) {}
 
   enqueue<T extends SyncEvent['type']>(type: T, payload: Extract<SyncEvent, { type: T }>['payload']): string {
-    const eventId = randomUUID();
+    const eventId = newId();
     this.db
       .prepare('INSERT INTO outbox (event_id, type, payload, created_at) VALUES (?, ?, ?, ?)')
       .run(eventId, type, JSON.stringify(payload), new Date().toISOString());

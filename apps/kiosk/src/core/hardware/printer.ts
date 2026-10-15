@@ -1,12 +1,14 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { HardwareState, type HardwareStatus, type ReceiptData } from '@andishkadeh/shared';
 import { receiptHtml, receiptText } from './receipt';
 import type { PrinterAdapter, ScannerAdapter } from './types';
 
+/** Receives each simulated receipt (Electron writes .txt/.html files into <dataDir>/receipts). */
+export type ReceiptSink = (name: string, files: { txt: string; html: string }) => Promise<void> | void;
+
 /**
- * Simulated thermal printer: writes each receipt as .txt and .html into <dataDir>/receipts.
- * Modes allow testing paper-out / offline handling (PRD §19: print failure keeps the order).
+ * Simulated thermal printer: hands each receipt to the platform's sink (files in Electron,
+ * memory in the web app). Modes allow testing paper-out / offline handling
+ * (PRD §19: print failure keeps the order).
  */
 export class MockPrinterAdapter implements PrinterAdapter {
   readonly name = 'mock-printer';
@@ -14,7 +16,7 @@ export class MockPrinterAdapter implements PrinterAdapter {
   mode: 'ok' | 'paper-out' | 'offline' = 'ok';
   readonly printed: string[] = [];
 
-  constructor(private readonly dir: string) {}
+  constructor(private readonly sink?: ReceiptSink) {}
 
   async status(): Promise<HardwareStatus> {
     if (this.mode === 'paper-out') return { state: HardwareState.ERROR, adapter: this.name, detail: 'کاغذ چاپگر تمام شده است' };
@@ -25,10 +27,8 @@ export class MockPrinterAdapter implements PrinterAdapter {
   async print(receipt: ReceiptData): Promise<{ ok: boolean; detail: string | null }> {
     await new Promise((r) => setTimeout(r, 600));
     if (this.mode !== 'ok') return { ok: false, detail: (await this.status()).detail };
-    mkdirSync(this.dir, { recursive: true });
-    const base = join(this.dir, `${receipt.orderNumber}${receipt.reprint ? '-reprint' : ''}-${Date.now()}`);
-    writeFileSync(`${base}.txt`, receiptText(receipt), 'utf8');
-    writeFileSync(`${base}.html`, await receiptHtml(receipt), 'utf8');
+    const name = `${receipt.orderNumber}${receipt.reprint ? '-reprint' : ''}-${Date.now()}`;
+    await this.sink?.(name, { txt: receiptText(receipt), html: await receiptHtml(receipt) });
     this.printed.push(receipt.orderNumber);
     return { ok: true, detail: null };
   }
