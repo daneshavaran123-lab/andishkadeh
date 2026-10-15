@@ -1,6 +1,14 @@
 # اندیشکده کشتی ایران — کیوسک سلف‌سرویس
 
-سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (ویندوز، لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی.
+سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی.
+
+برنامه کیوسک سه نسخه با یک رابط و یک هسته مشترک دارد:
+
+- **ویندوز**: نصب‌کننده Electron.
+- **وب‌اپ**: PWA روی `/kiosk/` همان سرور.
+- **اندروید**: APK با Capacitor.
+
+ر.ک. [سه نسخه کیوسک](docs/kiosk-platforms.md).
 
 - **کیوسک**: خرید یک یا چند خدمت از حوزه‌های مختلف با یک پرداخت، خرید اشتراک کامل و دریافت کارت عضویت QR، بررسی اعتبار اشتراک با اسکن QR. ادامه فروش خدمات در قطع شبکه (آفلاین) و همگام‌سازی بعدی.
 - **پنل مدیریت**: داشبورد، گزارش فروش و خروجی Excel/CSV، سفارش‌ها، پرداخت‌ها (استعلام و تطبیق دستی)، اشتراک‌ها، خدمات و تعرفه‌ها، حوزه‌ها، پلن‌ها، تخفیف‌ها با پیش‌نمایش، رسانه‌ها، محتوای کیوسک، دستگاه‌ها، همگام‌سازی، تنظیمات، کاربران و نقش‌ها، سوابق تغییرات.
@@ -12,17 +20,20 @@
 | --- | --- |
 | `packages/shared` | قراردادهای مشترک (zod)، موتور قیمت‌گذاری و تخفیف، تقویم جلالی، قالب‌بندی پول و موبایل، QR |
 | `apps/server` | سرور NestJS + Prisma + PostgreSQL: API کیوسک و پنل، احراز هویت، RBAC، همگام‌سازی، گزارش‌ها، OpenAPI |
-| `apps/kiosk` | برنامه کیوسک Electron + React. هسته فروش و پرداخت در main process با SQLite محلی است و آداپترهای سخت‌افزار جدا هستند |
+| `apps/kiosk` | برنامه کیوسک React با هسته فروش و پرداخت مستقل از سکو (`src/core`) و میزبان‌های ویندوز (`electron`)، وب و اندروید (`src/platform/web`، `android`). آداپترهای سخت‌افزار جدا هستند |
 | `apps/admin` | پنل مدیریت React (SPA) |
 | `e2e` | تست‌های پذیرش Playwright (ماتریس T01–T15 سند) |
 | `assets/seed-media` | تصاویر اولیه حوزه‌ها و صفحه شروع |
 | `docs` | مستندات فنی، راهنمای نصب، OpenAPI |
+| `tools/icons` | تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از یک طرح |
+| `.github/workflows` | ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز |
 
 ## پیش‌نیازها
 
 - Node.js 22 و pnpm 10 (`corepack enable`)
 - PostgreSQL 14 یا بالاتر
-- برای ساخت نصب‌کننده کیوسک: ویندوز ۱۰/۱۱ x64
+- برای ساخت نصب‌کننده کیوسک: ویندوز ۱۰/۱۱ x64 (یا لینوکس با wine، یا CI)
+- برای ساخت APK روی سیستم خودتان: JDK 21 و Android SDK (یا CI)
 
 ## راه‌اندازی محیط توسعه
 
@@ -41,6 +52,7 @@ pnpm --filter @andishkadeh/shared build
 | `pnpm dev:server` | API: `http://localhost:3000/api/v1`، مستند API: `http://localhost:3000/api/docs` |
 | `pnpm dev:admin` | پنل مدیریت: `http://localhost:5173/admin/` |
 | `pnpm dev:kiosk` | کیوسک در مرورگر: `http://localhost:5174`، هسته کیوسک (bridge) روی پورت 5175 |
+| `pnpm --filter @andishkadeh/kiosk dev:app` | نسخه وب‌اپ/اندروید (هسته داخل صفحه، صفحه راه‌اندازی): `http://localhost:5176` |
 
 در حالت توسعه، `pnpm dev:kiosk` همان هسته کیوسک (SQLite، صف همگام‌سازی، ژورنال پرداخت) را در Node اجرا می‌کند. کارتخوان، چاپگر و اسکنر شبیه‌سازی می‌شوند. نوار «حالت آزمایشی» همیشه روی صفحه دیده می‌شود. شبیه‌سازها به هیچ عنوان اتصال واقعی معرفی نمی‌شوند.
 
@@ -57,6 +69,9 @@ pnpm --filter @andishkadeh/shared build
 | `pnpm e2e` | تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های 3200/5283/5284/5285) |
 | `pnpm --filter @andishkadeh/server openapi` | تولید `docs/openapi.json` |
 | `pnpm --filter @andishkadeh/kiosk dist:win` | ساخت نصب‌کننده ویندوز کیوسک (NSIS) |
+| `pnpm --filter @andishkadeh/kiosk build:web` | ساخت وب‌اپ کیوسک (`apps/kiosk/dist-web`، برای `KIOSK_WEB_DIST_DIR` سرور) |
+| `pnpm --filter @andishkadeh/kiosk android:apk` | ساخت APK اندروید (debug) |
+| `python3 tools/icons/generate.py --android apps/kiosk/android/app/src/main/res` | تولید دوباره آیکون‌ها و صفحه آغاز |
 
 ## مستندات
 
@@ -64,6 +79,7 @@ pnpm --filter @andishkadeh/shared build
 - [معماری، مدل داده و نمودارهای وضعیت](docs/architecture.md)
 - [راه‌اندازی سرور و پنل مدیریت](docs/server-setup.md)
 - [نصب و پیکربندی کیوسک ویندوز](docs/windows-kiosk-install.md)
+- [سه نسخه کیوسک: ویندوز، وب‌اپ و اندروید](docs/kiosk-platforms.md)
 - [پشتیبان‌گیری و بازیابی](docs/backup-restore.md)
 - [گزارش تست و ماتریس پذیرش](docs/test-report.md)
 - [موارد باز و فرض‌ها](docs/open-items.md)

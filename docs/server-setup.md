@@ -39,8 +39,9 @@ cp apps/server/.env.example apps/server/.env
 | `MEDIA_DIR` | پوشه تصاویر؛ باید در پشتیبان‌گیری باشد |
 | `PUBLIC_BASE_URL` | آدرس عمومی سرور که کیوسک تصاویر را از آن دانلود می‌کند (مثلاً `https://kiosk-api.example.ir`) |
 | `TRUST_PROXY` | پشت IIS/nginx مقدار `1` بگذارید تا IP واقعی ثبت شود |
-| `CORS_ORIGINS` | فقط اگر پنل روی دامنه دیگری میزبانی می‌شود |
+| `CORS_ORIGINS` | فقط اگر پنل روی دامنه دیگری میزبانی می‌شود. برای برنامه اندروید کیوسک `https://localhost` را اضافه کنید |
 | `ADMIN_DIST_DIR` | مسیر بیلد پنل (`apps/admin/dist`) برای ارائه روی `/admin` |
+| `KIOSK_WEB_DIST_DIR` | مسیر بیلد وب‌اپ کیوسک (`apps/kiosk/dist-web`) برای ارائه روی `/kiosk/` (ر.ک. [سه نسخه کیوسک](kiosk-platforms.md)) |
 | `SEED_*` | فقط برای نصب اول: نام کاربری و رمز مدیر و اپراتور، شناسه و کلید دستگاه کیوسک |
 
 تولید رشته‌های تصادفی:
@@ -130,6 +131,7 @@ server {
 | `GET /api/v1/health` | `{"status":"ok","db":"ok",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
 | `/api/docs` | مستند تعاملی API (OpenAPI) |
 | `/admin/` | صفحه ورود پنل مدیریت (اگر `ADMIN_DIST_DIR` تنظیم شده باشد) |
+| `/kiosk/` | وب‌اپ کیوسک، صفحه راه‌اندازی در اجرای اول (اگر `KIOSK_WEB_DIST_DIR` تنظیم شده باشد) |
 
 ## ۸. ثبت کیوسک جدید
 

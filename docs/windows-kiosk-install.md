@@ -14,9 +14,18 @@ pnpm --filter @andishkadeh/kiosk dist:win
 
 خروجی `apps\kiosk\release\AndishkadehKiosk-Setup-<نسخه>.exe` است. این نصب‌کننده NSIS برای همه کاربران (per-machine) است.
 
-- ماژول بومی `better-sqlite3` هنگام ساخت برای Electron بازسازی می‌شود (`npmRebuild: true`).
-- آیکون اختصاصی را در `apps/kiosk/build-resources/icon.ico` قرار دهید (اختیاری).
+- **بدون سیستم ویندوز**: هر push در GitHub Actions (گردش‌کار `Apps`، کار «Windows installer») همین نصب‌کننده را روی ویندوز می‌سازد و با نام `windows-installer` قابل دریافت است.
+- **ساخت روی لینوکس** هم ممکن است. برای NSIS به `wine` (۳۲ و ۶۴ بیتی) نیاز است. بدون ویرایش فایل exe، آیکون روی فایل برنامه قرار نمی‌گیرد:
+
+  ```bash
+  pnpm --filter @andishkadeh/kiosk build
+  cd apps/kiosk && npx electron-builder --win --x64 --publish never -c.win.signAndEditExecutable=false
+  ```
+
+- ماژول بومی `better-sqlite3` هنگام ساخت برای Electron (ویندوز) بازسازی می‌شود (`npmRebuild: true`). این کار روی همان `node_modules` انجام می‌شود. برای اجرای دوباره تست‌ها یا bridge روی همان سیستم، نسخه Node را برگردانید: `cd apps/kiosk/node_modules/better-sqlite3 && npx prebuild-install --force`.
+- آیکون برنامه در `apps/kiosk/build-resources/icon.ico` است و با `python3 tools/icons/generate.py` دوباره ساخته می‌شود.
 - برای امضای دیجیتال، متغیرهای `CSC_LINK` و `CSC_KEY_PASSWORD` electron-builder را تنظیم کنید.
+- نسخه وب و اندروید همین برنامه: [کیوسک روی ویندوز، وب و اندروید](kiosk-platforms.md).
 
 ## ۲. آماده‌سازی ویندوز
 

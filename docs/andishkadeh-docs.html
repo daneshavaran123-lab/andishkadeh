@@ -175,6 +175,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <li><a href="#architecture">معماری و مدل داده</a></li>
     <li><a href="#server">راه‌اندازی سرور</a></li>
     <li><a href="#kiosk">نصب کیوسک ویندوز</a></li>
+    <li><a href="#platforms">وب‌اپ و اندروید</a></li>
     <li><a href="#backup">پشتیبان‌گیری و بازیابی</a></li>
     <li><a href="#tests">گزارش تست</a></li>
     <li><a href="#open">موارد باز</a></li>
@@ -220,11 +221,13 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <tbody>
       <tr><td><code>packages/shared</code></td><td>قراردادهای مشترک (zod)، موتور قیمت‌گذاری و تخفیف، تقویم جلالی، قالب‌بندی پول و موبایل، QR</td></tr>
       <tr><td><code>apps/server</code></td><td>سرور NestJS + Prisma + PostgreSQL: API کیوسک و پنل، احراز هویت، RBAC، همگام‌سازی، گزارش‌ها، OpenAPI</td></tr>
-      <tr><td><code>apps/kiosk</code></td><td>برنامه کیوسک Electron + React. هسته فروش و پرداخت در main process با SQLite محلی است و آداپترهای سخت‌افزار جدا هستند</td></tr>
+      <tr><td><code>apps/kiosk</code></td><td>برنامه کیوسک React با هسته فروش و پرداخت مستقل از سکو (<code>src/core</code>) و سه میزبان: ویندوز (<code>electron</code>)، وب‌اپ و اندروید (<code>src/platform/web</code>، <code>android</code>)</td></tr>
       <tr><td><code>apps/admin</code></td><td>پنل مدیریت React (SPA)</td></tr>
       <tr><td><code>e2e</code></td><td>تست‌های پذیرش Playwright (ماتریس T01 تا T15 سند)</td></tr>
       <tr><td><code>assets/seed-media</code></td><td>تصاویر اولیه حوزه‌ها و صفحه شروع</td></tr>
       <tr><td><code>docs</code></td><td>مستندات فنی، راهنمای نصب، OpenAPI</td></tr>
+      <tr><td><code>tools/icons</code></td><td>تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از یک طرح</td></tr>
+      <tr><td><code>.github/workflows</code></td><td>ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -626,8 +629,9 @@ pnpm --filter @andishkadeh/shared build
 pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
   <p>خروجی <code>apps\kiosk\release\AndishkadehKiosk-Setup-&lt;نسخه&gt;.exe</code> است؛ نصب‌کننده NSIS برای همه کاربران.</p>
   <ul>
+    <li><strong>بدون سیستم ویندوز:</strong> هر push در GitHub Actions همین نصب‌کننده را روی ویندوز می‌سازد (خروجی <code>windows-installer</code>). ساخت روی لینوکس هم با <code>wine</code> ممکن است.</li>
     <li>ماژول بومی <code>better-sqlite3</code> هنگام ساخت برای Electron بازسازی می‌شود.</li>
-    <li>آیکون اختصاصی را در <code>apps/kiosk/build-resources/icon.ico</code> قرار دهید (اختیاری).</li>
+    <li>آیکون برنامه در <code>apps/kiosk/build-resources/icon.ico</code> است و با <code>tools/icons/generate.py</code> ساخته می‌شود.</li>
     <li>برای امضای دیجیتال، متغیرهای <code>CSC_LINK</code> و <code>CSC_KEY_PASSWORD</code> را تنظیم کنید.</li>
   </ul>
 
@@ -717,6 +721,54 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
     </tbody>
   </table></div>
   <p>وضعیت لحظه‌ای هر کیوسک (آخرین ارتباط، صف رویدادها، تجهیزات، نسخه برنامه) در پنل ← «کیوسک و تجهیزات» دیده می‌شود. برای به‌روزرسانی برنامه، نصب‌کننده نسخه جدید را اجرا کنید؛ پوشه داده حفظ می‌شود. پیش از آن مطمئن شوید پرداخت نامشخص یا رویداد ارسال‌نشده‌ای نمانده است.</p>
+</section>
+
+<!-- ============================================================ platforms -->
+<section id="platforms">
+  <h2>کیوسک روی وب و اندروید</h2>
+  <p class="lede">سه نسخه با یک رابط و یک هسته: منطق فروش، ژورنال پرداخت، صف همگام‌سازی، حالت آفلاین و بررسی QR در هر سه یکسان است. تفاوت فقط در محل نگهداری داده و اتصال به تجهیزات است.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>ویندوز (Electron)</th><th>وب‌اپ (PWA)</th><th>اندروید (Capacitor)</th></tr></thead>
+    <tbody>
+      <tr><td>نصب</td><td>نصب‌کننده NSIS</td><td><code>http(s)://&lt;سرور&gt;/kiosk/</code> در Chrome یا Edge</td><td>فایل APK</td></tr>
+      <tr><td>پایگاه محلی</td><td>فایل SQLite (WAL، <code>synchronous=FULL</code>)</td><td>SQLite در WebAssembly، ذخیره در IndexedDB</td><td>مانند وب‌اپ</td></tr>
+      <tr><td>پیکربندی</td><td><code>kiosk.config.json</code></td><td>صفحه راه‌اندازی تکنسین</td><td>صفحه راه‌اندازی تکنسین</td></tr>
+      <tr><td>چاپ رسید</td><td>درایور ویندوز، بی‌صدا</td><td>چاپ مرورگر (با <code>--kiosk-printing</code> بی‌صدا)</td><td>سرویس چاپ اندروید</td></tr>
+      <tr><td>اسکنر QR</td><td colspan="3">USB HID در حالت صفحه‌کلید (در اندروید با OTG)</td></tr>
+      <tr><td>کارتخوان</td><td colspan="3">آداپتر؛ تا رسیدن SDK بانک فقط «شبیه‌ساز» با نوار حالت آزمایشی یا «متصل نشده»</td></tr>
+      <tr><td>قفل کیوسک</td><td>حالت kiosk / Assigned Access</td><td>حالت kiosk مرورگر</td><td>Lock Task با مدیریت دستگاه، یا App pinning</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <p><strong>ماندگاری در وب و اندروید:</strong> پایگاه پس از هر تغییر به‌صورت یک نسخه کامل در IndexedDB ذخیره می‌شود. ثبت ژورنال پیش از روشن شدن کارتخوان و ثبت نتیجه پس از پاسخ آن تا ذخیره قطعی صبر می‌کنند، پس بازیابی پس از قطع برق مانند نسخه ویندوز است. فقط یک زبانه می‌تواند هسته را اجرا کند.</p>
+  </div>
+
+  <h3>وب‌اپ روی سرور</h3>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm --filter @andishkadeh/kiosk build:web   # apps/kiosk/dist-web
+# apps/server/.env
+KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
+  <p>کیوسک در <code>/kiosk/</code> همان سرور باز می‌شود و CORS لازم نیست. روی HTTP شبکه محلی، فروش و حالت آفلاین کار می‌کند، ولی راه‌اندازی دوباره بدون سرور (Service Worker)، جلوگیری از زبانه دوم و روشن ماندن صفحه به <strong>HTTPS</strong> نیاز دارند.</p>
+  <div class="code"><span class="lang">text</span><button type="button" data-copy>کپی</button><pre><code>chrome.exe --kiosk --kiosk-printing --start-fullscreen --noerrdialogs ^
+  --user-data-dir=C:\KioskChrome https://kiosk.example.local/kiosk/</code></pre></div>
+
+  <h3>راه‌اندازی اولیه</h3>
+  <ol class="steps">
+    <li>در پنل ← «کیوسک‌ها» کیوسک ثبت کنید یا کلید جدید بگیرید (کلید یک بار نمایش داده می‌شود).</li>
+    <li>برنامه را باز کنید: آدرس سرور (در وب‌اپ خودکار)، شناسه کیوسک، کلید دستگاه و تجهیزات را وارد کنید.</li>
+    <li>«بررسی اتصال و شروع» کلید را با سرور بررسی می‌کند. کلید نادرست پذیرفته نمی‌شود.</li>
+  </ol>
+  <p>ورود دوباره به تنظیمات: <strong>۷ لمس پشت سر هم</strong> در گوشه بالا-چپ و وارد کردن کلید دستگاه. پاک کردن داده دستگاه تا وقتی رویداد ارسال‌نشده یا پرداخت نامشخص هست ممکن نیست.</p>
+
+  <h3>اندروید</h3>
+  <ul>
+    <li><strong>APK:</strong> هر push در GitHub Actions خروجی <code>android-apk</code> می‌سازد. نسخه امضاشده با secretهای <code>ANDROID_KEYSTORE_BASE64</code>، <code>ANDROID_KEYSTORE_PASSWORD</code>، <code>ANDROID_KEY_ALIAS</code> و <code>ANDROID_KEY_PASSWORD</code>. روی سیستم خودتان: <code>pnpm --filter @andishkadeh/kiosk android:apk</code>.</li>
+    <li><strong>سرور:</strong> <code>https://localhost</code> را به <code>CORS_ORIGINS</code> اضافه کنید.</li>
+    <li><strong>حالت کیوسک:</strong> با MDM بسته <code>ir.andishkadeh.kiosk</code> را در Lock Task مجاز کنید. بدون MDM، برنامه را Home app پیش‌فرض کنید و App pinning را فعال کنید.</li>
+    <li><strong>چاپ:</strong> سرویس چاپ اندروید (ممکن است پنجره چاپ باز شود). چاپ بی‌صدا به SDK سازنده چاپگر نیاز دارد.</li>
+    <li><strong>به‌روزرسانی:</strong> برای دستگاه‌های عملیاتی فقط از APK امضاشده انتشار استفاده کنید تا نسخه‌های جدید روی قبلی نصب شوند.</li>
+  </ul>
 </section>
 
 <!-- ============================================================ backup -->
@@ -878,8 +930,18 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.1.0</span></h2>
-  <p class="lede">۲۳ مهر ۱۴۰۵ — بازطراحی بصری کیوسک بر اساس طرح‌های تأییدشده جدید.</p>
+  <h2>تغییرات نسخه <span class="tag">1.2.0</span></h2>
+  <p class="lede">۲۳ مهر ۱۴۰۵ — کیوسک علاوه بر ویندوز به‌صورت وب‌اپ و برنامه اندروید، با یک رابط و یک هسته.</p>
+  <ul>
+    <li><strong>هسته مستقل از سکو:</strong> پایگاه محلی در ویندوز <code>better-sqlite3</code> و در وب و اندروید SQLite در WebAssembly با ذخیره در IndexedDB. ژورنال پیش از کارتخوان و نتیجه پس از آن تا ذخیره قطعی صبر می‌کنند. تست‌های هسته روی هر دو پایگاه.</li>
+    <li><strong>وب‌اپ (PWA):</strong> روی <code>/kiosk/</code> سرور؛ صفحه راه‌اندازی تکنسین، کش تصاویر، اجرای آفلاین با Service Worker، چاپ مرورگر، جلوگیری از زبانه دوم.</li>
+    <li><strong>اندروید:</strong> برنامه Capacitor تمام‌صفحه با Lock Task و چاپ با سرویس چاپ اندروید؛ APK در CI.</li>
+    <li><strong>ویندوز:</strong> بسته کوچک‌تر، آیکون برنامه، ساخت نصب‌کننده در CI.</li>
+    <li><strong>پنل مدیریت:</strong> قابل نصب به‌عنوان برنامه.</li>
+    <li><strong>CI:</strong> تست‌ها، وب‌اپ، APK اندروید و نصب‌کننده ویندوز در GitHub Actions.</li>
+  </ul>
+  <h3>نسخه 1.1.0</h3>
+  <p>۲۳ مهر ۱۴۰۵ — بازطراحی بصری کیوسک بر اساس طرح‌های تأییدشده جدید.</p>
   <ul>
     <li><strong>منوی اصلی:</strong> کارت‌ها با عکس ورزشکار، حاشیه نئونی هم‌رنگ هر مسیر و تشک کشتی با نورهای آبی و قرمز در پایین صفحه.</li>
     <li><strong>فهرست خدمات:</strong> تصویر اختصاصی برای ۱۳ خدمت؛ خدمتی که در سبد است با حاشیه و هاله سبز مشخص می‌شود.</li>
