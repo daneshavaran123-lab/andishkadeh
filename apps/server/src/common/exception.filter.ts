@@ -4,6 +4,26 @@ import { ErrorCode } from '@andishkadeh/shared';
 import type { Request, Response } from 'express';
 import { ApiError } from './errors';
 
+/** Code and Persian message for errors that carry only an HTTP status (framework / middleware errors). */
+const STATUS_ERRORS: Record<number, [ErrorCode, string]> = {
+  400: [ErrorCode.VALIDATION_FAILED, 'درخواست نامعتبر است؛ بدنه درخواست قابل خواندن نیست'],
+  401: [ErrorCode.UNAUTHENTICATED, 'نیاز به ورود مجدد'],
+  403: [ErrorCode.FORBIDDEN, 'دسترسی به این مسیر مجاز نیست'],
+  404: [ErrorCode.NOT_FOUND, 'مورد درخواستی یافت نشد'],
+  413: [ErrorCode.VALIDATION_FAILED, 'حجم درخواست بیش از حد مجاز است'],
+  415: [ErrorCode.VALIDATION_FAILED, 'نوع محتوای درخواست پشتیبانی نمی‌شود'],
+};
+
+/**
+ * Errors raised by Express middleware (express.static, the JSON body parser) are http-errors
+ * objects: they carry their 4xx status but are not Nest HttpExceptions.
+ */
+function clientErrorStatus(e: unknown): number | null {
+  if (typeof e !== 'object' || e === null) return null;
+  const status = (e as { status?: unknown; statusCode?: unknown }).status ?? (e as { statusCode?: unknown }).statusCode;
+  return Number.isInteger(status) && (status as number) >= 400 && (status as number) < 500 ? (status as number) : null;
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger('HTTP');
@@ -33,20 +53,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = HttpStatus.NOT_FOUND;
       code = ErrorCode.NOT_FOUND;
       message = 'مورد درخواستی یافت نشد';
-    } else if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const body = exception.getResponse();
-      message = typeof body === 'string' ? body : ((body as { message?: string }).message ?? exception.message);
-      code =
-        status === 404
-          ? ErrorCode.NOT_FOUND
-          : status === 401
-            ? ErrorCode.UNAUTHENTICATED
-            : status === 403
-              ? ErrorCode.FORBIDDEN
-              : status === 413
-                ? ErrorCode.VALIDATION_FAILED
-                : ErrorCode.INTERNAL;
+    } else if (exception instanceof HttpException || clientErrorStatus(exception) !== null) {
+      // Framework and middleware errors: keep the status, never echo their English internals.
+      status = exception instanceof HttpException ? exception.getStatus() : clientErrorStatus(exception)!;
+      const known = STATUS_ERRORS[status];
+      if (known) [code, message] = known;
+      else if (status < 500) [code, message] = [ErrorCode.VALIDATION_FAILED, 'درخواست نامعتبر است'];
     }
 
     if (status >= 500) {
