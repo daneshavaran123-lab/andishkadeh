@@ -5,7 +5,9 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 /**
  * Content-Security-Policy of the production panel (meta tag, so it also applies when the panel is
  * hosted apart from the API). Dev mode keeps Vite's inline HMR preamble working. The API origin
- * (VITE_API_URL, empty = same origin) is allowed for API calls and media thumbnails.
+ * (VITE_API_URL, empty = same origin) is allowed for API calls. Images may come from any http(s)
+ * origin: media URLs are absolute (server PUBLIC_BASE_URL), which can differ from the address the
+ * panel was opened with; scripts stay limited to the panel itself.
  */
 const csp = (apiUrl: string): Plugin => {
   const api = apiUrl ? ` ${new URL(apiUrl).origin}` : '';
@@ -13,7 +15,7 @@ const csp = (apiUrl: string): Plugin => {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob:${api}`,
+    "img-src 'self' data: blob: http: https:",
     "font-src 'self' data:",
     `connect-src 'self'${api}`,
     "object-src 'none'",

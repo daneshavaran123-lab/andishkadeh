@@ -55,3 +55,24 @@ test('production admin panel runs under a strict CSP: pages, images and receipt 
 
   expect(violations).toEqual([]);
 });
+
+// Found by /review on 2026-10-16: media URLs are absolute (server PUBLIC_BASE_URL). Opening the panel under
+// another address of the same server (here 127.0.0.1 vs localhost) must not block the thumbnails.
+test('thumbnails still load when the panel is opened under another address of the server', async ({ page }) => {
+  const violations: string[] = [];
+  page.on('console', (m) => {
+    if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text());
+  });
+  await page.goto('http://127.0.0.1:3200/admin/login');
+  await page.getByLabel('نام کاربری').fill('admin');
+  await page.getByLabel('رمز عبور').fill('Admin@12345');
+  await page.getByRole('button', { name: 'ورود' }).click();
+  await expect(page.getByTestId('logout')).toBeVisible();
+  await page.goto('http://127.0.0.1:3200/admin/media', { waitUntil: 'networkidle' });
+  const imgs = page.locator('img');
+  expect(await imgs.count()).toBeGreaterThan(0);
+  const broken = await imgs.evaluateAll((list) => (list as HTMLImageElement[]).filter((i) => i.complete && i.naturalWidth === 0).length);
+  expect(broken).toBe(0);
+  expect(violations).toEqual([]);
+});
+
