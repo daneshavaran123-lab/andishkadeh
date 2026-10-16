@@ -24,7 +24,7 @@ import { Icon } from '../components/Icon';
 import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, Pagination, ReasonDialog, useToast, type RangePreset, type Tone } from '../components/ui';
 import { PAYMENT_TONE } from './Dashboard';
 import { PaymentActions } from './Payments';
-import { escapeHtml } from '../html';
+import { escapeHtml, printWhenReady } from '../html';
 
 export const ORDER_TONE: Record<OrderStatus, Tone> = {
   LOCKED: 'neutral',
@@ -209,8 +209,8 @@ ${r.discountTotal ? `<div class="m"><span>تخفیف</span><span>${formatToman(r
 <div class="m t"><span>پرداخت‌شده</span><span>${formatToman(r.total)}</span></div>
 ${r.payment.terminalRef ? `<div class="m"><span>مرجع کارتخوان</span><span class="l">${esc(r.payment.terminalRef)}</span></div>` : ''}
 ${r.subscription ? `<hr><div class="m"><span>اشتراک</span><span>${esc(r.subscription.planTitle)}</span></div><div class="m"><span>اعتبار تا</span><span>${formatJalaliDate(r.subscription.expiresAt, r.timezone)}</span></div>` : ''}
-<div class="f">${esc(r.footer)}</div><script>window.onload=()=>{window.print();}</script></body></html>`);
-  w.document.close();
+<div class="f">${esc(r.footer)}</div></body></html>`);
+  printWhenReady(w);
 }
 
 function KioskPrintDialog({ orderId, onClose }: { orderId: string; onClose: () => void }) {
