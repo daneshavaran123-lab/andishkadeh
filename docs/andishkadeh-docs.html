@@ -154,14 +154,14 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.2</span> · ۲۵ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.2</span> · ۲۴ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
   <div class="facts">
     <span class="fact">کیوسک: <b>ویندوز · وب‌اپ · اندروید</b></span>
     <span class="fact">سرور: <b>NestJS + PostgreSQL</b></span>
-    <span class="fact">تست پذیرش: <b class="num">۳۱ از ۳۱ موفق</b></span>
+    <span class="fact">تست پذیرش: <b class="num">۳۲ از ۳۲ موفق</b></span>
     <span class="fact">بدون رزرو و نوبت‌دهی</span>
   </div>
 </header>
@@ -1264,7 +1264,7 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۳۳</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API</td><td>Vitest</td><td class="num">۲۹</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ و پنل تولیدی زیر CSP)</td><td>Playwright</td><td class="num">۳۱</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ و پنل تولیدی زیر CSP)</td><td>Playwright</td><td class="num">۳۲</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1365,7 +1365,7 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 <!-- ============================================================ changelog -->
 <section id="changelog">
   <h2>تغییرات نسخه <span class="tag">1.2.2</span></h2>
-  <p class="lede">۲۵ مهر ۱۴۰۵ — QA مرورگری و API با روش gstack: هفت ایراد پیدا و شش مورد رفع شد؛ امتیاز سلامت ۹۲ → ۱۰۰.</p>
+  <p class="lede">۲۴ مهر ۱۴۰۵ — QA مرورگری و API با روش gstack: هفت ایراد پیدا و شش مورد رفع شد؛ امتیاز سلامت ۹۲ → ۱۰۰.</p>
   <ul>
     <li><strong>پنل روی گوشی:</strong> منو باز می‌شود، نوار بالا و همه ۱۶ صفحه در عرض ۳۷۵ پیکسل جا می‌شوند و جدول‌ها داخل کارت پیمایش می‌شوند.</li>
     <li><strong>امنیت پنل:</strong> Content-Security-Policy سخت‌گیرانه در build تولیدی؛ چاپ رسید و کارت QR بدون اسکریپت درون‌خطی.</li>
