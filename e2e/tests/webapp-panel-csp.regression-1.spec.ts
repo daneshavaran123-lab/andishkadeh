@@ -35,7 +35,7 @@ test('production admin panel runs under a strict CSP: pages, images and receipt 
     await page.goto(path, { waitUntil: 'networkidle' });
   }
   // Media thumbnails are loaded from the API under img-src.
-  const broken = await page.locator('img').evaluateAll((imgs) => imgs.filter((i) => i.complete && i.naturalWidth === 0).length);
+  const broken = await page.locator('img').evaluateAll((imgs) => (imgs as HTMLImageElement[]).filter((i) => i.complete && i.naturalWidth === 0).length);
   expect(broken).toBe(0);
 
   // The receipt popup inherits the panel's CSP: printing must not depend on an inline script.
