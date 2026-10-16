@@ -118,7 +118,16 @@ export function QrCode({ value }: { value: string }) {
     void QRCode.toString(value, { type: 'svg', errorCorrectionLevel: 'M', margin: 0 }).then(setSvg);
   }, [value]);
   // The raw value is exposed as an attribute only in the dev bridge (E2E); never in the Electron build.
-  return <div className="qr-box" data-testid="qr" data-value={platform === 'web-dev' ? value : undefined} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return (
+    <div
+      className="qr-box"
+      role="img"
+      aria-label="کد QR کارت عضویت"
+      data-testid="qr"
+      data-value={platform === 'web-dev' ? value : undefined}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
 }
 
 export function Notice({ tone, icon = 'alert', children }: { tone: 'amber' | 'blue' | 'red' | 'green'; icon?: Parameters<typeof Icon>[0]['name']; children: ReactNode }) {
