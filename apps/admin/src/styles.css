@@ -291,10 +291,16 @@ textarea {
     inset-inline-start: 0;
     width: 264px;
     transform: translateX(100%);
-    transition: transform 200ms ease;
+    /* Hidden once slid out: it never peeks in and its links are not reachable with Tab. */
+    visibility: hidden;
+    transition:
+      transform 200ms ease,
+      visibility 0s linear 200ms;
   }
   .sidebar.open {
     transform: none;
+    visibility: visible;
+    transition: transform 200ms ease;
     box-shadow: 0 0 60px rgba(0, 0, 0, 0.35);
   }
   .menu-toggle {
@@ -302,6 +308,32 @@ textarea {
   }
   .content {
     padding: 18px 16px 48px;
+  }
+}
+
+/* Phones: the top bar must fit 360 px (title truncates, name and button label give way). */
+@media (max-width: 720px) {
+  .topbar {
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .topbar .center {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .topbar .spacer {
+    display: none;
+  }
+  .user-chip {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .user-chip .user-name,
+  .user-chip .btn-label {
+    display: none;
   }
 }
 

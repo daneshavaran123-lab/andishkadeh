@@ -110,13 +110,13 @@ export function Layout() {
           {user && (
             <div className="user-chip">
               <span className="avatar">{user.displayName.slice(0, 1)}</span>
-              <span>
+              <span className="user-name">
                 <b>{user.displayName}</b>{' '}
                 <span className={`badge ${isAdmin ? 'info' : ''}`}>{ROLE_LABEL[user.role]}</span>
               </span>
-              <button className="btn btn-sm btn-ghost" onClick={() => setPwd(true)}>
+              <button className="btn btn-sm btn-ghost" onClick={() => setPwd(true)} aria-label="تغییر رمز">
                 <Icon name="key" />
-                تغییر رمز
+                <span className="btn-label">تغییر رمز</span>
               </button>
               <button className="btn btn-sm" onClick={() => logout()} data-testid="logout">
                 <Icon name="logout" />
