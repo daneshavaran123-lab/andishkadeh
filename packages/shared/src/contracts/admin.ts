@@ -17,7 +17,14 @@ const code = z
   .min(2)
   .max(24)
   .regex(/^[A-Za-z0-9-]+$/, 'کد فقط شامل حروف لاتین، عدد و خط تیره است');
-const DateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD');
+/** A real calendar day as YYYY-MM-DD: 2026-02-30 would otherwise roll over to March silently. */
+const DateKey = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD')
+  .refine((s) => {
+    const d = new Date(`${s}T00:00:00Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(s);
+  }, 'تاریخ نامعتبر است');
 
 // ---------------------------------------------------------------------------
 // Auth & users

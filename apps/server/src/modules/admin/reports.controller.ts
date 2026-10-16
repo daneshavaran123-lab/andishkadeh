@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import {
   DashboardQuery,
   DashboardResponse,
+  ErrorCode,
   ORDER_KIND_LABEL,
   ReportBucket,
   ReportQuery,
@@ -120,10 +121,10 @@ export class ReportsController {
 
   private async loadReport(q: ReportQuery) {
     const tz = (await this.settings.settings()).timezone;
-    if (q.from > q.to) throw ApiError.conflict('VALIDATION_FAILED', 'تاریخ شروع بعد از تاریخ پایان است');
+    if (q.from > q.to) throw new ApiError(ErrorCode.VALIDATION_FAILED, 'تاریخ شروع بعد از تاریخ پایان است');
     const from = localDayRange(q.from, tz).from;
     const to = localDayRange(q.to, tz).to;
-    if (to.getTime() - from.getTime() > 400 * 86400000) throw ApiError.conflict('VALIDATION_FAILED', 'بازه گزارش حداکثر ۴۰۰ روز است');
+    if (to.getTime() - from.getTime() > 400 * 86400000) throw new ApiError(ErrorCode.VALIDATION_FAILED, 'بازه گزارش حداکثر ۴۰۰ روز است');
 
     const itemWhere: Prisma.OrderItemWhereInput = { order: { status: 'PAID', paidAt: { gte: from, lt: to }, ...(q.kind ? { kind: q.kind } : {}) } };
     if (q.categoryId) itemWhere.categoryIdSnapshot = q.categoryId;
