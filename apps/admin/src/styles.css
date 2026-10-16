@@ -347,6 +347,7 @@ textarea {
 
 .card-head {
   display: flex;
+  flex-wrap: wrap; /* title and actions stack on narrow screens instead of widening the page */
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
@@ -367,6 +368,7 @@ textarea {
 .card-head .actions {
   margin-inline-start: auto;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -377,6 +379,7 @@ textarea {
 
 .grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -400,16 +403,17 @@ textarea {
   .grid-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* minmax(0, …), not 1fr (= minmax(auto, 1fr)): a wide table must scroll in its card, not widen the page. */
   .grid-2-1,
   .grid-3 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 @media (max-width: 720px) {
   .grid-4,
   .grid-2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
