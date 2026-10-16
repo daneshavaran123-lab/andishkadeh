@@ -539,11 +539,11 @@ flowchart LR
 | لایه | ابزار | تعداد |
 | --- | --- | --- |
 | واحد (قیمت، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن) | Vitest (`packages/shared`) | ۳۷ |
-| یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون) | Vitest (`apps/server`) | ۲۱ |
+| یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون) | Vitest (`apps/server`) | ۳۳ |
 | یکپارچه هسته کیوسک روی `better-sqlite3` و `sql.js` + درایور `sql.js` + کلاینت API | Vitest (`apps/kiosk`) | ۲۹ |
-| پذیرش E2E (ماتریس T01 تا T15، پنل و وب‌اپ) | Playwright (`e2e`) | ۲۷ |
+| پذیرش E2E (ماتریس T01 تا T15، پنل، وب‌اپ و پنل تولیدی زیر CSP) | Playwright (`e2e`) | ۳۱ |
 
-جزئیات و ماتریس پذیرش: [گزارش تست](docs/test-report.md).
+جزئیات و ماتریس پذیرش: [گزارش تست](docs/test-report.md). آخرین QA مرورگری و API با روش gstack: [گزارش QA](docs/qa/gstack-qa-2026-10-16.md).
 
 ## ساختار مخزن
 
