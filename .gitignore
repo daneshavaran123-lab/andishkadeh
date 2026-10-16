@@ -21,3 +21,6 @@ e2e/playwright-report/
 *.tsbuildinfo
 e2e/.kiosk-data/
 tools/uml/.cache/
+
+# gstack QA reports and screenshots (local evidence)
+.gstack/
