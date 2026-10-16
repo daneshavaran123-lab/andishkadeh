@@ -56,6 +56,11 @@ export class Outbox {
     tx();
   }
 
+  /** The server already received this event directly (e.g. a payment result posted online). */
+  markDone(eventId: string) {
+    this.db.prepare("UPDATE outbox SET status = 'DONE', last_error = NULL WHERE event_id = ? AND status = 'PENDING'").run(eventId);
+  }
+
   /** Network failure: keep everything pending, back off a little. */
   deferAll(events: SyncEvent[], error: string) {
     const stmt = this.db.prepare('UPDATE outbox SET last_error = ?, next_attempt_at = ? WHERE event_id = ?');

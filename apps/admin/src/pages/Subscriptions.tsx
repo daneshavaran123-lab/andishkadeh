@@ -14,6 +14,7 @@ import { api, qs } from '../api';
 import { AdminOnly } from '../auth';
 import { Icon } from '../components/Icon';
 import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JDate, JDateTime, Loading, Modal, PageHead, Pagination, ReasonDialog, useToast, type Tone } from '../components/ui';
+import { escapeHtml } from '../html';
 
 const STATE: Record<SubscriptionState, { label: string; tone: Tone }> = {
   active: { label: 'فعال', tone: 'success' },
@@ -138,7 +139,7 @@ function QrOnce({ token, planTitle, expiresAt, onClose }: { token: string; planT
     const w = window.open('', '_blank', 'width=420,height=600');
     if (!w) return;
     w.document.write(
-      `<!doctype html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><style>body{font-family:Vazirmatn,Tahoma;text-align:center;width:72mm;margin:0 auto}svg{width:52mm;height:52mm}</style></head><body><h3>کارت عضویت (صدور مجدد)</h3><div>${planTitle}</div><div>اعتبار تا ${formatJalaliDate(expiresAt)}</div>${svg}<p style="font-size:11px">کارت قبلی باطل شده است.</p><script>onload=()=>print()</script></body></html>`,
+      `<!doctype html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><style>body{font-family:Vazirmatn,Tahoma;text-align:center;width:72mm;margin:0 auto}svg{width:52mm;height:52mm}</style></head><body><h3>کارت عضویت (صدور مجدد)</h3><div>${escapeHtml(planTitle)}</div><div>اعتبار تا ${formatJalaliDate(expiresAt)}</div>${svg}<p style="font-size:11px">کارت قبلی باطل شده است.</p><script>onload=()=>print()</script></body></html>`,
     );
     w.document.close();
   };

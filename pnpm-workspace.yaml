@@ -11,3 +11,20 @@ onlyBuiltDependencies:
   - esbuild
   - "@swc/core"
   - electron
+
+# Build scripts that only print sponsor/analytics messages; not needed.
+ignoredBuiltDependencies:
+  - "@nestjs/core"
+  - "@scarf/scarf"
+
+# Patched versions of vulnerable transitive dependencies (pnpm audit).
+overrides:
+  "exceljs>uuid": "11.1.1"
+  "@prisma/config>deepmerge-ts": "8.0.2"
+  "router>path-to-regexp": "8.4.2"
+  "@nestjs/swagger>js-yaml": "5.4.2"
+  "xcode>uuid": "11.1.1"
+  "app-builder-lib>js-yaml": "4.3.2"
+  "dmg-builder>js-yaml": "4.3.2"
+  "builder-util>js-yaml": "4.3.2"
+  "concurrently>shell-quote": "1.11.0"

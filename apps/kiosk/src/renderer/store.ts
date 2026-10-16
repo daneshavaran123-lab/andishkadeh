@@ -2,6 +2,7 @@
  * UI state. `app` = data from the kiosk core (catalogue, status). `session` = one customer's
  * journey; it is wiped completely on finish, cancel or inactivity timeout (PRD §12, B-02).
  */
+import { useEffect } from 'react';
 import { create } from 'zustand';
 import {
   ItemType,
@@ -80,6 +81,10 @@ interface SessionStore {
   back: () => void;
   backTo: (id: ScreenId) => void;
   reset: () => void;
+  /** Bumped by every reset: async results that belong to an earlier session are dropped. */
+  epoch: number;
+  /** A no-timeout screen (paying, printing) shows an error, so the inactivity timeout applies again. */
+  idleTimeoutAllowed: boolean;
   addToCart: (serviceId: string) => void;
   setQty: (serviceId: string, quantity: number) => void;
   removeFromCart: (serviceId: string) => void;
@@ -99,12 +104,14 @@ const initial = {
   access: null,
   inquiredOnce: false,
   toast: null,
+  idleTimeoutAllowed: false,
 };
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
 export const useSession = create<SessionStore>((set, get) => ({
   ...initial,
+  epoch: 0,
   go: (id, params) => set((s) => ({ stack: [...s.stack, { id, params }], toast: null })),
   replace: (id, params) => set((s) => ({ stack: [...s.stack.slice(0, -1), { id, params }], toast: null })),
   back: () => set((s) => ({ stack: s.stack.length > 1 ? s.stack.slice(0, -1) : s.stack, toast: null })),
@@ -115,7 +122,7 @@ export const useSession = create<SessionStore>((set, get) => ({
     }),
   reset: () => {
     clearTimeout(toastTimer);
-    set({ ...initial, stack: [{ id: 'welcome' }] });
+    set((s) => ({ ...initial, stack: [{ id: 'welcome' }], epoch: s.epoch + 1 }));
   },
   addToCart: (serviceId) =>
     set((s) => (s.cart.some((c) => c.serviceId === serviceId) ? s : { cart: [...s.cart, { serviceId, quantity: 1 }] })),
@@ -130,6 +137,21 @@ export const useSession = create<SessionStore>((set, get) => ({
     toastTimer = setTimeout(() => get().toast === toast && set({ toast: null }), 2200);
   },
 }));
+
+/** Captures the current session; `alive()` is false once it has ended (timeout, cancel, finish). */
+export function sessionGuard() {
+  const epoch = useSession.getState().epoch;
+  return { alive: () => useSession.getState().epoch === epoch };
+}
+
+/** Lets the inactivity timeout run on a no-timeout screen while `allowed` (e.g. an error is shown). */
+export function useAllowIdleTimeout(allowed: boolean) {
+  useEffect(() => {
+    if (!allowed) return;
+    useSession.setState({ idleTimeoutAllowed: true });
+    return () => useSession.setState({ idleTimeoutAllowed: false });
+  }, [allowed]);
+}
 
 export const currentRoute = () => {
   const s = useSession.getState().stack;

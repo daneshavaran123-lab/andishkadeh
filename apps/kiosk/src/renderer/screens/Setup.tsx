@@ -12,9 +12,11 @@ interface Props {
   onSave(setup: WebSetup): void | Promise<void>;
   onCancel?(): void;
   onReset?(): void | Promise<void>;
+  /** Why the kiosk id may not change (local orders and events belong to the current id). */
+  identityLocked?: string;
 }
 
-export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
+export function Setup({ initial, running, onSave, onCancel, onReset, identityLocked }: Props) {
   const [f, setF] = useState<WebSetup>({
     serverUrl: initial.serverUrl ?? '',
     deviceId: initial.deviceId ?? 'KIOSK-01',
@@ -44,6 +46,10 @@ export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
       return;
     }
     const next = { ...f, serverUrl: url.origin + url.pathname.replace(/\/+$/, ''), deviceId: f.deviceId.trim() };
+    if (lockReason && next.deviceId !== (initial.deviceId ?? '').trim()) {
+      setError({ message: lockReason, canForce: false });
+      return;
+    }
     setBusy(true);
     try {
       if (!force) {
@@ -60,6 +66,9 @@ export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
   };
 
   const blocked = running && (running.pending > 0 || running.unresolved > 0);
+  const lockReason =
+    identityLocked ??
+    (blocked ? `تا ${running.pending} رویداد ارسال‌نشده و ${running.unresolved} پرداخت نامشخص تعیین تکلیف نشوند، شناسه کیوسک تغییر نمی‌کند.` : undefined);
 
   return (
     <div className="setup" data-testid="setup">
@@ -74,7 +83,16 @@ export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
         </label>
         <label>
           شناسه کیوسک
-          <input dir="ltr" autoComplete="off" required value={f.deviceId} onChange={(e) => set('deviceId', e.target.value)} data-testid="setup-device" />
+          <input
+            dir="ltr"
+            autoComplete="off"
+            required
+            readOnly={!!lockReason}
+            value={f.deviceId}
+            onChange={(e) => set('deviceId', e.target.value)}
+            data-testid="setup-device"
+          />
+          {lockReason && <small className="setup-hint">{lockReason}</small>}
         </label>
         <label>
           کلید دستگاه
@@ -144,27 +162,43 @@ export function Setup({ initial, running, onSave, onCancel, onReset }: Props) {
   );
 }
 
-/** Device key prompt before opening settings on a running kiosk. */
-export function TechGate({ deviceKey, onPass, onCancel }: { deviceKey: string; onPass(): void; onCancel(): void }) {
+/**
+ * Device key prompt before opening settings. Accepts the key stored on this device, or, after a
+ * key rotation in the panel (A15), the new key once the server confirms it for this kiosk id.
+ */
+export function TechGate({ setup, onPass, onCancel }: { setup: Pick<WebSetup, 'serverUrl' | 'deviceId' | 'deviceKey'>; onPass(): void; onCancel(): void }) {
   const [value, setValue] = useState('');
-  const [wrong, setWrong] = useState(false);
+  const [wrong, setWrong] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const check = async () => {
+    if (value === setup.deviceKey) return onPass();
+    if (value.length < 8) return setWrong('کلید نادرست است');
+    setBusy(true);
+    try {
+      const r = await verifySetup({ ...setup, deviceKey: value });
+      if (r.ok) onPass();
+      else setWrong(r.reason === 'auth' ? 'کلید نادرست است' : `کلید نادرست است، یا بررسی آن با سرور ممکن نشد (${r.message})`);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="setup setup-overlay" data-testid="tech-gate">
       <form
         className="setup-card"
         onSubmit={(e) => {
           e.preventDefault();
-          if (value === deviceKey) onPass();
-          else setWrong(true);
+          setWrong(null);
+          void check();
         }}
       >
         <h1>تنظیمات دستگاه</h1>
         <p className="setup-hint">برای ادامه، کلید دستگاه را وارد کنید.</p>
-        <input dir="ltr" type="password" autoFocus autoComplete="off" value={value} onChange={(e) => setValue(e.target.value)} />
-        {wrong && <div className="setup-error">کلید نادرست است</div>}
+        <input dir="ltr" type="password" autoFocus autoComplete="off" value={value} onChange={(e) => setValue(e.target.value)} data-testid="tech-key" />
+        {wrong && <div className="setup-error">{wrong}</div>}
         <div className="setup-actions">
-          <button type="submit" className="setup-primary">
-            ادامه
+          <button type="submit" className="setup-primary" disabled={busy}>
+            {busy ? 'در حال بررسی…' : 'ادامه'}
           </button>
           <button type="button" className="setup-secondary" onClick={onCancel}>
             انصراف

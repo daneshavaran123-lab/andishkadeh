@@ -330,6 +330,33 @@ describe('subscriptions and QR (T07, T08)', () => {
     expect(revoked.body.result).toBe('REVOKED');
     expect(await prisma.accessLog.count({ where: { subscriptionId: paid.order.subscription.id } })).toBeGreaterThanOrEqual(3);
   });
+
+  it('extending a subscription moves the renewal chained after it, so the extra days are usable', async () => {
+    const mobile = randomMobile();
+    const buy = async (planId: string) => {
+      const create = await kiosk(app).post('/orders', {
+        localOrderId: uuid(),
+        idempotencyKey: uuid(),
+        kind: 'SUBSCRIPTION',
+        mobile,
+        items: [{ itemType: 'PLAN', itemId: planId, quantity: 1 }],
+        qrTokenHash: hashQrToken(generateQrToken()),
+      });
+      expect(create.status, JSON.stringify(create.body)).toBe(200);
+      return (await pay(create.body.id, 'PAID', create.body.total)).order.subscription;
+    };
+    const first = await buy(plans[0].id);
+    const renewal = await buy(plans[0].id);
+    expect(renewal.startsAt).toBe(first.expiresAt);
+
+    const ext = await admin(app, adminToken).post(`/admin/subscriptions/${first.id}/extend`, { days: 10, reason: 'جبران تعطیلی مرکز' });
+    expect(ext.status, JSON.stringify(ext.body)).toBe(200);
+    const day = 86400000;
+    expect(new Date(ext.body.expiresAt).getTime()).toBe(new Date(first.expiresAt).getTime() + 10 * day);
+    const moved = await prisma.subscription.findUniqueOrThrow({ where: { id: renewal.id } });
+    expect(moved.startsAt.toISOString()).toBe(ext.body.expiresAt);
+    expect(moved.expiresAt.getTime()).toBe(new Date(renewal.expiresAt).getTime() + 10 * day);
+  });
 });
 
 describe('sync (T11) and offline orders', () => {
@@ -378,6 +405,42 @@ describe('sync (T11) and offline orders', () => {
     expect(await prisma.paymentAttempt.count({ where: { id: attemptId } })).toBe(1);
     const order = await prisma.order.findFirstOrThrow({ where: { localId: localOrderId } });
     expect(order).toMatchObject({ status: 'PAID', offline: true, orderNumber, total: svc['N-101'].price });
+  });
+
+  it('flags an offline order whose line totals do not add up, and keeps the server titles', async () => {
+    const localOrderId = uuid();
+    const price = svc['P-101'].price;
+    const t0 = new Date(Date.now() - 60_000).toISOString();
+    const line = {
+      itemType: 'SERVICE',
+      itemId: svc['P-101'].id,
+      code: 'P-101',
+      title: '=HYPERLINK("http://evil")',
+      unit: 'نفر',
+      categoryId: null,
+      categoryTitle: null,
+      unitPrice: price,
+      quantity: 2,
+      discountId: null,
+      discountTitle: null,
+      unitDiscount: 0,
+      lineTotal: price, // should be 2 × price
+    };
+    const res = await kiosk(app).post('/sync/push', {
+      events: [
+        {
+          eventId: uuid(),
+          type: 'ORDER_OFFLINE',
+          createdAt: t0,
+          payload: { localOrderId, orderNumber: `OFF-KIOSK-01-${suffix()}`, kind: 'SERVICES', mobile: randomMobile(), createdAt: t0, lines: [line], subtotal: price, discountTotal: 0, total: price, qrTokenHash: null, catalogRevision: 1 },
+        },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.acceptedEventIds).toHaveLength(1);
+    const order = await prisma.order.findFirstOrThrow({ where: { localId: localOrderId }, include: { items: true } });
+    expect(order.conflictNote).toContain('P-101');
+    expect(order.items[0].titleSnapshot).not.toContain('HYPERLINK');
   });
 
   it('keeps a payment event for retry when its order is not synced yet, and rejects malformed events without blocking', async () => {
@@ -436,6 +499,9 @@ describe('dashboard and reports (T14)', () => {
     const csv = await admin(app, adminToken).get(`/admin/reports/sales/export?from=${today}&to=${today}&format=csv`);
     expect(csv.status).toBe(200);
     expect(csv.headers['content-type']).toContain('text/csv');
+    // No cell may start with a formula character (CSV injection into Excel).
+    const cells = (csv.text as string).replace(/^\uFEFF/, '').split('\r\n').flatMap((r) => r.split(','));
+    expect(cells.filter((c) => /^"?[=+@]/.test(c))).toEqual([]);
     const xlsx = await admin(app, adminToken).get(`/admin/reports/sales/export?from=${today}&to=${today}&format=xlsx`);
     expect(xlsx.status).toBe(200);
   });
@@ -457,6 +523,19 @@ describe('admin authentication', () => {
     const unlock = await admin(app, adminToken).patch(`/admin/users/${create.body.id}`, { unlock: true });
     expect(unlock.status).toBe(200);
     expect(await login(app, username, 'Secret@123')).toBeTruthy();
+  });
+
+  it('counts parallel wrong passwords, so a burst cannot get around the lock', async () => {
+    const username = `burst.${suffix()}`;
+    const create = await admin(app, adminToken).post('/admin/users', { username, displayName: 'تست هم‌زمانی', password: 'Secret@123', role: 'OPERATOR' });
+    expect(create.status).toBe(201);
+    const request = (await import('supertest')).default;
+    const tries = await Promise.all(
+      Array.from({ length: 5 }, () => request(app.getHttpServer()).post('/api/v1/admin/auth/login').send({ username, password: 'wrong' })),
+    );
+    expect(tries.map((r) => r.status)).toEqual([401, 401, 401, 401, 401]);
+    const locked = await request(app.getHttpServer()).post('/api/v1/admin/auth/login').send({ username, password: 'Secret@123' });
+    expect(locked.status).toBe(423);
   });
 
   it('invalidates tokens of deactivated users immediately', async () => {

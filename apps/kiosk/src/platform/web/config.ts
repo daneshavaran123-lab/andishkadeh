@@ -59,7 +59,12 @@ export async function verifySetup(s: Pick<WebSetup, 'serverUrl' | 'deviceId' | '
       headers: { Authorization: `Device ${s.deviceId}:${s.deviceKey}` },
       signal: ctrl.signal,
     });
-    if (res.ok) return { ok: true };
+    if (res.ok) {
+      // A captive portal or proxy page also answers 200: only our server returns the bootstrap JSON.
+      const body = (await res.json().catch(() => null)) as { catalogRevision?: unknown } | null;
+      if (body && typeof body.catalogRevision === 'number') return { ok: true };
+      return { ok: false, reason: 'server', message: 'این آدرس به سرور اندیشکده نمی‌رسد' };
+    }
     if (res.status === 401 || res.status === 403) return { ok: false, reason: 'auth', message: 'شناسه یا کلید دستگاه پذیرفته نشد' };
     return { ok: false, reason: 'server', message: `پاسخ نامعتبر از سرور (${res.status})` };
   } catch {

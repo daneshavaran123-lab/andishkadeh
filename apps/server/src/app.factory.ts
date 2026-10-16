@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { existsSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import express from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/exception.filter';
@@ -51,18 +51,22 @@ export async function createApp(opts: { logger?: boolean } = {}) {
   // Kiosk web app (PWA) under /kiosk/. Hashed assets are immutable; the entry page, manifest and
   // service worker are revalidated so a new release reaches the kiosks on their next start.
   if (cfg.kioskWebDistAbs && existsSync(join(cfg.kioskWebDistAbs, 'index.html'))) {
+    const kioskDist = cfg.kioskWebDistAbs;
     app.use('/kiosk', (req: express.Request, res: express.Response, next: express.NextFunction) => {
       if (req.method === 'GET' && req.originalUrl === '/kiosk') return res.redirect(301, '/kiosk/');
       next();
     });
     app.use(
       '/kiosk',
-      express.static(cfg.kioskWebDistAbs, {
+      express.static(kioskDist, {
         index: 'index.html',
         dotfiles: 'deny',
         fallthrough: false,
         setHeaders: (res, path) => {
-          if (/[\\/]assets[\\/]/.test(path)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          // Judged from inside the dist folder: a deployment path containing "assets" must not make
+          // index.html or sw.js immutable (kiosks would never update).
+          const rel = relative(kioskDist, path).split(sep).join('/');
+          if (rel.startsWith('assets/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
           else res.setHeader('Cache-Control', 'no-cache');
         },
       }),

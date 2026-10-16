@@ -10,6 +10,8 @@ import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../core/types';
 import { createNodeCore, loadConfig } from '../platform/node';
 
 const PORT = Number(process.env.KIOSK_BRIDGE_PORT ?? 5175);
+// The bridge can start payments: only this machine may reach it.
+const HOST = process.env.KIOSK_BRIDGE_HOST ?? 'localhost';
 const dataDir = resolve(process.env.KIOSK_DATA_DIR ?? resolve(__dirname, '../../.kiosk-data'));
 const allowedOrigins = (process.env.KIOSK_BRIDGE_ORIGINS ?? 'http://localhost:5174,http://127.0.0.1:5174').split(',');
 
@@ -54,6 +56,12 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
   try {
     if (req.method === 'POST' && url.pathname.startsWith('/ipc/')) {
+      // JSON only: a cross-site form post cannot send it without a CORS preflight we refuse.
+      const origin = req.headers.origin;
+      if ((origin && !allowedOrigins.includes(origin)) || !/^application\/json\b/i.test(req.headers['content-type'] ?? '')) {
+        res.writeHead(403, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: 'forbidden' }));
+        return;
+      }
       const channel = decodeURIComponent(url.pathname.slice(5)) as IpcChannel;
       if (!IPC_CHANNELS.includes(channel)) {
         res.writeHead(404, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: 'channel not allowed' }));
@@ -95,8 +103,8 @@ const server = createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`[kiosk-bridge] core running, device=${cfg.deviceId} server=${cfg.serverUrl} data=${dataDir} → http://localhost:${PORT}`);
+server.listen(PORT, HOST, () => {
+  console.log(`[kiosk-bridge] core running, device=${cfg.deviceId} server=${cfg.serverUrl} data=${dataDir} → http://${HOST}:${PORT}`);
 });
 
 const shutdown = () => {

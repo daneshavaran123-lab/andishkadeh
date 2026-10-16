@@ -24,6 +24,7 @@ import {
   type OfflineOrderLine,
   type OrderDto,
   type OrderItemDto,
+  type PaymentResultRequest,
   type PaymentResultResponse,
   type PricingItem,
   type ReceiptData,
@@ -89,9 +90,25 @@ const OUTCOME_MESSAGE: Record<TerminalOutcome, string> = {
   UNKNOWN: 'نتیجه پرداخت هنوز مشخص نیست',
 };
 
+/** An inquiry that does not answer in time counts as UNKNOWN (and is retried later). */
+const INQUIRY_TIMEOUT_MS = 30_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('پاسخ استعلام در زمان مقرر نرسید')), ms);
+    p.then(
+      (v) => (clearTimeout(t), resolve(v)),
+      (e) => (clearTimeout(t), reject(e)),
+    );
+  });
+}
+
 export class SalesService {
   /** Attempts currently on the card reader in this process (never recovered while active). */
   private readonly active = new Set<string>();
+  /** Orders with a payment being started right now: a second start must not reach the card reader. */
+  private readonly paying = new Set<string>();
+  private recovering: Promise<number> | null = null;
 
   constructor(
     private readonly db: Db,
@@ -387,6 +404,17 @@ export class SalesService {
   // ------------------------------------------------------------------ payment
 
   async startPayment(localId: string): Promise<PaymentStartResult> {
+    // Taken before any await: two quick calls for the same order would otherwise both pass the checks below.
+    if (this.paying.has(localId)) return { ok: false, code: 'PAYMENT_IN_PROGRESS', message: 'پرداخت این سفارش در جریان است' };
+    this.paying.add(localId);
+    try {
+      return await this.startPaymentLocked(localId);
+    } finally {
+      this.paying.delete(localId);
+    }
+  }
+
+  private async startPaymentLocked(localId: string): Promise<PaymentStartResult> {
     const row = this.row(localId);
     if (!row) return { ok: false, code: 'NOT_FOUND', message: 'سفارش یافت نشد' };
     if (row.status === OrderStatus.PAID) return { ok: true, result: this.outcomeView(localId, TerminalOutcome.PAID) };
@@ -415,20 +443,23 @@ export class SalesService {
       await this.db.flush();
       // 2) Make sure the server can attach the result to an order.
       if (row.offline === 1 && row.offline_enqueued === 0) {
-        this.outbox.enqueue(SyncEventType.ORDER_OFFLINE, {
-          localOrderId: row.local_id,
-          orderNumber: row.order_number,
-          kind: row.kind,
-          mobile: row.mobile,
-          createdAt: row.created_at,
-          lines: p.lines ?? [],
-          subtotal: p.subtotal,
-          discountTotal: p.discountTotal,
-          total: p.total,
-          qrTokenHash: row.qr_token_hash,
-          catalogRevision: p.catalogRevision,
-        });
-        this.update(localId, { offline_enqueued: 1 });
+        // One transaction: a crash in between must neither lose nor duplicate the offline order.
+        this.db.transaction(() => {
+          this.outbox.enqueue(SyncEventType.ORDER_OFFLINE, {
+            localOrderId: row.local_id,
+            orderNumber: row.order_number,
+            kind: row.kind,
+            mobile: row.mobile,
+            createdAt: row.created_at,
+            lines: p.lines ?? [],
+            subtotal: p.subtotal,
+            discountTotal: p.discountTotal,
+            total: p.total,
+            qrTokenHash: row.qr_token_hash,
+            catalogRevision: p.catalogRevision,
+          });
+          this.update(localId, { offline_enqueued: 1 });
+        })();
       } else if (row.server_id) {
         try {
           await this.api.post('/payments/initiate', { orderId: row.server_id, paymentAttemptId: attemptId, idempotencyKey: attemptId });
@@ -466,60 +497,56 @@ export class SalesService {
     }
   }
 
-  /** Persists a terminal/inquiry result and reports it (directly, or via the outbox when offline). */
+  /**
+   * Persists a terminal/inquiry result and reports it. The PAYMENT_RESULT event is queued in the same
+   * transaction as the journal update, before any network call: whatever happens next (power cut,
+   * slow server), the result reaches the server. A direct report that succeeds marks the event done.
+   */
   private async recordResult(localId: string, attemptId: string, result: TerminalResult, source: PaymentResultSource): Promise<PaymentOutcomeView> {
+    const current = this.db.prepare('SELECT * FROM payment_journal WHERE attempt_id = ?').get(attemptId) as JournalRow | undefined;
+    if (!current) return this.outcomeView(localId, result.outcome, result.message);
+    // A settled answer is never replaced by a weaker one: PAID is final; FAILED/CANCELLED may only become PAID.
+    const settled = current.state === TerminalOutcome.PAID || current.state === TerminalOutcome.FAILED || current.state === TerminalOutcome.CANCELLED;
+    if (current.state === TerminalOutcome.PAID || (settled && result.outcome !== TerminalOutcome.PAID)) {
+      return this.outcomeView(localId, current.state as TerminalOutcome);
+    }
+    if (current.state === TerminalOutcome.UNKNOWN && result.outcome === TerminalOutcome.UNKNOWN) {
+      // Still unknown: already reported, nothing new for the server (recovery asks every few seconds).
+      this.db.prepare('UPDATE payment_journal SET message = ? WHERE attempt_id = ?').run(result.message, attemptId);
+      return this.outcomeView(localId, TerminalOutcome.UNKNOWN, result.message);
+    }
+
     const now = new Date().toISOString();
     const final = result.outcome !== TerminalOutcome.UNKNOWN;
-    this.db
-      .prepare(
-        'UPDATE payment_journal SET state = ?, terminal_ref = COALESCE(?, terminal_ref), rrn = COALESCE(?, rrn), trace_no = COALESCE(?, trace_no), message = ?, source = ?, resolved_at = ? WHERE attempt_id = ?',
-      )
-      .run(result.outcome, result.terminalRef, result.rrn, result.traceNo, result.message, source, final ? now : null, attemptId);
-    await this.db.flush(); // the terminal's answer must survive a power cut before anything else happens
-    const journal = this.db.prepare('SELECT * FROM payment_journal WHERE attempt_id = ?').get(attemptId) as JournalRow;
-    const row = this.row(localId)!;
-    const p = this.payloadOf(row);
-
     const localStatus =
       result.outcome === TerminalOutcome.PAID
         ? OrderStatus.PAID
         : result.outcome === TerminalOutcome.UNKNOWN
           ? OrderStatus.UNKNOWN
           : OrderStatus.FAILED;
-    const report = {
-      outcome: result.outcome,
-      amount: journal.amount,
-      terminalRef: journal.terminal_ref,
-      rrn: journal.rrn,
-      traceNo: journal.trace_no,
-      message: result.message,
-      source,
-      occurredAt: now,
-    };
-
-    let synced = false;
-    if (row.server_id) {
-      try {
-        const res = await this.api.post<PaymentResultResponse>(`/payments/${attemptId}/result`, report);
-        this.applyServerOrder(localId, res.order);
-        synced = true;
-      } catch {
-        // Fall through to the outbox: the server will create/resolve the attempt on sync.
-      }
-    }
-    if (!synced) {
-      this.outbox.enqueue(SyncEventType.PAYMENT_RESULT, {
-        paymentAttemptId: attemptId,
-        localOrderId: localId,
-        ...report,
-        terminalRef: report.terminalRef ?? null,
-        rrn: report.rrn ?? null,
-        traceNo: report.traceNo ?? null,
-        message: report.message ?? null,
-      });
-      const fresh = this.row(localId)!;
+    const queued = this.db.transaction((): { eventId: string; report: PaymentResultRequest } => {
+      this.db
+        .prepare(
+          'UPDATE payment_journal SET state = ?, terminal_ref = COALESCE(?, terminal_ref), rrn = COALESCE(?, rrn), trace_no = COALESCE(?, trace_no), message = ?, source = ?, resolved_at = ? WHERE attempt_id = ?',
+        )
+        .run(result.outcome, result.terminalRef, result.rrn, result.traceNo, result.message, source, final ? now : null, attemptId);
+      const journal = this.db.prepare('SELECT * FROM payment_journal WHERE attempt_id = ?').get(attemptId) as JournalRow;
+      const report = {
+        outcome: result.outcome,
+        amount: journal.amount,
+        terminalRef: journal.terminal_ref ?? null,
+        rrn: journal.rrn ?? null,
+        traceNo: journal.trace_no ?? null,
+        // The server rejects longer messages; a rejected event would never deliver the result.
+        message: result.message?.slice(0, 300) ?? null,
+        source,
+        occurredAt: now,
+      };
+      const eventId = this.outbox.enqueue(SyncEventType.PAYMENT_RESULT, { paymentAttemptId: attemptId, localOrderId: localId, ...report });
+      const row = this.row(localId)!;
+      const p = this.payloadOf(row);
       // Never downgrade a confirmed PAID order.
-      const status = fresh.status === OrderStatus.PAID ? OrderStatus.PAID : localStatus;
+      const status = row.status === OrderStatus.PAID ? OrderStatus.PAID : localStatus;
       this.update(localId, {
         status,
         sync_pending: 1,
@@ -532,10 +559,23 @@ export class SalesService {
             : {}),
         },
       });
-    } else {
-      this.update(localId, { payload: { terminalRef: journal.terminal_ref, rrn: journal.rrn } });
+      return { eventId, report };
+    })();
+    // The card reader has answered: the customer must see the result even if storage is failing
+    // (the driver keeps retrying the save in the background).
+    await this.db.flush().catch((e) => console.error('[kiosk] payment result not yet stored', e));
+
+    const row = this.row(localId)!;
+    if (row.server_id) {
+      try {
+        const res = await this.api.post<PaymentResultResponse>(`/payments/${attemptId}/result`, queued.report);
+        this.applyServerOrder(localId, res.order);
+        this.outbox.markDone(queued.eventId);
+        await this.db.flush().catch(() => undefined);
+      } catch {
+        // The queued event delivers the result on the next sync.
+      }
     }
-    await this.db.flush();
     return this.outcomeView(localId, result.outcome, result.message);
   }
 
@@ -595,7 +635,7 @@ export class SalesService {
     this.db.prepare('UPDATE payment_journal SET inquiries = inquiries + 1 WHERE attempt_id = ?').run(j.attempt_id);
     let result: TerminalResult;
     try {
-      result = await this.payment.inquire({ attemptId: j.attempt_id, terminalRef: j.terminal_ref, amount: j.amount });
+      result = await withTimeout(this.payment.inquire({ attemptId: j.attempt_id, terminalRef: j.terminal_ref, amount: j.amount }), INQUIRY_TIMEOUT_MS);
     } catch (e) {
       result = { outcome: TerminalOutcome.UNKNOWN, terminalRef: null, rrn: null, traceNo: null, message: (e as Error).message };
     }
@@ -612,7 +652,13 @@ export class SalesService {
    * Journal recovery (power cut, crash, network drop): runs at startup and periodically.
    * IN_FLIGHT rows not owned by this process are turned into UNKNOWN and re-queried.
    */
-  async recover(maxInquiries = 30): Promise<number> {
+  recover(maxInquiries = 30): Promise<number> {
+    // One pass at a time: a slow terminal must not stack passes over the same rows.
+    this.recovering ??= this.recoverOnce(maxInquiries).finally(() => (this.recovering = null));
+    return this.recovering;
+  }
+
+  private async recoverOnce(maxInquiries: number): Promise<number> {
     const rows = this.db
       .prepare("SELECT * FROM payment_journal WHERE state IN ('IN_FLIGHT', 'UNKNOWN') AND inquiries < ? ORDER BY started_at")
       .all(maxInquiries) as JournalRow[];
@@ -628,6 +674,9 @@ export class SalesService {
   /** Device command PAYMENT_INQUIRY from the admin panel. */
   async inquireByAttempt(attemptId: string, terminalRef: string | null, amount: number): Promise<TerminalResult> {
     const j = this.db.prepare('SELECT * FROM payment_journal WHERE attempt_id = ?').get(attemptId) as JournalRow | undefined;
+    if (j && this.active.has(j.attempt_id)) {
+      return { outcome: TerminalOutcome.UNKNOWN, terminalRef: j.terminal_ref, rrn: j.rrn, traceNo: j.trace_no, message: 'پرداخت هنوز روی کارتخوان در جریان است' };
+    }
     if (j) {
       const out = await this.resolveByInquiry(j, PaymentResultSource.INQUIRY);
       return { outcome: out.outcome, terminalRef: j.terminal_ref, rrn: j.rrn, traceNo: j.trace_no, message: out.message };

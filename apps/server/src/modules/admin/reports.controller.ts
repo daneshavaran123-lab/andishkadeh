@@ -236,8 +236,10 @@ export class ReportsController {
 
     if (q.format === 'csv') {
       const esc = (v: unknown) => {
-        const s = String(v ?? '');
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        let s = String(v ?? '');
+        // Text starting with = + - @ (or a tab/CR) would run as a formula in Excel: keep it as text.
+        if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+        return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
       };
       const csv = '﻿' + [header, ...rows].map((r) => r.map(esc).join(',')).join('\r\n');
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

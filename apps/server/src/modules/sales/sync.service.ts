@@ -86,8 +86,11 @@ export class SyncService {
       } catch (e) {
         const retryable = e instanceof RetryableError || !(e instanceof ApiError);
         const code = e instanceof RetryableError ? e.code : e instanceof ApiError ? e.code : ErrorCode.INTERNAL;
-        const message = (e as Error).message ?? 'error';
-        if (!(e instanceof RetryableError)) this.logger.warn(`Sync event ${ev.type} ${ev.eventId} rejected: ${message}`);
+        // Only messages written for people leave the server; anything else is logged here in full.
+        const known = e instanceof ApiError || e instanceof RetryableError;
+        const message = known ? (e as Error).message : 'خطای داخلی سرور هنگام اعمال رویداد؛ دوباره تلاش می‌شود';
+        if (!known) this.logger.error(`Sync event ${ev.type} ${ev.eventId} failed`, (e as Error)?.stack ?? String(e));
+        else if (!(e instanceof RetryableError)) this.logger.warn(`Sync event ${ev.type} ${ev.eventId} rejected: ${message}`);
         await this.prisma.syncEvent.upsert({
           where: { id: ev.eventId },
           create: { id: ev.eventId, deviceId, type: ev.type, payload: ev.payload as unknown as Prisma.InputJsonValue, status: 'REJECTED', error: message },

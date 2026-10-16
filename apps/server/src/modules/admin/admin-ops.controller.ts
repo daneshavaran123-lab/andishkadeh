@@ -196,14 +196,18 @@ export class AdminOpsController {
   @HttpCode(200)
   @Roles(AdminRole.ADMIN)
   async resolveConflict(@CurrentAdmin() admin: AdminPrincipal, @Param('id') id: string, @Body(new ZodPipe(ReasonRequest)) body: { reason: string }) {
-    const order = await this.prisma.order.findUnique({ where: { id } });
-    if (!order) throw ApiError.notFound('سفارش');
-    const updated = await this.prisma.order.update({
-      where: { id },
-      data: { conflictFlag: false, conflictNote: [order.conflictNote, `بررسی شد: ${body.reason}`].filter(Boolean).join('؛ ') },
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({ where: { id } });
+      if (!order) throw ApiError.notFound('سفارش');
+      const conflictNote = [order.conflictNote, `بررسی شد: ${body.reason}`].filter(Boolean).join('؛ ');
+      // Only if nothing new was reported since the admin read the order (a new note keeps the flag up).
+      const updated = await tx.order.updateMany({ where: { id, conflictNote: order.conflictNote }, data: { conflictFlag: false, conflictNote } });
+      if (updated.count === 0) {
+        throw ApiError.conflict(ErrorCode.CONFLICT, 'مغایرت جدیدی برای این سفارش ثبت شد؛ صفحه را تازه کنید و دوباره بررسی کنید');
+      }
+      await this.audit.log(tx, admin, { action: 'order.conflict_resolved', entityType: 'Order', entityId: id, before: { conflictNote: order.conflictNote }, reason: body.reason });
+      return { ok: true, conflictNote };
     });
-    await this.audit.log(this.prisma, admin, { action: 'order.conflict_resolved', entityType: 'Order', entityId: id, before: { conflictNote: order.conflictNote }, reason: body.reason });
-    return { ok: true, conflictNote: updated.conflictNote };
   }
 
   // ------------------------------------------------------------------ A11 payments
@@ -363,15 +367,32 @@ export class AdminOpsController {
       const s = await tx.subscription.findUnique({ where: { id } });
       if (!s) throw ApiError.notFound('اشتراک');
       if (s.status === 'CANCELLED') throw ApiError.conflict(ErrorCode.CONFLICT, 'اشتراک ابطال‌شده قابل تمدید نیست');
-      const rev = await this.counters.next(tx, 'subscriptionRev');
-      const expiresAt = new Date(s.expiresAt.getTime() + body.days * 86400000);
-      await tx.subscription.update({ where: { id }, data: { expiresAt, rev } });
+      const shift = body.days * 86400000;
+      const expiresAt = new Date(s.expiresAt.getTime() + shift);
+      await tx.subscription.update({ where: { id }, data: { expiresAt, rev: await this.counters.next(tx, 'subscriptionRev') } });
+      // Renewals that start where this one ended form one continuous coverage; shift them too,
+      // or the extra days would be hidden behind the next period.
+      const shifted: string[] = [];
+      let chainEnd = s.expiresAt.getTime();
+      const later = await tx.subscription.findMany({
+        where: { customerId: s.customerId, id: { not: id }, status: { not: 'CANCELLED' }, startsAt: { gte: s.startsAt } },
+        orderBy: { startsAt: 'asc' },
+      });
+      for (const n of later) {
+        if (n.startsAt.getTime() < s.expiresAt.getTime() || n.startsAt.getTime() > chainEnd) continue;
+        chainEnd = Math.max(chainEnd, n.expiresAt.getTime());
+        await tx.subscription.update({
+          where: { id: n.id },
+          data: { startsAt: new Date(n.startsAt.getTime() + shift), expiresAt: new Date(n.expiresAt.getTime() + shift), rev: await this.counters.next(tx, 'subscriptionRev') },
+        });
+        shifted.push(n.id);
+      }
       await this.audit.log(tx, admin, {
         action: 'subscription.extended',
         entityType: 'Subscription',
         entityId: id,
         before: { expiresAt: s.expiresAt.toISOString() },
-        after: { expiresAt: expiresAt.toISOString(), days: body.days },
+        after: { expiresAt: expiresAt.toISOString(), days: body.days, shiftedRenewals: shifted },
         reason: body.reason,
         ip,
       });

@@ -75,14 +75,21 @@ function Router() {
   }
 }
 
+let ending: Promise<void> | null = null;
+
 /** Clears the session safely: an unpaid locked order is cancelled; settled/unknown payments stay recorded. */
-async function endSession() {
-  const { order, payment, reset } = useSession.getState();
-  if (order && !payment && order.status === 'LOCKED') {
-    await invoke('order:cancel', { localOrderId: order.localOrderId }).catch(() => undefined);
-  }
-  await invoke('session:end').catch(() => undefined);
-  reset();
+function endSession(): Promise<void> {
+  // The timeout ticks every 500 ms and the cancel button can race it: end each session once.
+  return (ending ??= (async () => {
+    const { order, payment, reset } = useSession.getState();
+    if (order && !payment && order.status === 'LOCKED') {
+      await invoke('order:cancel', { localOrderId: order.localOrderId }).catch(() => undefined);
+    }
+    await invoke('session:end').catch(() => undefined);
+    reset();
+  })().finally(() => {
+    ending = null;
+  }));
 }
 
 /** K24 — short help and cancel confirmation. */
@@ -139,6 +146,7 @@ function TimeoutModal({ seconds, onStay }: { seconds: number; onStay: () => void
 function useInactivity() {
   const routeId = useSession((s) => s.stack[s.stack.length - 1].id);
   const settings = useApp((s) => s.bootstrap?.settings);
+  const allowed = useSession((s) => s.idleTimeoutAllowed);
   const [warning, setWarning] = useState<number | null>(null);
   const last = useRef(Date.now());
 
@@ -157,12 +165,13 @@ function useInactivity() {
   }, []);
 
   useEffect(() => {
+    // The full timeout starts again on every screen change, and when an error makes it apply.
     last.current = Date.now();
     setWarning(null);
-  }, [routeId]);
+  }, [routeId, allowed]);
 
   useEffect(() => {
-    if (NO_TIMEOUT.includes(routeId)) return;
+    if (NO_TIMEOUT.includes(routeId) && !allowed) return;
     const timeout = (settings?.sessionTimeoutSec ?? 90) * 1000;
     const warnFor = (settings?.timeoutWarningSec ?? 15) * 1000;
     const t = setInterval(() => {
@@ -177,7 +186,7 @@ function useInactivity() {
       }
     }, 500);
     return () => clearInterval(t);
-  }, [routeId, settings?.sessionTimeoutSec, settings?.timeoutWarningSec]);
+  }, [routeId, allowed, settings?.sessionTimeoutSec, settings?.timeoutWarningSec]);
 
   return { warning, stay: () => ((last.current = Date.now()), setWarning(null)) };
 }

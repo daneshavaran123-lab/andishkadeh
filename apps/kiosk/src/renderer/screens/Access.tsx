@@ -3,7 +3,7 @@ import { AccessResult, OrderKind, formatJalaliLong, toPersianDigits } from '@and
 import { invoke, onEvent } from '../bridge';
 import { Icon } from '../components/Icon';
 import { Notice, Screen, Spinner } from '../components/ui';
-import { useApp, useSession } from '../store';
+import { sessionGuard, useApp, useSession } from '../store';
 
 /**
  * K19 — scan the membership QR. USB HID scanners type the code + Enter (keyboard wedge);
@@ -23,8 +23,10 @@ export function Scan() {
     busyRef.current = true;
     setBusy(true);
     setError(null);
+    const session = sessionGuard();
     const r = await invoke('access:validate', { token: payload });
     busyRef.current = false;
+    if (!session.alive()) return; // the member walked away; never show their result to the next person
     setBusy(false);
     if (r.ok) {
       set({ access: r.result });

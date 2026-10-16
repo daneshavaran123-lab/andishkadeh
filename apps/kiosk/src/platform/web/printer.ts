@@ -55,6 +55,8 @@ export class BrowserPrintAdapter implements PrinterAdapter {
     const html = await receiptHtml(receipt, await this.font());
     const frame = document.createElement('iframe');
     frame.setAttribute('aria-hidden', 'true');
+    // No scripts in the receipt; same-origin + modals only so this page can wait for fonts and call print().
+    frame.setAttribute('sandbox', 'allow-same-origin allow-modals');
     frame.style.cssText = 'position:fixed;left:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none';
     try {
       await new Promise<void>((resolve, reject) => {

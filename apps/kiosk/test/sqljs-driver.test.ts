@@ -80,4 +80,50 @@ describe('sql.js driver', () => {
     expect(kvGet(reloaded, 'k')).toBe('v');
     db.close();
   });
+
+  it('a failed save does not stop later saves, and retries on its own', async () => {
+    const store = memoryPersistence();
+    let failNext = 1;
+    const flaky = {
+      load: store.load,
+      save: async (b: Uint8Array) => {
+        if (failNext-- > 0) throw new Error('QuotaExceededError');
+        await store.save(b);
+      },
+    };
+    const db = migrate(await openSqlJsDatabase(SQL, flaky, { debounceMs: 60_000 }));
+    kvSet(db, 'k', 'first');
+    await expect(db.flush()).rejects.toThrow('QuotaExceededError');
+    kvSet(db, 'k', 'second');
+    await db.flush(); // storage is back: this save must run, not inherit the earlier rejection
+    expect(kvGet(await openSqlJsDatabase(SQL, memoryPersistence(store.bytes)), 'k')).toBe('second');
+    db.close();
+
+    // Without an explicit flush, the driver retries the failed save in the background.
+    const store2 = memoryPersistence();
+    let fails = 1;
+    const db2 = migrate(
+      await openSqlJsDatabase(
+        SQL,
+        {
+          load: store2.load,
+          save: async (b) => {
+            if (fails-- > 0) throw new Error('IDB unavailable');
+            await store2.save(b);
+          },
+        },
+        { debounceMs: 5 },
+      ),
+    );
+    const errors = console.error;
+    console.error = () => undefined;
+    try {
+      kvSet(db2, 'k', 'v');
+      await new Promise((r) => setTimeout(r, 120));
+    } finally {
+      console.error = errors;
+    }
+    expect(kvGet(await openSqlJsDatabase(SQL, memoryPersistence(store2.bytes)), 'k')).toBe('v');
+    db2.close();
+  });
 });

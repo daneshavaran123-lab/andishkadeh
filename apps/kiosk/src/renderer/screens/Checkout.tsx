@@ -11,7 +11,7 @@ import {
 import { invoke } from '../bridge';
 import { Icon } from '../components/Icon';
 import { Notice, NumPad, Screen, Spinner } from '../components/ui';
-import { cartPreview, planPrice, useApp, useSession } from '../store';
+import { cartPreview, planPrice, sessionGuard, useAllowIdleTimeout, useApp, useSession } from '../store';
 import type { CreateOrderResult, PaymentStartResult, PrintResult } from '../../core/types';
 
 const fmtMobile = (digits: string) => {
@@ -92,7 +92,13 @@ export function Review() {
       ? [{ itemType: ItemType.PLAN, itemId: planId!, quantity: 1 }]
       : cart.map((c) => ({ itemType: ItemType.SERVICE, itemId: c.serviceId, quantity: c.quantity }));
     const expectedTotal = isSub ? (bootstrap && plan ? planPrice(bootstrap, plan).finalPrice : undefined) : cartPreview(bootstrap, cart).total;
+    const session = sessionGuard();
     void invoke('order:create', { kind: isSub ? OrderKind.SUBSCRIPTION : OrderKind.SERVICES, mobile, items, expectedTotal }).then((r: CreateOrderResult) => {
+      if (!session.alive()) {
+        // The customer left while the order was being locked: release it instead of showing it to the next one.
+        if (r.ok) void invoke('order:cancel', { localOrderId: r.order.localOrderId }).catch(() => undefined);
+        return;
+      }
       if (r.ok) {
         set({ order: r.order });
         setState('ready');
@@ -248,7 +254,9 @@ export function Paying() {
   useEffect(() => {
     if (!order || startedPayments.has(visit.current)) return;
     startedPayments.add(visit.current);
+    const session = sessionGuard();
     void invoke('payment:start', { localOrderId: order.localOrderId }).then((r: PaymentStartResult) => {
+      if (!session.alive()) return; // the result is recorded by the core either way
       if (r.ok) {
         set({ payment: r.result, order: r.result.order, inquiredOnce: false });
         replace('paymentResult');
@@ -257,6 +265,7 @@ export function Paying() {
       }
     });
   }, []);
+  useAllowIdleTimeout(!!error);
 
   if (!order) return null;
   if (error) {
@@ -301,7 +310,9 @@ export function PaymentResult() {
 
   const inquire = async () => {
     setBusy(true);
+    const session = sessionGuard();
     const r = await invoke('payment:inquire', { localOrderId: order.localOrderId });
+    if (!session.alive()) return;
     setBusy(false);
     if (r.ok) set({ payment: r.result, order: r.result.order, inquiredOnce: true });
     else set({ inquiredOnce: true });
@@ -436,14 +447,16 @@ export function Printing() {
     if (!order) return;
     const id = ++run.current;
     setState('printing');
+    const session = sessionGuard();
     void invoke('receipt:print', { localOrderId: order.localOrderId }).then((r: PrintResult) => {
-      if (id !== run.current) return;
+      if (id !== run.current || !session.alive()) return;
       setDetail(r.detail);
       setState(r.printed ? 'done' : 'failed');
     });
   };
 
   useEffect(print, []);
+  useAllowIdleTimeout(state === 'failed');
   useEffect(() => {
     if (state !== 'done') return;
     const t = setTimeout(() => replace('end'), 4000);

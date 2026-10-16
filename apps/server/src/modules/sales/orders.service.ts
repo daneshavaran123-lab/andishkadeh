@@ -212,13 +212,35 @@ export class OrdersService {
     if (subtotal !== p.subtotal || discount !== p.discountTotal || p.total !== p.subtotal - p.discountTotal) {
       notes.push('محاسبات مبلغ سفارش آفلاین با اقلام آن سازگار نیست');
     }
+    // Offline policy and order shape: a kiosk enforces these itself, so a mismatch means a faulty or
+    // tampered device. The sale is kept (the card may already be charged) and flagged for review.
+    const settings = await this.settings.settings(tx);
+    if (!settings.offlineSalesEnabled) notes.push('فروش آفلاین در تنظیمات مرکز غیرفعال است');
+    if (p.kind === OrderKind.SUBSCRIPTION) {
+      if (!settings.offlineSubscriptionSales) notes.push('فروش اشتراک آفلاین در تنظیمات مرکز غیرفعال است');
+      if (p.lines.length !== 1 || p.lines[0].itemType !== ItemType.PLAN || p.lines[0].quantity !== 1) {
+        notes.push('سفارش اشتراک آفلاین باید دقیقاً یک پلن با تعداد یک داشته باشد');
+      }
+    } else if (p.lines.some((l) => l.itemType === ItemType.PLAN)) {
+      notes.push('سفارش خدمات آفلاین شامل پلن اشتراک است');
+    }
+
+    // Titles, codes and units are taken from the server catalogue whenever the item is known.
+    const trusted: Array<{ code: string; title: string; unit: string } | null> = [];
     for (const l of p.lines) {
       if (l.itemType === ItemType.SERVICE) {
         const s = await tx.service.findUnique({ where: { id: l.itemId } });
         if (!s || s.price !== l.unitPrice) notes.push(`قیمت ${l.code} در زمان فروش آفلاین با قیمت فعلی مرکز متفاوت است`);
+        trusted.push(s ? { code: s.code, title: s.title, unit: s.unit } : null);
       } else {
         const plan = await tx.subscriptionPlan.findUnique({ where: { id: l.itemId } });
         if (!plan || plan.price !== l.unitPrice) notes.push(`قیمت ${l.code} در زمان فروش آفلاین با قیمت فعلی مرکز متفاوت است`);
+        trusted.push(plan ? { code: plan.code, title: plan.title, unit: l.unit } : null);
+      }
+      if (l.unitDiscount > l.unitPrice) notes.push(`تخفیف ${l.code} بیشتر از قیمت آن است`);
+      if (l.lineTotal !== (l.unitPrice - l.unitDiscount) * l.quantity) notes.push(`جمع ردیف ${l.code} با قیمت، تخفیف و تعداد آن سازگار نیست`);
+      if (l.unitDiscount > 0 && !(l.discountId && (await tx.discount.findUnique({ where: { id: l.discountId }, select: { id: true } })))) {
+        notes.push(`تخفیف ${l.code} در مرکز تعریف نشده است`);
       }
     }
 
@@ -249,9 +271,9 @@ export class OrdersService {
           create: p.lines.map((l, i) => ({
             itemType: l.itemType,
             itemId: l.itemId,
-            codeSnapshot: l.code,
-            titleSnapshot: l.title,
-            unitSnapshot: l.unit,
+            codeSnapshot: trusted[i]?.code ?? l.code,
+            titleSnapshot: trusted[i]?.title ?? l.title,
+            unitSnapshot: trusted[i]?.unit ?? l.unit,
             categoryIdSnapshot: l.categoryId,
             categoryTitleSnapshot: l.categoryTitle,
             unitPriceSnapshot: l.unitPrice,

@@ -24,6 +24,7 @@ import { Icon } from '../components/Icon';
 import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, Pagination, ReasonDialog, useToast, type RangePreset, type Tone } from '../components/ui';
 import { PAYMENT_TONE } from './Dashboard';
 import { PaymentActions } from './Payments';
+import { escapeHtml } from '../html';
 
 export const ORDER_TONE: Record<OrderStatus, Tone> = {
   LOCKED: 'neutral',
@@ -185,7 +186,7 @@ export function Orders() {
   );
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+const esc = escapeHtml;
 
 /** Browser print of a receipt (reception printer). No QR on reprints: raw tokens are never stored. */
 export function printReceiptInBrowser(r: ReceiptData) {

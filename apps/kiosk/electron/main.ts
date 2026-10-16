@@ -7,6 +7,7 @@
 import { app, BrowserWindow, ipcMain, net, powerSaveBlocker, protocol, session } from 'electron';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import type { KioskConfig } from '../src/core/config';
 import type { KioskCore } from '../src/core/kiosk-core';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../src/core/types';
 import { createNodeCore, loadConfig } from '../src/platform/node';
@@ -16,13 +17,13 @@ protocol.registerSchemesAsPrivileged([
   { scheme: 'kiosk-media', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },
 ]);
 
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
-}
+// A second copy must not touch the database: it exits at once and the running kiosk takes focus.
+const primary = app.requestSingleInstanceLock();
+if (!primary) app.exit(0);
 
 // Fixed, documented location (kiosk.config.json, SQLite, media cache, receipts): %APPDATA%\AndishkadehKiosk
 const dataDir = process.env.KIOSK_DATA_DIR ?? join(app.getPath('appData'), 'AndishkadehKiosk');
-const cfg = loadConfig(dataDir, { appVersion: app.getVersion() });
+let cfg: KioskConfig;
 let core: KioskCore;
 let win: BrowserWindow | null = null;
 
@@ -72,13 +73,16 @@ function createWindow() {
   else void win.loadFile(rendererFile);
 }
 
-app.whenReady().then(async () => {
+if (primary) void app.whenReady().then(start);
+
+async function start() {
+  cfg = loadConfig(dataDir, { appVersion: app.getVersion() });
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
   powerSaveBlocker.start('prevent-display-sleep');
 
   core = createNodeCore(cfg, {
     mediaBase: 'kiosk-media://media',
-    printer: cfg.adapters.printer === 'windows' ? new WindowsDriverPrinter(cfg.adapters.printerName) : undefined,
+    printer: cfg.adapters.printer === 'windows' ? new WindowsDriverPrinter(cfg.adapters.printerName, () => win?.webContents ?? null) : undefined,
   });
 
   protocol.handle('kiosk-media', async (request) => {
@@ -103,7 +107,7 @@ app.whenReady().then(async () => {
   if (app.isPackaged && cfg.kioskMode) {
     app.setLoginItemSettings({ openAtLogin: true });
   }
-});
+}
 
 app.on('second-instance', () => {
   if (win) {

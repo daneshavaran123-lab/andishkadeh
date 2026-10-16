@@ -13,7 +13,8 @@ import {
   type ReceiptData,
 } from '@andishkadeh/shared';
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+// Every interpolated value is escaped, numbers included: receipt data comes from synced storage.
+const esc = (v: string | number) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 export async function receiptHtml(r: ReceiptData, fontUrl?: string): Promise<string> {
   const qr = r.subscription?.qrToken
@@ -21,8 +22,8 @@ export async function receiptHtml(r: ReceiptData, fontUrl?: string): Promise<str
     : '';
   const rows = r.lines
     .map(
-      (l) => `<tr><td class="t"><div>${esc(l.title)}</div><div class="c" dir="ltr">${esc(l.code)} × ${l.quantity}</div></td>
-      <td class="n">${formatNumberFa(l.lineTotal)}${l.unitDiscount ? `<div class="d">تخفیف ${formatNumberFa(l.unitDiscount * l.quantity)}</div>` : ''}</td></tr>`,
+      (l) => `<tr><td class="t"><div>${esc(l.title)}</div><div class="c" dir="ltr">${esc(l.code)} × ${esc(l.quantity)}</div></td>
+      <td class="n">${esc(formatNumberFa(l.lineTotal))}${l.unitDiscount ? `<div class="d">تخفیف ${esc(formatNumberFa(l.unitDiscount * l.quantity))}</div>` : ''}</td></tr>`,
     )
     .join('');
   return `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8">
@@ -47,21 +48,21 @@ td{vertical-align:top;padding:3px 0}
 <h1>${esc(r.centerName)}</h1>
 <div class="sub">${esc(r.header)}${r.reprint ? ' — <span class="badge">چاپ مجدد</span>' : ''}</div>
 <div class="meta"><span>شماره سفارش</span><span class="ltr">${esc(r.orderNumber)}</span></div>
-<div class="meta"><span>تاریخ</span><span>${formatJalaliDateTime(r.paidAt ?? r.createdAt, r.timezone)}</span></div>
-<div class="meta"><span>نوع</span><span>${ORDER_KIND_LABEL[r.kind]}</span></div>
+<div class="meta"><span>تاریخ</span><span>${esc(formatJalaliDateTime(r.paidAt ?? r.createdAt, r.timezone))}</span></div>
+<div class="meta"><span>نوع</span><span>${esc(ORDER_KIND_LABEL[r.kind] ?? r.kind)}</span></div>
 <div class="meta"><span>موبایل</span><span class="ltr">${esc(r.mobileMasked)}</span></div>
 ${r.offline ? '<div class="meta"><span class="badge">ثبت آفلاین — در انتظار همگام‌سازی</span></div>' : ''}
 <hr><table>${rows}</table><hr>
-<div class="meta"><span>جمع</span><span>${formatToman(r.subtotal)}</span></div>
-${r.discountTotal ? `<div class="meta"><span>تخفیف</span><span>${formatToman(r.discountTotal)}</span></div>` : ''}
-<div class="meta tot"><span>مبلغ پرداخت‌شده</span><span>${formatToman(r.total)}</span></div>
+<div class="meta"><span>جمع</span><span>${esc(formatToman(r.subtotal))}</span></div>
+${r.discountTotal ? `<div class="meta"><span>تخفیف</span><span>${esc(formatToman(r.discountTotal))}</span></div>` : ''}
+<div class="meta tot"><span>مبلغ پرداخت‌شده</span><span>${esc(formatToman(r.total))}</span></div>
 ${r.payment.terminalRef ? `<div class="meta"><span>مرجع کارتخوان</span><span class="ltr">${esc(r.payment.terminalRef)}</span></div>` : ''}
 ${r.payment.rrn ? `<div class="meta"><span>شماره پیگیری بانک</span><span class="ltr">${esc(r.payment.rrn)}</span></div>` : ''}
 ${
   r.subscription
     ? `<hr><div class="meta"><span>اشتراک</span><span>${esc(r.subscription.planTitle)}</span></div>
-<div class="meta"><span>شروع</span><span>${formatJalaliDate(r.subscription.startsAt, r.timezone)}</span></div>
-<div class="meta"><span>پایان اعتبار</span><span>${formatJalaliDate(r.subscription.expiresAt, r.timezone)}</span></div>
+<div class="meta"><span>شروع</span><span>${esc(formatJalaliDate(r.subscription.startsAt, r.timezone))}</span></div>
+<div class="meta"><span>پایان اعتبار</span><span>${esc(formatJalaliDate(r.subscription.expiresAt, r.timezone))}</span></div>
 ${qr ? `<div class="qr">${qr}<div>کارت عضویت — این کد را نزد خود نگه دارید</div></div>` : '<div class="foot">QR در چاپ مجدد درج نمی‌شود؛ برای صدور مجدد به پذیرش مراجعه کنید.</div>'}`
     : ''
 }

@@ -3,6 +3,7 @@ const VERSION = '__VERSION__';
 const PRECACHE = __PRECACHE__;
 const CACHE = `kiosk-shell-${VERSION}`;
 const SCOPE = self.registration.scope;
+const NAV_TIMEOUT_MS = 4000;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -27,17 +28,19 @@ self.addEventListener('fetch', (event) => {
   // Only the app's own files: API calls, media downloads and other origins always go to the network.
   if (req.method !== 'GET' || !req.url.startsWith(SCOPE)) return;
   if (req.mode === 'navigate') {
-    // Network first so updates arrive while online; the cached shell keeps the kiosk usable offline.
+    // Network first so updates arrive while online, but a slow or failing server (timeout, 502)
+    // falls back to the precached shell of this version. Navigations are never written to the
+    // cache: the shell must always match the precached scripts.
     event.respondWith(
-      fetch(req)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            void caches.open(CACHE).then((c) => c.put(new URL('./', SCOPE).toString(), copy));
-          }
-          return res;
-        })
-        .catch(() => caches.match(new URL('./', SCOPE).toString(), { cacheName: CACHE })),
+      (async () => {
+        const network = fetch(req);
+        const timeout = new Promise((resolve) => setTimeout(() => resolve(null), NAV_TIMEOUT_MS));
+        const res = await Promise.race([network.catch(() => null), timeout]);
+        if (res && res.ok) return res;
+        const shell = await caches.match(new URL('./', SCOPE).toString(), { cacheName: CACHE });
+        if (shell) return shell;
+        return res ?? network; // not installed yet: wait for the network after all
+      })(),
     );
     return;
   }

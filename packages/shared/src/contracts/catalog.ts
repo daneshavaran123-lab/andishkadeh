@@ -18,6 +18,16 @@ export const MediaRef = z.object({
 });
 export type MediaRef = z.infer<typeof MediaRef>;
 
+/** IANA time zone known to the runtime (an unknown one would make every date format call throw). */
+function isTimeZone(tz: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const KioskSettings = z.object({
   centerName: z.string().min(1).max(120),
   centerSubtitle: z.string().max(200),
@@ -44,7 +54,7 @@ export const KioskSettings = z.object({
   offlineSubscriptionSales: z.boolean(),
   /** How long a cached catalogue stays usable offline before sales stop (hours). */
   offlineCatalogMaxAgeHours: z.number().int().min(1).max(720),
-  timezone: z.string(),
+  timezone: z.string().refine(isTimeZone, 'منطقه زمانی نامعتبر است (مثال: Asia/Tehran)'),
 });
 export type KioskSettings = z.infer<typeof KioskSettings>;
 

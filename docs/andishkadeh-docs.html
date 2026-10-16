@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.0</span> · ۲۳ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.1</span> · ۲۴ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -466,7 +466,7 @@ flowchart TD
   PRN --&gt; END["پایان و بازگشت خودکار"] --&gt; K01
   ACC --&gt; K01
 </pre>
-    <figcaption>از شروع تا پایان؛ مهلت بی‌فعالیتی نشست را پاک می‌کند (به‌جز هنگام پرداخت و چاپ)</figcaption>
+    <figcaption>از شروع تا پایان؛ مهلت بی‌فعالیتی نشست را پاک می‌کند (به‌جز هنگام پرداخت و چاپ، مگر وقتی خطا نمایش داده شود)</figcaption>
   </figure>
 
   <h3>مراحل پرداخت امن</h3>
@@ -487,16 +487,17 @@ sequenceDiagram
   end
   C-&gt;&gt;P: initiate (مبلغ، شماره سفارش، attemptId)
   P--&gt;&gt;C: PAID / FAILED / UNKNOWN
-  C-&gt;&gt;DB: ثبت نتیجه + flush
+  C-&gt;&gt;DB: ثبت نتیجه + رویداد PAYMENT_RESULT در صف (یک تراکنش) + flush
   alt سرور در دسترس
     C-&gt;&gt;S: payments/{attemptId}/result
     S--&gt;&gt;C: سفارش تأییدشده
+    C-&gt;&gt;DB: رویداد صف انجام‌شده
   else قطع شبکه
-    C-&gt;&gt;DB: رویداد PAYMENT_RESULT در صف
+    Note over C,DB: رویداد در صف می‌ماند و با همگام‌سازی ارسال می‌شود
   end
   C--&gt;&gt;UI: نتیجه پرداخت
 </pre>
-    <figcaption>ژورنال پیش از کارتخوان؛ نتیجه پیش از هر کار دیگر ذخیره می‌شود؛ در قطع شبکه نتیجه در صف می‌ماند</figcaption>
+    <figcaption>ژورنال پیش از کارتخوان؛ نتیجه همراه با رویداد صف پیش از هر کار دیگر ذخیره می‌شود؛ در قطع شبکه رویداد در صف می‌ماند</figcaption>
   </figure>
 
   <h3>وضعیت سفارش و پرداخت</h3>
@@ -863,7 +864,7 @@ KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
   <ul>
     <li><strong>APK:</strong> هر push در GitHub Actions خروجی <code>android-apk</code> می‌سازد. نسخه امضاشده با secretهای <code>ANDROID_KEYSTORE_BASE64</code>، <code>ANDROID_KEYSTORE_PASSWORD</code>، <code>ANDROID_KEY_ALIAS</code> و <code>ANDROID_KEY_PASSWORD</code>. روی سیستم خودتان: <code>pnpm --filter @andishkadeh/kiosk android:apk</code>.</li>
     <li><strong>سرور:</strong> <code>https://localhost</code> را به <code>CORS_ORIGINS</code> اضافه کنید.</li>
-    <li><strong>حالت کیوسک:</strong> با MDM بسته <code>ir.andishkadeh.kiosk</code> را در Lock Task مجاز کنید. بدون MDM، برنامه را Home app پیش‌فرض کنید و App pinning را فعال کنید.</li>
+    <li><strong>حالت کیوسک:</strong> با MDM بسته <code>ir.andishkadeh.kiosk</code> را در Lock Task مجاز کنید؛ برای پنجره چاپ، <code>com.android.printspooler</code> و افزونه سرویس چاپ سازنده چاپگر را هم مجاز کنید. بدون MDM، برنامه را Home app پیش‌فرض کنید و App pinning را فعال کنید.</li>
     <li><strong>چاپ:</strong> سرویس چاپ اندروید (ممکن است پنجره چاپ باز شود). چاپ بی‌صدا به SDK سازنده چاپگر نیاز دارد.</li>
     <li><strong>به‌روزرسانی:</strong> برای دستگاه‌های عملیاتی فقط از APK امضاشده انتشار استفاده کنید تا نسخه‌های جدید روی قبلی نصب شوند.</li>
   </ul>
@@ -1001,7 +1002,8 @@ flowchart TD
   V -- "سرور در دسترس نیست" --&gt; E2["گزینه اختیاری&lt;br/&gt;ذخیره بدون بررسی"] --&gt; SAVE
   Q -- "بله" --&gt; RUN
   SAVE --&gt; RUN["اجرای هسته و نمایش کیوسک"]
-  RUN -- "هفت لمس در گوشه بالا-چپ" --&gt; G{"کلید دستگاه&lt;br/&gt;درست است؟"}
+  RUN -- "هفت لمس در گوشه بالا-چپ" --&gt; G{"کلید ذخیره‌شده، یا کلید جدید&lt;br/&gt;تأییدشده با سرور؟"}
+  RUN -. "خطای راه‌اندازی" .-&gt; ERR["کیوسک آماده نیست:&lt;br/&gt;تلاش دوباره · تنظیمات دستگاه"] --&gt; G
   G -- "خیر" --&gt; RUN
   G -- "بله" --&gt; SET["تنظیمات دستگاه"]
   SET -- "ذخیره" --&gt; RL["ذخیره داده‌ها و اجرای دوباره"] --&gt; RUN
@@ -1046,8 +1048,8 @@ flowchart TD
     <tbody>
       <tr><td>کارتخوان</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>شبیه‌ساز با سناریوهای تأیید، رد، لغو و نامشخص. نوار «حالت آزمایشی» همیشه دیده می‌شود</td></tr>
       <tr><td>کارتخوان</td><td><code>none</code></td><td>✓</td><td>✓</td><td>✓</td><td>SDK وصل نیست؛ فروش آغاز نمی‌شود</td></tr>
-      <tr><td>چاپگر</td><td><code>windows</code></td><td>✓</td><td></td><td></td><td>چاپ بی‌صدا با درایور ویندوز، رسید ۸۰ میلی‌متر</td></tr>
-      <tr><td>چاپگر</td><td><code>browser</code></td><td></td><td>✓</td><td>✓</td><td>وب: قاب پنهان و چاپ مرورگر. اندروید: سرویس چاپ اندروید</td></tr>
+      <tr><td>چاپگر</td><td><code>windows</code></td><td>✓</td><td></td><td></td><td>چاپ بی‌صدا با درایور ویندوز، رسید ۸۰ میلی‌متر. اگر درایور در ۶۰ ثانیه پاسخ ندهد «چاپ نشد»</td></tr>
+      <tr><td>چاپگر</td><td><code>browser</code></td><td></td><td>✓</td><td>✓</td><td>وب: قاب پنهان و ایزوله و چاپ مرورگر. اندروید: سرویس چاپ اندروید؛ «چاپ شد» فقط پس از تکمیل کار چاپ، و لغو پس از ۲ دقیقه</td></tr>
       <tr><td>چاپگر</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>شبیه‌ساز. در ویندوز رسید به‌صورت فایل txt و html ذخیره می‌شود</td></tr>
       <tr><td>اسکنر</td><td><code>keyboard</code></td><td>✓</td><td>✓</td><td>✓</td><td>ورودی سریع‌تر از تایپ انسان (فاصله کلیدها زیر ۳۰۰ میلی‌ثانیه) با Enter</td></tr>
       <tr><td>اسکنر</td><td><code>mock</code></td><td>✓</td><td>✓</td><td>✓</td><td>اسکن فقط از کنترل‌های آزمون</td></tr>
@@ -1196,7 +1198,7 @@ flowchart TD
   </figure>
 
   <h3>۹. مهلت بی‌فعالیتی و پایان نشست</h3>
-  <p>شمارش معکوس پیش از پایان مهلت (به‌جز پرداخت، چاپ و پایان). لغو سفارش پرداخت‌نشده، پاک شدن QR خام و ماسک موبایل.</p>
+  <p>شمارش معکوس پیش از پایان مهلت (به‌جز پرداخت، چاپ و پایان، مگر وقتی پرداخت یا چاپ خطا نشان دهد). لغو سفارش پرداخت‌نشده، پاک شدن QR خام و ماسک موبایل. پاسخ دیررس نشست قبلی نمایش داده نمی‌شود.</p>
   <figure class="diagram">
     <img src="uml/09-session-timeout.png" alt="نمودار فعالیت UML: مهلت بی‌فعالیتی و پایان نشست" loading="lazy">
     <figcaption>منبع: <code>docs/uml/09-session-timeout.puml</code> · <a href="uml/09-session-timeout.svg">نسخه SVG</a></figcaption>
@@ -1259,10 +1261,10 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
   <div class="table-wrap"><table>
     <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
     <tbody>
-      <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک</td><td>Vitest</td><td class="num">۳۵</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۱۸</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه هسته کیوسک (SQLite واقعی + سرور واقعی)</td><td>Vitest</td><td class="num">۸</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور)</td><td>Playwright</td><td class="num">۲۶</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۲۱</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API</td><td>Vitest</td><td class="num">۲۹</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، و وب‌اپ)</td><td>Playwright</td><td class="num">۲۷</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1362,8 +1364,17 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.2.0</span></h2>
-  <p class="lede">۲۳ مهر ۱۴۰۵ — کیوسک علاوه بر ویندوز به‌صورت وب‌اپ و برنامه اندروید، با یک رابط و یک هسته.</p>
+  <h2>تغییرات نسخه <span class="tag">1.2.1</span></h2>
+  <p class="lede">۲۴ مهر ۱۴۰۵ — بازبینی کامل همه بخش‌ها: ایمنی پرداخت، پایداری، امنیت و به‌روزرسانی وابستگی‌ها.</p>
+  <ul>
+    <li><strong>پرداخت:</strong> یک پرداخت هم‌زمان برای هر سفارش؛ نتیجه کارتخوان پیش از گزارش به سرور در صف ثبت می‌شود؛ نتیجه قطعی با پاسخ ضعیف‌تر بازنویسی نمی‌شود؛ استعلام کارتخوان مهلت ۳۰ ثانیه دارد.</li>
+    <li><strong>کیوسک:</strong> ذخیره ناموفق پایگاه وب/اندروید ذخیره‌های بعدی را متوقف نمی‌کند؛ پاسخ غیر JSON قطع ارتباط حساب می‌شود؛ مهلت بی‌فعالیتی روی صفحه خطای پرداخت و چاپ؛ نتیجه‌ای که پس از پایان نشست برسد نمایش داده نمی‌شود.</li>
+    <li><strong>وب‌اپ و اندروید:</strong> ورود به تنظیمات با کلید جدید پس از تعویض کلید؛ دکمه تنظیمات در صفحه خطای راه‌اندازی؛ شناسه کیوسک با صف پر قفل است؛ Service Worker با نسخه بر اساس محتوا و بازگشت به نسخه ذخیره‌شده پس از ۴ ثانیه.</li>
+    <li><strong>اندروید و ویندوز:</strong> چاپ اندروید فقط پس از تکمیل کار چاپ موفق است؛ نسخه دوم برنامه ویندوز فوراً بسته می‌شود؛ چاپ ویندوز مهلت ۶۰ ثانیه دارد؛ Electron 42.</li>
+    <li><strong>سرور و پنل:</strong> قفل حساب در برابر تلاش‌های هم‌زمان؛ تمدید اشتراک تمدیدهای زنجیره‌ای را جابه‌جا می‌کند؛ سفارش آفلاین ناسازگار علامت‌گذاری می‌شود؛ CSV ایمن در برابر فرمول؛ escape کامل در چاپ پنل.</li>
+  </ul>
+  <h3>نسخه 1.2.0</h3>
+  <p>۲۳ مهر ۱۴۰۵ — کیوسک علاوه بر ویندوز به‌صورت وب‌اپ و برنامه اندروید، با یک رابط و یک هسته.</p>
   <ul>
     <li><strong>هسته مستقل از سکو:</strong> پایگاه محلی در ویندوز <code>better-sqlite3</code> و در وب و اندروید SQLite در WebAssembly با ذخیره در IndexedDB. ژورنال پیش از کارتخوان و نتیجه پس از آن تا ذخیره قطعی صبر می‌کنند. تست‌های هسته روی هر دو پایگاه.</li>
     <li><strong>وب‌اپ (PWA):</strong> روی <code>/kiosk/</code> سرور؛ صفحه راه‌اندازی تکنسین، کش تصاویر، اجرای آفلاین با Service Worker، چاپ مرورگر، جلوگیری از زبانه دوم.</li>

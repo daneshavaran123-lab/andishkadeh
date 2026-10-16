@@ -95,18 +95,41 @@ export function WebBoot() {
     );
   }
   if (phase.kind === 'error') {
+    const stored = readWebSetup();
     return (
-      <div className="setup" data-testid="boot-error">
-        <div className="setup-card">
-          <h1>کیوسک آماده نیست</h1>
-          <p className="setup-hint">{phase.message}</p>
-          <div className="setup-actions">
-            <button type="button" className="setup-primary" onClick={() => void start()}>
-              تلاش دوباره
-            </button>
+      <>
+        <div className="setup" data-testid="boot-error">
+          <div className="setup-card">
+            <h1>کیوسک آماده نیست</h1>
+            <p className="setup-hint">{phase.message}</p>
+            <div className="setup-actions">
+              <button type="button" className="setup-primary" onClick={() => void start()}>
+                تلاش دوباره
+              </button>
+              {stored && (
+                <button type="button" className="setup-secondary" onClick={() => setSettings('gate')} data-testid="boot-settings">
+                  تنظیمات دستگاه
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+        {stored && settings === 'gate' && <TechGate setup={stored} onPass={() => setSettings('open')} onCancel={() => setSettings('closed')} />}
+        {stored && settings === 'open' && (
+          <div className="setup-overlay">
+            <Setup
+              initial={stored}
+              // The local database could not be opened, so its pending events cannot be counted.
+              identityLocked="تا وقتی داده‌های این دستگاه باز نشود، شناسه کیوسک تغییر نمی‌کند."
+              onCancel={() => setSettings('closed')}
+              onSave={(s) => {
+                writeWebSetup(s);
+                location.reload();
+              }}
+            />
+          </div>
+        )}
+      </>
     );
   }
   if (phase.kind === 'starting') {
@@ -122,7 +145,7 @@ export function WebBoot() {
   return (
     <>
       <App />
-      {settings === 'gate' && <TechGate deviceKey={setup.deviceKey} onPass={() => setSettings('open')} onCancel={() => setSettings('closed')} />}
+      {settings === 'gate' && <TechGate setup={setup} onPass={() => setSettings('open')} onCancel={() => setSettings('closed')} />}
       {settings === 'open' && (
         <div className="setup-overlay">
           <Setup

@@ -33,6 +33,7 @@ export class ApiClient {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     let res: Response;
+    let text: string;
     try {
       res = await fetch(`${this.cfg.serverUrl.replace(/\/$/, '')}/api/v1${path}`, {
         method,
@@ -44,20 +45,31 @@ export class ApiClient {
         },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
+      // The timeout also covers a body that stalls mid-transfer.
+      text = await res.text();
     } catch (e) {
       this.onConnectivity(false);
       throw new NetworkError((e as Error).message);
     } finally {
       clearTimeout(timer);
     }
-    this.onConnectivity(true);
-    const text = await res.text();
-    const json = text ? (JSON.parse(text) as unknown) : null;
+    let json: unknown = null;
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // Not our server answering (proxy error page, captive portal): the server is not usable.
+        // Never an ApiResponseError < 500, which callers read as a business rejection.
+        this.onConnectivity(false);
+        if (res.status >= 500) throw new ApiResponseError(res.status, 'HTTP_' + res.status, res.statusText || `HTTP ${res.status}`);
+        throw new NetworkError(`unexpected non-JSON response (HTTP ${res.status})`);
+      }
+    }
+    // 5xx means "server not usable right now"; any other JSON answer proves it is reachable.
+    this.onConnectivity(res.status < 500);
     if (!res.ok) {
       const err = (json as { error?: { code?: string; message?: string; details?: unknown } } | null)?.error;
-      // 5xx and auth problems are treated like "server not usable right now".
-      if (res.status >= 500) this.onConnectivity(false);
-      throw new ApiResponseError(res.status, err?.code ?? 'HTTP_' + res.status, err?.message ?? res.statusText, err?.details);
+      throw new ApiResponseError(res.status, err?.code ?? 'HTTP_' + res.status, err?.message ?? (res.statusText || `HTTP ${res.status}`), err?.details);
     }
     return json as T;
   }

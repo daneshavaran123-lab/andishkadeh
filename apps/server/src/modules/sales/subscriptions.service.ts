@@ -13,7 +13,7 @@ import {
   isQrTokenFormat,
   mobileTail,
 } from '@andishkadeh/shared';
-import { cleanScannedPayload, hashQrToken } from '@andishkadeh/shared/node';
+import { cleanScannedPayload, generateQrToken, hashQrToken } from '@andishkadeh/shared/node';
 import { CounterService, SettingsService } from '../../common/core.services';
 import { PrismaService, Tx } from '../../common/prisma.service';
 
@@ -74,13 +74,16 @@ export class SubscriptionsService {
     if (order.status !== 'PAID') return { subscription: null, conflict: null };
 
     const line = order.items[0];
-    if (!order.pendingQrTokenHash || !line) {
-      return { subscription: null, conflict: 'سفارش اشتراک بدون توکن QR ثبت شده است؛ صدور مجدد QR از پنل لازم است' };
-    }
-    const plan = await tx.subscriptionPlan.findUnique({ where: { id: line.itemId } });
-    if (!plan) return { subscription: null, conflict: 'پلن سفارش یافت نشد' };
-    if (await tx.subscription.findUnique({ where: { qrTokenHash: order.pendingQrTokenHash } })) {
-      return { subscription: null, conflict: 'توکن QR تکراری است؛ صدور مجدد QR لازم است' };
+    const plan = line ? await tx.subscriptionPlan.findUnique({ where: { id: line.itemId } }) : null;
+    if (!line || !plan) return { subscription: null, conflict: 'پلن سفارش اشتراک یافت نشد؛ بررسی دستی لازم است' };
+
+    // The customer has paid, so the subscription is always created. Without a usable QR hash it gets
+    // a hash nobody holds a token for: no card works until staff press «صدور مجدد QR» in the panel.
+    let qrTokenHash = order.pendingQrTokenHash;
+    let conflict: string | null = null;
+    if (!qrTokenHash || (await tx.subscription.findUnique({ where: { qrTokenHash } }))) {
+      qrTokenHash = hashQrToken(generateQrToken());
+      conflict = 'کارت QR معتبری برای این اشتراک ثبت نشد؛ از «اشتراک‌ها» گزینه «صدور مجدد QR» را بزنید';
     }
 
     const settings = await this.settings.settings(tx);
@@ -91,16 +94,17 @@ export class SubscriptionsService {
       data: {
         customerId: order.customerId,
         planId: plan.id,
-        planTitle: line.titleSnapshot,
+        // Offline orders carry the kiosk's copy of the title; the plan record is the trusted source.
+        planTitle: order.offline ? plan.title : line.titleSnapshot,
         orderId: order.id,
         startsAt: period.startsAt,
         expiresAt: period.expiresAt,
         extended: period.extended,
-        qrTokenHash: order.pendingQrTokenHash,
+        qrTokenHash,
         rev,
       },
     });
-    return { subscription, conflict: null };
+    return { subscription, conflict };
   }
 
   /** QR validation (K19/K20). Logs every check; never reveals personal data beyond the last 4 digits. */

@@ -43,16 +43,17 @@ export class KioskAlreadyOpenError extends Error {
 /**
  * Only one tab may run the core: two would race on the same local database and outbox.
  * Waits briefly so a reload can take over the lock the previous page is releasing.
+ * Resolves with the function that releases the lock, or null if another tab holds it.
  */
-function singleInstanceLock(waitMs = 3000): Promise<boolean> {
-  if (!navigator.locks) return Promise.resolve(true);
+function singleInstanceLock(waitMs = 3000): Promise<(() => void) | null> {
+  if (!navigator.locks) return Promise.resolve(() => undefined);
   return new Promise((resolve) => {
     navigator.locks
       .request(`${WEB_DATA_NAME}-core`, { signal: AbortSignal.timeout(waitMs) }, () => {
-        resolve(true);
-        return new Promise<void>(() => undefined); // held for the lifetime of the page
+        // Held until released: for the lifetime of the page once start-up succeeds.
+        return new Promise<void>((release) => resolve(() => release()));
       })
-      .catch(() => resolve(false));
+      .catch(() => resolve(null));
   });
 }
 
@@ -66,7 +67,18 @@ function keepScreenOn() {
 }
 
 export async function startWebHost(cfg: KioskConfig, opts: WebHostOptions): Promise<WebHost> {
-  if (!(await singleInstanceLock())) throw new KioskAlreadyOpenError();
+  const release = await singleInstanceLock();
+  if (!release) throw new KioskAlreadyOpenError();
+  try {
+    return await openHost(cfg, opts);
+  } catch (e) {
+    // A failed start must not keep other tabs (or the retry after a reload) locked out.
+    release();
+    throw e;
+  }
+}
+
+async function openHost(cfg: KioskConfig, opts: WebHostOptions): Promise<WebHost> {
   // Ask the browser not to evict the local database under storage pressure.
   await navigator.storage?.persist?.().catch(() => false);
 
@@ -76,7 +88,13 @@ export async function startWebHost(cfg: KioskConfig, opts: WebHostOptions): Prom
     load: async () => (await idb.get<Uint8Array>('sqlite', 'main')) ?? null,
     save: (bytes) => idb.put('sqlite', 'main', bytes, true),
   });
-  const media = await IdbMediaStore.open(idb);
+  let media: IdbMediaStore;
+  try {
+    media = await IdbMediaStore.open(idb);
+  } catch (e) {
+    db.close();
+    throw e;
+  }
 
   let printer: PrinterAdapter;
   if (cfg.adapters.printer === 'mock') printer = new MockPrinterAdapter();

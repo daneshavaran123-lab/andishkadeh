@@ -98,6 +98,39 @@ describe.each(DRIVERS)('kiosk core on %s', (driver) => {
     });
   });
 
+  describe('payment safety', () => {
+    it('runs one payment per order even when the pay button is pressed twice', async () => {
+      const svc = firstServices(core.catalog.current!, 1)[0];
+      const created = await core.sales.createOrder({ kind: OrderKind.SERVICES, mobile: mobile(), items: [{ itemType: ItemType.SERVICE, itemId: svc.id, quantity: 1 }] });
+      if (!created.ok) throw new Error(created.message);
+      const [a, b] = await Promise.all([core.sales.startPayment(created.order.localOrderId), core.sales.startPayment(created.order.localOrderId)]);
+      const outcomes = [a, b].map((r) => (r.ok ? r.result.outcome : r.code)).sort();
+      expect(outcomes).toEqual(['PAID', 'PAYMENT_IN_PROGRESS']);
+      const attempts = core.db.prepare('SELECT COUNT(*) AS n FROM payment_journal WHERE local_order_id = ?').get(created.order.localOrderId) as { n: number };
+      expect(attempts.n).toBe(1);
+    });
+
+    it('queues the card result before reporting it, so a failed report still reaches the server', async () => {
+      const svc = firstServices(core.catalog.current!, 1)[0];
+      const created = await core.sales.createOrder({ kind: OrderKind.SERVICES, mobile: mobile(), items: [{ itemType: ItemType.SERVICE, itemId: svc.id, quantity: 1 }] });
+      if (!created.ok) throw new Error(created.message);
+      const post = core.api.post.bind(core.api);
+      core.api.post = (async (path: string, body?: unknown, timeoutMs?: number) => {
+        if (path.endsWith('/result')) throw new Error('connection reset while reporting');
+        return post(path, body, timeoutMs);
+      }) as typeof core.api.post;
+      const paid = await core.sales.startPayment(created.order.localOrderId);
+      core.api.post = post;
+      expect(paid.ok && paid.result.outcome).toBe(TerminalOutcome.PAID);
+      expect(core.outbox.stats().pending).toBe(1);
+      expect((await serverOrder(created.order.localOrderId)).status).not.toBe('PAID');
+
+      await core.sync.push();
+      expect(core.outbox.stats()).toMatchObject({ pending: 0, failed: 0 });
+      expect((await serverOrder(created.order.localOrderId)).status).toBe('PAID');
+    });
+  });
+
   describe('offline sale with OFF code (T11)', () => {
     it('prices from the cached catalogue, pays by card, syncs without duplicates', async () => {
       const svc = firstServices(core.catalog.current!, 2);

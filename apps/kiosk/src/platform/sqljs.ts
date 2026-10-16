@@ -37,23 +37,34 @@ export async function openSqlJsDatabase(SQL: SqlJsStatic, persistence: SqlPersis
   let savedVersion = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let chain: Promise<void> = Promise.resolve();
+  let failures = 0;
 
   const save = (): Promise<void> => {
-    chain = chain.then(async () => {
+    const step = chain.then(async () => {
       if (closed || version === savedVersion) return;
       if (depth > 0) return void schedule(); // never snapshot half a transaction
       const v = version;
-      await persistence.save(db.export());
+      try {
+        await persistence.save(db.export());
+      } catch (e) {
+        // The data is still in memory: keep retrying with backoff (quota freed, storage back).
+        failures++;
+        schedule(Math.min(30_000, debounceMs * 2 ** failures));
+        throw e;
+      }
+      failures = 0;
       savedVersion = Math.max(savedVersion, v);
     });
-    return chain;
+    // A failed save rejects only its own callers; later saves must still run.
+    chain = step.catch(() => undefined);
+    return step;
   };
-  const schedule = () => {
-    if (timer) return;
+  const schedule = (delay = debounceMs) => {
+    if (timer || closed) return;
     timer = setTimeout(() => {
       timer = null;
       save().catch((e) => console.error('[kiosk] could not store the local database', e));
-    }, debounceMs);
+    }, delay);
   };
   const dirty = () => {
     version++;

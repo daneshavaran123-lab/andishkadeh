@@ -76,17 +76,20 @@ export class AuthService {
     const ok = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_HASH);
     if (!user || !ok || !user.active) {
       if (user) {
-        const failed = user.failedLoginCount + 1;
-        const lock = failed >= LOGIN_MAX_ATTEMPTS;
-        await this.prisma.adminUser.update({
+        // Atomic increment: parallel wrong guesses must each count towards the lock.
+        const counted = await this.prisma.adminUser.update({
           where: { id: user.id },
-          data: {
-            failedLoginCount: lock ? 0 : failed,
-            lockedUntil: lock ? new Date(now.getTime() + LOGIN_LOCK_MINUTES * 60000) : user.lockedUntil,
-          },
+          data: { failedLoginCount: { increment: 1 } },
+          select: { failedLoginCount: true },
         });
-        if (lock) {
-          await this.audit.log(this.prisma, null, { action: 'auth.locked', entityType: 'AdminUser', entityId: user.id, ip });
+        if (counted.failedLoginCount >= LOGIN_MAX_ATTEMPTS) {
+          const locked = await this.prisma.adminUser.updateMany({
+            where: { id: user.id, failedLoginCount: { gte: LOGIN_MAX_ATTEMPTS } },
+            data: { failedLoginCount: 0, lockedUntil: new Date(now.getTime() + LOGIN_LOCK_MINUTES * 60000) },
+          });
+          if (locked.count > 0) {
+            await this.audit.log(this.prisma, null, { action: 'auth.locked', entityType: 'AdminUser', entityId: user.id, ip });
+          }
         }
       }
       throw new ApiError(ErrorCode.INVALID_CREDENTIALS, 'نام کاربری یا رمز عبور نادرست است', HttpStatus.UNAUTHORIZED);

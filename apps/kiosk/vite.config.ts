@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
@@ -27,17 +27,32 @@ const csp = (policy: string): Plugin => ({
 const pwa = (): Plugin => ({
   name: 'kiosk-pwa',
   apply: 'build',
+  enforce: 'post', // runs after index.html is added to the bundle, so its contents count too
   transformIndexHtml: (html) =>
     html.replace(
       '</head>',
       '    <link rel="manifest" href="./manifest.webmanifest" />\n    <meta name="theme-color" content="#050b18" />\n    <link rel="icon" href="./icons/icon-192.png" />\n    <link rel="apple-touch-icon" href="./icons/icon-192.png" />\n  </head>',
     ),
   generateBundle(_opts, bundle) {
-    const files = ['./', ...Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'sw.js'), 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
-    const version = createHash('sha256').update(files.sort().join('\n')).digest('hex').slice(0, 12);
+    // Every emitted file plus everything in public-web (manifest, all icons).
+    const publicDir = resolve(__dirname, 'src/renderer/public-web');
+    const publicFiles = (readdirSync(publicDir, { recursive: true, withFileTypes: true }) as import('node:fs').Dirent[])
+      .filter((d) => d.isFile())
+      .map((d) => relative(publicDir, join(d.parentPath, d.name)).split('\\').join('/'));
+    const emitted = Object.keys(bundle).filter((f) => !f.endsWith('.map') && f !== 'sw.js');
+    // index.html is cached as the scope URL ('./').
+    const files = ['./', ...new Set([...emitted.filter((f) => f !== 'index.html'), ...publicFiles])].sort();
+    // The version follows the contents, so any change (index.html, CSP, icons) installs a new worker.
+    const hash = createHash('sha256');
+    for (const f of emitted) {
+      const out = bundle[f];
+      hash.update(f).update(out.type === 'chunk' ? out.code : out.source);
+    }
+    for (const f of publicFiles) hash.update(f).update(readFileSync(join(publicDir, f)));
+    const version = hash.digest('hex').slice(0, 12);
     const sw = readFileSync(resolve(__dirname, 'src/renderer/sw-template.js'), 'utf8')
       .replace('__VERSION__', version)
-      .replace('__PRECACHE__', JSON.stringify([...new Set(files)], null, 2));
+      .replace('__PRECACHE__', JSON.stringify(files, null, 2));
     this.emitFile({ type: 'asset', fileName: 'sw.js', source: sw });
   },
 });
