@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.4</span> · ۲۵ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.5</span> · ۲۵ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -179,6 +179,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <li><a href="#device-settings">تنظیمات دستگاه</a></li>
     <li><a href="#uml">نمودارهای فعالیت UML</a></li>
     <li><a href="#backup">پشتیبان‌گیری و بازیابی</a></li>
+    <li><a href="#release">انتشار نسخه</a></li>
     <li><a href="#tests">گزارش تست</a></li>
     <li><a href="#open">موارد باز</a></li>
     <li><a href="#changelog">تغییرات نسخه</a></li>
@@ -265,7 +266,8 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
     <tbody>
       <tr><td><code>pnpm build</code></td><td>ساخت همه بسته‌ها</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td>بررسی نوع‌ها در همه بسته‌ها</td></tr>
-      <tr><td><code>pnpm lint</code></td><td>ESLint با تنظیم <code>eslint.config.mjs</code>: قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React؛ در CI هم اجرا می‌شود</td></tr>
+      <tr><td><code>pnpm lint</code></td><td>ESLint با تنظیم <code>eslint.config.mjs</code>: قواعد پیشنهادی JavaScript و TypeScript، قواعد hookهای React و قواعد نوع‌آگاه Promise؛ در CI هم اجرا می‌شود</td></tr>
+      <tr><td><code>pnpm version:check</code> / <code>pnpm version:set X.Y.Z</code></td><td>بررسی یا تغییر نسخه واحد محصول در همه <code>package.json</code>ها (ر.ک. <a href="#release">انتشار نسخه</a>)</td></tr>
       <tr><td><code>pnpm knip</code></td><td>یافتن کد مرده (فایل، export و وابستگی بی‌استفاده) با تنظیم <code>knip.jsonc</code>؛ در CI هم اجرا می‌شود</td></tr>
       <tr><td><code>pnpm test</code></td><td>تست‌های واحد و یکپارچه (shared، server روی پایگاه <code>*_test</code>، هسته کیوسک روی هر دو درایور SQLite)</td></tr>
       <tr><td><code>pnpm e2e</code></td><td>تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های <span class="num">3200 / 5283 / 5284 / 5285</span>)</td></tr>
@@ -697,7 +699,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.2.5",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -711,12 +713,13 @@ WantedBy=multi-user.target</code></pre></div>
   </ol>
 
   <h3>به‌روزرسانی نسخه</h3>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git pull
+  <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.2.5
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
 # راه‌اندازی مجدد سرویس</code></pre></div>
-  <p>پیش از هر به‌روزرسانی از پایگاه داده پشتیبان بگیرید.</p>
+  <p>پیش از هر به‌روزرسانی از پایگاه داده پشتیبان بگیرید. پس از راه‌اندازی، <code>version</code> در <code>GET /api/v1/health</code> باید نسخه تازه باشد.</p>
 </section>
 
 <!-- ============================================================ kiosk -->
@@ -875,15 +878,16 @@ KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
   <figure class="diagram">
 <pre class="mermaid">
 flowchart LR
-  PUSH["push به مخزن"] --&gt; T["تست‌ها&lt;br/&gt;typecheck + lint + knip&lt;br/&gt;واحد و یکپارچه با PostgreSQL"]
+  PUSH["push به مخزن"] --&gt; T["تست‌ها&lt;br/&gt;نسخه، typecheck، lint، knip، OpenAPI&lt;br/&gt;واحد و یکپارچه با PostgreSQL"]
   PUSH --&gt; WEB["وب‌اپ و پنل&lt;br/&gt;ubuntu"]
   PUSH --&gt; AND["APK اندروید&lt;br/&gt;ubuntu + Android SDK"]
   PUSH --&gt; WIN["نصب‌کننده ویندوز&lt;br/&gt;windows"]
   WEB --&gt; A1["خروجی: kiosk-web-app&lt;br/&gt;و admin-panel"]
   AND --&gt; A2["خروجی: android-apk"]
   WIN --&gt; A3["خروجی: windows-installer"]
+  A1 &amp; A2 &amp; A3 -.-&gt;|"اجرای دستی با گزینه release"| REL["پیش‌نویس GitHub Release&lt;br/&gt;vX.Y.Z"]
 </pre>
-    <figcaption>هر push در GitHub Actions؛ خروجی‌ها از صفحه همان اجرا (بخش Artifacts) دانلود می‌شوند</figcaption>
+    <figcaption>هر push در GitHub Actions؛ خروجی‌ها از صفحه همان اجرا (بخش Artifacts) دانلود می‌شوند. اجرای دستی با گزینه release همه را در یک پیش‌نویس انتشار جمع می‌کند</figcaption>
   </figure>
 </section>
 
@@ -1255,16 +1259,54 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
   </ul>
 </section>
 
+<!-- ============================================================ release -->
+<section id="release">
+  <h2>انتشار نسخه</h2>
+  <p class="lede">هر انتشار یک نسخه واحد برای کل محصول است: کیوسک (ویندوز، وب‌اپ و اندروید)، پنل و سرور. نسخه در همه <code>package.json</code>ها و بالاترین بخش CHANGELOG یکی است و CI آن را بررسی می‌کند.</p>
+
+  <h3>فایل‌های هر انتشار</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>فایل</th><th>کاربرد</th></tr></thead>
+    <tbody>
+      <tr><td><code>AndishkadehKiosk-Setup-&lt;نسخه&gt;.exe</code></td><td>نصب‌کننده کیوسک ویندوز؛ امضای دیجیتال ندارد، پس ویندوز هشدار SmartScreen نشان می‌دهد</td></tr>
+      <tr><td><code>AndishkadehKiosk-&lt;نسخه&gt;.apk</code></td><td>برنامه اندروید با امضای انتشار؛ فقط اگر secretهای امضا تعریف شده باشند</td></tr>
+      <tr><td><code>AndishkadehKiosk-&lt;نسخه&gt;-debug.apk</code></td><td>اندروید با کلید debug، فقط برای آزمایش؛ روی نسخه قبلی نصب نمی‌شود</td></tr>
+      <tr><td><code>AndishkadehKioskWeb-&lt;نسخه&gt;.zip</code></td><td>وب‌اپ کیوسک برای <code>KIOSK_WEB_DIST_DIR</code></td></tr>
+      <tr><td><code>AndishkadehAdmin-&lt;نسخه&gt;.zip</code></td><td>پنل مدیریت برای <code>ADMIN_DIST_DIR</code></td></tr>
+      <tr><td><code>SHA256SUMS.txt</code></td><td>چکیده SHA-256 همه فایل‌ها</td></tr>
+      <tr><td>Source code</td><td>کد همین نسخه (GitHub خودش اضافه می‌کند)؛ سرور از روی آن ساخته می‌شود</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>مراحل</h3>
+  <ol class="steps">
+    <li><code>pnpm version:set 1.2.6</code> و افزودن بخش <code>## 1.2.6</code> به CHANGELOG؛ <code>pnpm version:check</code> باید همان نسخه را چاپ کند.</li>
+    <li>بررسی محلی (<code>typecheck</code>، <code>lint</code>، <code>knip</code>، <code>test</code>، <code>e2e</code>)، سپس commit و push و صبر تا CI سبز شود.</li>
+    <li>GitHub ← Actions ← «Apps» ← «Run workflow» با تیک «Create a draft GitHub Release from this commit». همه خروجی‌ها از همان commit ساخته و آزموده می‌شوند و پیش‌نویس <code>v1.2.6</code> با یادداشت CHANGELOG ساخته می‌شود. اگر نسخه قبلاً منتشر شده باشد، کار متوقف می‌شود.</li>
+    <li>بازبینی پیش‌نویس، سپس «Publish release». برچسب <code>v1.2.6</code> روی همان commit ساخته می‌شود.</li>
+  </ol>
+
+  <h3>به‌روزرسانی محیط عملیاتی</h3>
+  <ul>
+    <li><strong>پشتیبان</strong> از پایگاه داده، سپس سرور از روی برچسب نسخه (<a href="#server">راه‌اندازی سرور ← به‌روزرسانی نسخه</a>). پنل و وب‌اپ با همان build به‌روز می‌شوند.</li>
+    <li><strong>وب‌اپ:</strong> در بارگذاری بعدی صفحه، وقتی سرور در دسترس است، نسخه تازه را می‌گیرد.</li>
+    <li><strong>ویندوز:</strong> نصب‌کننده جدید روی همان نصب؛ داده محلی حفظ می‌شود.</li>
+    <li><strong>اندروید:</strong> فقط APK امضاشده انتشار روی نسخه قبلی نصب می‌شود.</li>
+    <li>پیش از به‌روزرسانی هر کیوسک، در پنل مطمئن شوید پرداخت نامشخص یا رویداد ارسال‌نشده‌ای روی آن نمانده است.</li>
+  </ul>
+  <div class="note risk"><p><strong>انتشار نرم‌افزار به معنی آمادگی بهره‌برداری نیست.</strong> آداپتر کارتخوان بانکی هنوز پیاده‌سازی نشده است؛ تا رسیدن SDK بانک فروش واقعی ممکن نیست (ر.ک. <a href="#open">موارد باز</a>).</p></div>
+</section>
+
 <!-- ============================================================ tests -->
 <section id="tests">
-  <h2>گزارش تست <span class="tag">2026-10-14</span></h2>
+  <h2>گزارش تست <span class="tag">2026-10-17</span></h2>
   <p class="lede">Node 22 · PostgreSQL 16 · Chromium (Playwright 1.56.1). همه لایه‌ها موفق.</p>
 
   <div class="table-wrap"><table>
     <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
     <tbody>
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۳۳</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۳۵</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API</td><td>Vitest</td><td class="num">۲۹</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ و پنل تولیدی زیر CSP)</td><td>Playwright</td><td class="num">۳۳</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
@@ -1366,7 +1408,14 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.2.4</span></h2>
+  <h2>تغییرات نسخه <span class="tag">1.2.5</span></h2>
+  <p class="lede">۲۵ مهر ۱۴۰۵ — نسخه آماده انتشار.</p>
+  <ul>
+    <li><strong>انتشار:</strong> یک نسخه برای همه بخش‌ها (<code>pnpm version:set</code> و <code>version:check</code>)؛ اجرای دستی CI یک پیش‌نویس GitHub Release با همه فایل‌ها و یادداشت CHANGELOG می‌سازد (<a href="#release">انتشار نسخه</a>).</li>
+    <li><strong>سرور:</strong> نسخه واقعی در <code>/api/v1/health</code> و سند API؛ <code>docs/openapi.json</code> با قراردادها هماهنگ شد و CI ناهماهنگی را رد می‌کند.</li>
+    <li><strong>ESLint مرحله ۲:</strong> قواعد نوع‌آگاه Promise فعال و ۷۱ یافته رفع شد. پنل با <code>useAction</code> خطای کنترل‌کننده‌های async را همیشه نشان می‌دهد.</li>
+  </ul>
+  <h3>نسخه 1.2.4</h3>
   <p class="lede">۲۵ مهر ۱۴۰۵ — ESLint برای همه بسته‌ها و در CI.</p>
   <ul>
     <li><strong>ESLint:</strong> <code>pnpm lint</code> قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React را بررسی می‌کند (پیش‌تر همان typecheck بود) و در CI اجرا می‌شود.</li>

@@ -1,8 +1,10 @@
 # Builds and checks every deliverable on each push:
-#   test     — typecheck + unit/integration tests (shared, server, kiosk core on both SQLite drivers)
+#   test     — version, typecheck, lint, dead code, API document, unit/integration tests (shared, server, kiosk core on both SQLite drivers)
 #   web      — kiosk web app (PWA, served by the server at /kiosk/) + admin panel
 #   android  — Android kiosk app (Capacitor): debug APK, plus a signed release APK when the keystore secrets exist
 #   windows  — Windows kiosk installer (Electron, NSIS)
+#   release  — manual runs with "release" ticked: a draft GitHub Release v<version> with all of the above
+#              (see docs/release.md); nothing is published until someone presses "Publish release"
 name: Apps
 
 on:
@@ -11,6 +13,11 @@ on:
       - 'docs/**'
       - '**/*.md'
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Create a draft GitHub Release from this commit'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,9 +58,12 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:shared
+      - run: pnpm version:check
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm knip
+      - name: API document (docs/openapi.json) matches the contracts
+        run: pnpm --filter @andishkadeh/server openapi && git diff --exit-code docs/openapi.json
       - run: pnpm test
 
   web:
@@ -156,3 +166,43 @@ jobs:
           name: windows-installer
           path: apps/kiosk/release/*.exe
           if-no-files-found: error
+
+  release:
+    name: Draft release
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    needs: [test, web, android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Version and release notes
+        run: |
+          version=$(node tools/release/version.mjs)
+          if gh release view "v$version" >/dev/null 2>&1 || git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "::error::v$version already has a release or tag; raise the version (pnpm version:set) and add a CHANGELOG entry"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          node tools/release/version.mjs notes > notes.md
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Collect files
+        run: |
+          mkdir out
+          (cd artifacts/kiosk-web-app && zip -qr "../../out/AndishkadehKioskWeb-$VERSION.zip" .)
+          (cd artifacts/admin-panel && zip -qr "../../out/AndishkadehAdmin-$VERSION.zip" .)
+          cp artifacts/android-apk/*.apk artifacts/windows-installer/*.exe out/
+          (cd out && sha256sum * > SHA256SUMS.txt)
+          ls -l out
+          if [ ! -f "out/AndishkadehKiosk-$VERSION.apk" ]; then
+            printf '\n> APK این نسخه با کلید debug امضا شده و فقط برای آزمایش است؛ برای دستگاه‌های عملیاتی secretهای امضای اندروید را تعریف کنید (docs/release.md).\n' >> notes.md
+          fi
+      - name: Draft release
+        run: gh release create "v$VERSION" out/* --draft --target "$GITHUB_SHA" --title "اندیشکده کشتی ایران $VERSION" --notes-file notes.md

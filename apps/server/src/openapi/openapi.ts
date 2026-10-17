@@ -3,6 +3,7 @@ import { SwaggerModule, type OpenAPIObject } from '@nestjs/swagger';
 import { OpenAPIRegistry, OpenApiGeneratorV3, extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z, type ZodTypeAny } from 'zod';
 import * as C from '@andishkadeh/shared';
+import { APP_VERSION } from '../version';
 
 // Patches ZodType.prototype, so schemas created earlier in @andishkadeh/shared gain .openapi() too.
 extendZodWithOpenApi(z);
@@ -130,7 +131,7 @@ export function buildOpenApiDocument(): OpenAPIObject {
     openapi: '3.0.3',
     info: {
       title: 'Andishkadeh Koshti Iran — Kiosk & Admin API',
-      version: '1.0.0',
+      version: APP_VERSION,
       description:
         'API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. ' +
         'مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد.',

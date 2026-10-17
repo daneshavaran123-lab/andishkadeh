@@ -14,6 +14,7 @@ import { OrdersService } from './modules/sales/orders.service';
 import { PaymentsService } from './modules/sales/payments.service';
 import { SubscriptionsService } from './modules/sales/subscriptions.service';
 import { SyncService } from './modules/sales/sync.service';
+import { APP_VERSION } from './version';
 
 @Controller('health')
 class HealthController {
@@ -27,7 +28,7 @@ class HealthController {
     } catch {
       db = 'down';
     }
-    return { status: db === 'ok' ? 'ok' : 'degraded', db, time: new Date().toISOString(), version: process.env.npm_package_version ?? '1.0.0' };
+    return { status: db === 'ok' ? 'ok' : 'degraded', db, time: new Date().toISOString(), version: APP_VERSION };
   }
 }
 

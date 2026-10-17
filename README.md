@@ -508,7 +508,8 @@ pnpm --filter @andishkadeh/shared build
 | --- | --- |
 | `pnpm build` | ساخت همه بسته‌ها |
 | `pnpm typecheck` | بررسی نوع‌ها در همه بسته‌ها |
-| `pnpm lint` | ESLint با تنظیم `eslint.config.mjs`: قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React؛ در CI هم اجرا می‌شود |
+| `pnpm lint` | ESLint با تنظیم `eslint.config.mjs`: قواعد پیشنهادی JavaScript و TypeScript، قواعد hookهای React و قواعد نوع‌آگاه Promise؛ در CI هم اجرا می‌شود |
+| `pnpm version:check` / `pnpm version:set X.Y.Z` | بررسی یا تغییر نسخه واحد محصول در همه `package.json`ها (ر.ک. [انتشار نسخه](docs/release.md)) |
 | `pnpm knip` | یافتن کد مرده (فایل، export و وابستگی بی‌استفاده) با تنظیم `knip.jsonc`؛ در CI هم اجرا می‌شود |
 | `pnpm test` | تست‌های واحد و یکپارچه (shared، server روی پایگاه `*_test`، هسته کیوسک روی هر دو درایور SQLite) |
 | `pnpm e2e` | تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های 3200/5283/5284/5285 و وب‌اپ روی `3200/kiosk/`) |
@@ -523,16 +524,18 @@ pnpm --filter @andishkadeh/shared build
 
 ```mermaid
 flowchart LR
-  PUSH["push به مخزن"] --> T["تست‌ها<br/>typecheck + lint + knip<br/>واحد و یکپارچه با PostgreSQL"]
+  PUSH["push به مخزن"] --> T["تست‌ها<br/>نسخه، typecheck، lint، knip، OpenAPI<br/>واحد و یکپارچه با PostgreSQL"]
   PUSH --> WEB["وب‌اپ و پنل<br/>ubuntu"]
   PUSH --> AND["APK اندروید<br/>ubuntu + Android SDK"]
   PUSH --> WIN["نصب‌کننده ویندوز<br/>windows"]
   WEB --> A1["خروجی: kiosk-web-app<br/>و admin-panel"]
   AND --> A2["خروجی: android-apk"]
   WIN --> A3["خروجی: windows-installer"]
+  A1 & A2 & A3 -.->|"اجرای دستی با گزینه release"| REL["پیش‌نویس GitHub Release<br/>vX.Y.Z"]
 ```
 
 - گردش‌کار در [`.github/workflows/apps.yml`](.github/workflows/apps.yml) است. خروجی‌ها از صفحه هر اجرا در GitHub Actions (بخش Artifacts) دانلود می‌شوند.
+- برای انتشار، «Apps» را دستی با گزینه «Create a draft GitHub Release» اجرا کنید. همه خروجی‌ها در یک پیش‌نویس انتشار جمع می‌شوند که با «Publish» منتشر می‌شود. ر.ک. [انتشار نسخه](docs/release.md).
 - APK آزمایشی با کلید debug همان اجرا امضا می‌شود. برای نسخه انتشار با امضای ثابت، secretهای `ANDROID_KEYSTORE_BASE64`، `ANDROID_KEYSTORE_PASSWORD`، `ANDROID_KEY_ALIAS` و `ANDROID_KEY_PASSWORD` را تعریف کنید (ر.ک. [سه نسخه کیوسک](docs/kiosk-platforms.md#اندروید)).
 - پس از `dist:win` روی سیستم توسعه، ماژول بومی SQLite برای Electron ساخته شده است. برای اجرای دوباره تست‌ها: `cd apps/kiosk/node_modules/better-sqlite3 && npx prebuild-install --force`.
 
@@ -541,7 +544,7 @@ flowchart LR
 | لایه | ابزار | تعداد |
 | --- | --- | --- |
 | واحد (قیمت، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن) | Vitest (`packages/shared`) | ۳۷ |
-| یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون) | Vitest (`apps/server`) | ۳۳ |
+| یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون) | Vitest (`apps/server`) | ۳۵ |
 | یکپارچه هسته کیوسک روی `better-sqlite3` و `sql.js` + درایور `sql.js` + کلاینت API | Vitest (`apps/kiosk`) | ۲۹ |
 | پذیرش E2E (ماتریس T01 تا T15، پنل، وب‌اپ و پنل تولیدی زیر CSP) | Playwright (`e2e`) | ۳۳ |
 
@@ -563,7 +566,8 @@ flowchart LR
 | `assets/seed-media` | تصاویر اولیه حوزه‌ها، خدمات و صفحه شروع |
 | `tools/icons` | تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از یک طرح |
 | `tools/uml`، `docs/uml` | اسکریپت ساخت و منبع نمودارهای فعالیت UML (PlantUML) |
-| `.github/workflows` | ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز |
+| `.github/workflows` | ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز، پیش‌نویس انتشار |
+| `tools/release` | نسخه واحد محصول و یادداشت انتشار از CHANGELOG |
 | `docs` | مستندات فنی، راهنماهای نصب، OpenAPI |
 
 ## مستندات
@@ -575,6 +579,7 @@ flowchart LR
 - [نصب و پیکربندی کیوسک ویندوز](docs/windows-kiosk-install.md)
 - [سه نسخه کیوسک: ویندوز، وب‌اپ و اندروید](docs/kiosk-platforms.md)
 - [پشتیبان‌گیری و بازیابی](docs/backup-restore.md)
+- [انتشار نسخه و به‌روزرسانی محیط عملیاتی](docs/release.md)
 - [گزارش تست و ماتریس پذیرش](docs/test-report.md)
 - [موارد باز و فرض‌ها](docs/open-items.md)
 - [مرجع API (OpenAPI 3)](docs/openapi.json)

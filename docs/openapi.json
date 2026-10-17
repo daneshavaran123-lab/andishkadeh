@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Andishkadeh Koshti Iran — Kiosk & Admin API",
-    "version": "1.0.0",
+    "version": "1.2.5",
     "description": "API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد."
   },
   "servers": [
@@ -3485,24 +3485,31 @@
                                         ]
                                       },
                                       "itemId": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 64
                                       },
                                       "code": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 40
                                       },
                                       "title": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 200
                                       },
                                       "unit": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "maxLength": 40
                                       },
                                       "categoryId": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 64
                                       },
                                       "categoryTitle": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 200
                                       },
                                       "unitPrice": {
                                         "type": "integer",
@@ -3511,15 +3518,18 @@
                                       },
                                       "quantity": {
                                         "type": "integer",
-                                        "minimum": 1
+                                        "minimum": 1,
+                                        "maximum": 100
                                       },
                                       "discountId": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 64
                                       },
                                       "discountTitle": {
                                         "type": "string",
-                                        "nullable": true
+                                        "nullable": true,
+                                        "maxLength": 200
                                       },
                                       "unitDiscount": {
                                         "type": "integer",
@@ -3548,7 +3558,8 @@
                                       "lineTotal"
                                     ]
                                   },
-                                  "minItems": 1
+                                  "minItems": 1,
+                                  "maxItems": 100
                                 },
                                 "subtotal": {
                                   "type": "integer",
