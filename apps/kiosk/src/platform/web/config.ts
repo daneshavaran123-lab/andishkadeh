@@ -4,6 +4,7 @@
  */
 import { z } from 'zod';
 import { KioskConfigSchema, type KioskConfig } from '../../core/config';
+import type { SetupValues } from '../../core/setup-check';
 
 const STORAGE_KEY = 'andishkadeh.kiosk.setup.v1';
 export const WEB_DATA_NAME = 'andishkadeh-kiosk';
@@ -29,7 +30,7 @@ export function readWebSetup(): WebSetup | null {
   }
 }
 
-export function writeWebSetup(s: WebSetup) {
+export function writeWebSetup(s: SetupValues) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(WebSetupSchema.parse(s)));
 }
 
@@ -48,28 +49,4 @@ export function toKioskConfig(s: WebSetup, appVersion: string): KioskConfig {
     kioskMode: true,
     devControls: s.devControls,
   });
-}
-
-/** Checks address and credentials against the server before saving. */
-export async function verifySetup(s: Pick<WebSetup, 'serverUrl' | 'deviceId' | 'deviceKey'>): Promise<{ ok: true } | { ok: false; reason: 'auth' | 'network' | 'server'; message: string }> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
-  try {
-    const res = await fetch(`${s.serverUrl.replace(/\/+$/, '')}/api/v1/kiosk/bootstrap`, {
-      headers: { Authorization: `Device ${s.deviceId}:${s.deviceKey}` },
-      signal: ctrl.signal,
-    });
-    if (res.ok) {
-      // A captive portal or proxy page also answers 200: only our server returns the bootstrap JSON.
-      const body = (await res.json().catch(() => null)) as { catalogRevision?: unknown } | null;
-      if (body && typeof body.catalogRevision === 'number') return { ok: true };
-      return { ok: false, reason: 'server', message: 'این آدرس به سرور اندیشکده نمی‌رسد' };
-    }
-    if (res.status === 401 || res.status === 403) return { ok: false, reason: 'auth', message: 'شناسه یا کلید دستگاه پذیرفته نشد' };
-    return { ok: false, reason: 'server', message: `پاسخ نامعتبر از سرور (${res.status})` };
-  } catch {
-    return { ok: false, reason: 'network', message: 'سرور در دسترس نیست؛ آدرس و اتصال شبکه را بررسی کنید' };
-  } finally {
-    clearTimeout(timer);
-  }
 }

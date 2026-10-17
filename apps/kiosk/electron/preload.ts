@@ -17,4 +17,10 @@ contextBridge.exposeInMainWorld('kiosk', {
     ipcRenderer.on(`kiosk:event:${event}`, handler);
     return () => ipcRenderer.removeListener(`kiosk:event:${event}`, handler);
   },
+  // First-run setup screen only; the main process registers these channels only before the kiosk is configured.
+  setup: {
+    printers: () => ipcRenderer.invoke('kiosk-setup:printers'),
+    verify: (s: unknown) => ipcRenderer.invoke('kiosk-setup:verify', s),
+    save: (values: unknown) => ipcRenderer.invoke('kiosk-setup:save', values),
+  },
 });

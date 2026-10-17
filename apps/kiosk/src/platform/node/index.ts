@@ -10,9 +10,10 @@ import type { PrinterAdapter } from '../../core/hardware/types';
 import { KioskCore } from '../../core/kiosk-core';
 import { MEDIA_EXT, type MediaStore } from '../../core/media';
 import type { SqlDatabase } from '../../core/sql';
+import { HelperPaymentAdapter } from './payment-helper';
 import { openNodeDatabase } from './sqlite';
 
-export { loadConfig } from './config';
+export { isConfigured, loadConfig, writeSetupConfig } from './config';
 
 export class FsMediaStore implements MediaStore {
   constructor(private readonly dir: string) {}
@@ -53,5 +54,7 @@ export function createNodeCore(cfg: KioskConfig, opts: NodeCoreOptions): KioskCo
     db: opts.db ?? openNodeDatabase(join(cfg.dataDir, 'kiosk.sqlite')),
     media: new FsMediaStore(join(cfg.dataDir, 'media')),
     printer: opts.printer ?? new MockPrinterAdapter(fileReceiptSink(join(cfg.dataDir, 'receipts'))),
+    // Without a helper path the core falls back to "not configured" (sales blocked).
+    payment: cfg.adapters.payment === 'helper' && cfg.adapters.paymentHelperPath ? new HelperPaymentAdapter(cfg.adapters.paymentHelperPath, cfg.adapters.paymentHelperArgs) : undefined,
   });
 }

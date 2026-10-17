@@ -1,5 +1,6 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { z } from 'zod';
 import { KioskConfigSchema, type KioskConfig } from '../../core/config';
 
 /** Electron / Node: defaults → <dataDir>/kiosk.config.json → environment variables (KIOSK_*). */
@@ -31,4 +32,37 @@ export function loadConfig(dataDir: string, overrides: Partial<KioskConfig> = {}
     adapters,
     dataDir,
   });
+}
+
+/** True when this device has a configuration (file or KIOSK_DEVICE_KEY); otherwise Windows shows the setup screen. */
+export function isConfigured(dataDir: string): boolean {
+  return existsSync(join(dataDir, 'kiosk.config.json')) || !!process.env.KIOSK_DEVICE_KEY;
+}
+
+/** Values from the Windows setup screen (first run). */
+export const NodeSetupSchema = z.object({
+  serverUrl: z.string().url(),
+  deviceId: z.string().trim().min(1).max(64),
+  deviceKey: z.string().min(8),
+  payment: z.enum(['mock', 'none']),
+  printer: z.enum(['windows', 'mock']),
+  printerName: z.string().optional(),
+  scanner: z.enum(['keyboard', 'mock']),
+  devControls: z.boolean().default(false),
+});
+
+/** Writes <dataDir>/kiosk.config.json from the setup screen; other settings keep their defaults. */
+export function writeSetupConfig(dataDir: string, values: unknown): void {
+  const s = NodeSetupSchema.parse(values);
+  const file = {
+    serverUrl: s.serverUrl.replace(/\/+$/, ''),
+    deviceId: s.deviceId,
+    deviceKey: s.deviceKey,
+    adapters: { payment: s.payment, printer: s.printer, ...(s.printerName ? { printerName: s.printerName } : {}), scanner: s.scanner },
+    devControls: s.devControls,
+  };
+  mkdirSync(dataDir, { recursive: true });
+  const target = join(dataDir, 'kiosk.config.json');
+  writeFileSync(`${target}.part`, `${JSON.stringify(file, null, 2)}\n`, { mode: 0o600 });
+  renameSync(`${target}.part`, target);
 }

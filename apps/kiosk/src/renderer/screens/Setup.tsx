@@ -1,34 +1,47 @@
 /**
- * Technician setup of the web app / Android app: server address, kiosk id and device key
- * (issued once in the admin panel, A15) plus the hardware adapters. Not shown to customers.
+ * Technician setup of the web app / Android app, and of the Windows app on first run: server
+ * address, kiosk id and device key (issued once in the admin panel, A15) plus the hardware
+ * adapters. Not shown to customers.
  */
 import { useState, type FormEvent } from 'react';
-import { verifySetup, type WebSetup } from '../../platform/web/config';
+import { verifySetup, type SetupCheck, type SetupValues } from '../../core/setup-check';
+
+const WEB_PRINTERS = [
+  { value: 'browser', label: 'چاپگر دستگاه' },
+  { value: 'mock', label: 'شبیه‌ساز' },
+];
 
 interface Props {
-  initial: Partial<WebSetup>;
+  initial: Partial<SetupValues>;
   /** Settings opened from a running kiosk (shows reset, needs a restart to apply). */
   running?: { pending: number; unresolved: number };
-  onSave(setup: WebSetup): void | Promise<void>;
+  onSave(setup: SetupValues): void | Promise<void>;
   onCancel?(): void;
   onReset?(): void | Promise<void>;
   /** Why the kiosk id may not change (local orders and events belong to the current id). */
   identityLocked?: string;
+  /** Printer adapters of this platform (default: the web app's). */
+  printerOptions?: Array<{ value: string; label: string }>;
+  /** Windows: installed printers; one must be chosen when any is installed. */
+  printerNames?: string[];
+  /** Where the check runs; Windows checks from the main process (default: from this page). */
+  verify?(s: Pick<SetupValues, 'serverUrl' | 'deviceId' | 'deviceKey'>): Promise<SetupCheck>;
 }
 
-export function Setup({ initial, running, onSave, onCancel, onReset, identityLocked }: Props) {
-  const [f, setF] = useState<WebSetup>({
+export function Setup({ initial, running, onSave, onCancel, onReset, identityLocked, printerOptions = WEB_PRINTERS, printerNames, verify = verifySetup }: Props) {
+  const [f, setF] = useState<SetupValues>({
     serverUrl: initial.serverUrl ?? '',
     deviceId: initial.deviceId ?? 'KIOSK-01',
     deviceKey: initial.deviceKey ?? '',
     payment: initial.payment ?? 'mock',
-    printer: initial.printer ?? 'browser',
+    printer: initial.printer ?? printerOptions[0].value,
+    printerName: initial.printerName ?? '',
     scanner: initial.scanner ?? 'keyboard',
     devControls: initial.devControls ?? false,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ message: string; canForce: boolean } | null>(null);
-  const set = <K extends keyof WebSetup>(k: K, v: WebSetup[K]) => setF((x) => ({ ...x, [k]: v }));
+  const set = <K extends keyof SetupValues>(k: K, v: SetupValues[K]) => setF((x) => ({ ...x, [k]: v }));
 
   const submit = async (e: FormEvent, force = false) => {
     e.preventDefault();
@@ -45,6 +58,10 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
       setError({ message: 'کلید دستگاه دست‌کم ۸ نویسه است', canForce: false });
       return;
     }
+    if (printerNames?.length && f.printer === 'windows' && !f.printerName) {
+      setError({ message: 'چاپگر رسید را انتخاب کنید', canForce: false });
+      return;
+    }
     const next = { ...f, serverUrl: url.origin + url.pathname.replace(/\/+$/, ''), deviceId: f.deviceId.trim() };
     if (lockReason && next.deviceId !== (initial.deviceId ?? '').trim()) {
       setError({ message: lockReason, canForce: false });
@@ -53,7 +70,7 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
     setBusy(true);
     try {
       if (!force) {
-        const check = await verifySetup(next);
+        const check = await verify(next);
         if (!check.ok) {
           setError({ message: check.message, canForce: check.reason === 'network' });
           return;
@@ -101,26 +118,42 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
         <div className="setup-row">
           <label>
             کارتخوان
-            <select value={f.payment} onChange={(e) => set('payment', e.target.value as WebSetup['payment'])} data-testid="setup-payment">
+            <select value={f.payment} onChange={(e) => set('payment', e.target.value as SetupValues['payment'])} data-testid="setup-payment">
               <option value="mock">شبیه‌ساز (آزمایشی)</option>
               <option value="none">متصل نشده</option>
             </select>
           </label>
           <label>
             چاپگر
-            <select value={f.printer} onChange={(e) => set('printer', e.target.value as WebSetup['printer'])} data-testid="setup-printer">
-              <option value="browser">چاپگر دستگاه</option>
-              <option value="mock">شبیه‌ساز</option>
+            <select value={f.printer} onChange={(e) => set('printer', e.target.value)} data-testid="setup-printer">
+              {printerOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </label>
           <label>
             اسکنر QR
-            <select value={f.scanner} onChange={(e) => set('scanner', e.target.value as WebSetup['scanner'])} data-testid="setup-scanner">
+            <select value={f.scanner} onChange={(e) => set('scanner', e.target.value as SetupValues['scanner'])} data-testid="setup-scanner">
               <option value="keyboard">اسکنر USB</option>
               <option value="mock">شبیه‌ساز</option>
             </select>
           </label>
         </div>
+        {printerNames && f.printer === 'windows' && (
+          <label>
+            چاپگر رسید
+            <select value={f.printerName} onChange={(e) => set('printerName', e.target.value)} data-testid="setup-printer-name">
+              <option value="">{printerNames.length ? '— انتخاب کنید —' : 'چاپگری در ویندوز نصب نیست'}</option>
+              {printerNames.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="setup-check">
           <input type="checkbox" checked={f.devControls} onChange={(e) => set('devControls', e.target.checked)} />
           کنترل‌های آزمایشی (فقط برای آزمون؛ در بهره‌برداری خاموش باشد)
@@ -166,7 +199,7 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
  * Device key prompt before opening settings. Accepts the key stored on this device, or, after a
  * key rotation in the panel (A15), the new key once the server confirms it for this kiosk id.
  */
-export function TechGate({ setup, onPass, onCancel }: { setup: Pick<WebSetup, 'serverUrl' | 'deviceId' | 'deviceKey'>; onPass(): void; onCancel(): void }) {
+export function TechGate({ setup, onPass, onCancel }: { setup: Pick<SetupValues, 'serverUrl' | 'deviceId' | 'deviceKey'>; onPass(): void; onCancel(): void }) {
   const [value, setValue] = useState('');
   const [wrong, setWrong] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

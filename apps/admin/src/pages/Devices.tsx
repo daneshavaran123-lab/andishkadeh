@@ -8,6 +8,7 @@ import {
   type DeviceCommandRow,
   type DeviceRow,
   type HardwareStatus,
+  type SystemInfo,
 } from '@andishkadeh/shared';
 import { api, errorMessage } from '../api';
 import { AdminOnly } from '../auth';
@@ -77,6 +78,7 @@ function Commands({ device }: { device: DeviceRow }) {
 /** A15 — kiosk heartbeat, card reader / printer / scanner state, version, outbox. */
 export function Devices() {
   const q = useQuery({ queryKey: ['devices'], queryFn: () => api.get<DeviceRow[]>('/admin/devices'), refetchInterval: 15_000 });
+  const system = useQuery({ queryKey: ['system'], queryFn: () => api.get<SystemInfo>('/admin/system'), staleTime: Infinity });
   const qc = useQueryClient();
   const toast = useToast();
   const action = useAction();
@@ -104,12 +106,20 @@ export function Devices() {
         title="کیوسک و تجهیزات"
         subtitle="وضعیت «نامشخص» یعنی SDK واقعی آن تجهیز متصل نیست یا وضعیت را گزارش نمی‌کند"
         actions={
-          <AdminOnly>
-            <button className="btn btn-primary" onClick={() => setCreate(true)}>
-              <Icon name="plus" />
-              ثبت کیوسک جدید
-            </button>
-          </AdminOnly>
+          <>
+            {system.data && (
+              <a className="btn" href={system.data.kioskInstallerUrl} title="نصب‌کننده برنامه کیوسک برای ویندوز، هم‌نسخه با این سرور" data-testid="kiosk-installer">
+                <Icon name="download" />
+                برنامه کیوسک ویندوز {toPersianDigits(system.data.version)}
+              </a>
+            )}
+            <AdminOnly>
+              <button className="btn btn-primary" onClick={() => setCreate(true)}>
+                <Icon name="plus" />
+                ثبت کیوسک جدید
+              </button>
+            </AdminOnly>
+          </>
         }
       />
       {q.data.length === 0 && <Empty icon="monitor">کیوسکی ثبت نشده است</Empty>}

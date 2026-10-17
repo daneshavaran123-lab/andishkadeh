@@ -3,14 +3,17 @@
  * Security (PRD §18): contextIsolation, sandboxed renderer, no Node in the UI, IPC allowlist,
  * navigation/new-window blocked, device secrets only in this process.
  * Lifecycle: fullscreen kiosk window, renderer crash → reload, single instance, no sleep.
+ * First run (no kiosk.config.json): the setup screen asks for the server address and device key,
+ * writes the file and restarts the app.
  */
 import { app, BrowserWindow, ipcMain, net, powerSaveBlocker, protocol, session } from 'electron';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { KioskConfig } from '../src/core/config';
 import type { KioskCore } from '../src/core/kiosk-core';
+import { verifySetup } from '../src/core/setup-check';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../src/core/types';
-import { createNodeCore, loadConfig } from '../src/platform/node';
+import { createNodeCore, isConfigured, loadConfig, writeSetupConfig } from '../src/platform/node';
 import { WindowsDriverPrinter } from './printer-windows';
 
 protocol.registerSchemesAsPrivileged([
@@ -35,14 +38,14 @@ function isTrustedSender(url: string): boolean {
   return url.startsWith(pathToFileURL(join(__dirname, '../dist-renderer')).toString());
 }
 
-function createWindow() {
+function createWindow(kioskMode: boolean, search = '') {
   win = new BrowserWindow({
     width: 1080,
     height: 1920,
     backgroundColor: '#050B18',
-    fullscreen: cfg.kioskMode,
-    kiosk: cfg.kioskMode,
-    frame: !cfg.kioskMode,
+    fullscreen: kioskMode,
+    kiosk: kioskMode,
+    frame: !kioskMode,
     autoHideMenuBar: true,
     show: false,
     webPreferences: {
@@ -50,7 +53,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      devTools: !cfg.kioskMode,
+      devTools: !kioskMode,
       spellcheck: false,
     },
   });
@@ -61,7 +64,7 @@ function createWindow() {
   });
   // Block reload / devtools / zoom shortcuts on the kiosk.
   win.webContents.on('before-input-event', (e, input) => {
-    if (!cfg.kioskMode) return;
+    if (!kioskMode) return;
     const k = input.key.toLowerCase();
     if ((input.control || input.meta) && ['r', 'w', 'q', 'n', 't', 'p', '=', '-', '0', 'shift'].includes(k)) e.preventDefault();
     if (['f5', 'f11', 'f12'].includes(k)) e.preventDefault();
@@ -69,11 +72,38 @@ function createWindow() {
   });
   win.webContents.on('render-process-gone', () => setTimeout(() => win?.reload(), 1500));
   win.on('unresponsive', () => setTimeout(() => win?.reload(), 10_000));
-  if (rendererUrl) void win.loadURL(rendererUrl);
-  else void win.loadFile(rendererFile);
+  if (rendererUrl) void win.loadURL(`${rendererUrl}${search ? `?${search}` : ''}`);
+  else void win.loadFile(rendererFile, { search });
 }
 
-if (primary) void app.whenReady().then(start);
+if (primary) void app.whenReady().then(() => (isConfigured(dataDir) ? start() : setup()));
+
+/** First run: the setup screen collects the server address and device key, then the app restarts. */
+function setup() {
+  session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
+  const trusted = (event: Electron.IpcMainInvokeEvent) => {
+    if (!isTrustedSender(event.senderFrame?.url ?? '')) throw new Error('untrusted sender');
+  };
+  ipcMain.handle('kiosk-setup:printers', async (event) => {
+    trusted(event);
+    return ((await win?.webContents.getPrintersAsync()) ?? []).map((p) => p.name);
+  });
+  ipcMain.handle('kiosk-setup:verify', (event, s: { serverUrl: string; deviceId: string; deviceKey: string }) => {
+    trusted(event);
+    return verifySetup(s);
+  });
+  ipcMain.handle('kiosk-setup:save', (event, values: unknown) => {
+    trusted(event);
+    writeSetupConfig(dataDir, values);
+    // Answer the page first, then start again with the new configuration.
+    setTimeout(() => {
+      app.relaunch();
+      app.exit(0);
+    }, 300);
+    return { ok: true };
+  });
+  createWindow(app.isPackaged, 'setup');
+}
 
 async function start() {
   cfg = loadConfig(dataDir, { appVersion: app.getVersion() });
@@ -102,7 +132,7 @@ async function start() {
   for (const ev of IPC_EVENTS) core.on(ev, (data) => win?.webContents.send(`kiosk:event:${ev}`, data));
 
   core.start();
-  createWindow();
+  createWindow(cfg.kioskMode);
 
   if (app.isPackaged && cfg.kioskMode) {
     app.setLoginItemSettings({ openAtLogin: true });

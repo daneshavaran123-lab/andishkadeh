@@ -106,6 +106,12 @@ export interface DeviceRow {
   lastSyncAt: string | null;
 }
 
+/** Release of this server; the Windows kiosk installer of the same version (A15). */
+export interface SystemInfo {
+  version: string;
+  kioskInstallerUrl: string;
+}
+
 export interface DeviceCommandRow {
   id: string;
   deviceId: string;

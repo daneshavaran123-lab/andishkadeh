@@ -16,6 +16,16 @@ if (__KIOSK_WEB__) {
     </StrictMode>,
   );
   void import('./pwa').then((m) => m.registerServiceWorker());
+} else if (new URLSearchParams(location.search).has('setup')) {
+  // Windows app before its first configuration (electron/main.ts).
+  const ElectronSetup = lazy(() => import('./ElectronSetup').then((m) => ({ default: m.ElectronSetup })));
+  root.render(
+    <StrictMode>
+      <Suspense fallback={null}>
+        <ElectronSetup />
+      </Suspense>
+    </StrictMode>,
+  );
 } else {
   root.render(
     <StrictMode>

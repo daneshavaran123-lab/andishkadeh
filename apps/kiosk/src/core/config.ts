@@ -14,8 +14,14 @@ export const KioskConfigSchema = z.object({
   dataDir: z.string(),
   appVersion: z.string().default('1.0.0'),
   adapters: z.object({
-    /** mock = simulated card reader. none = no SDK configured (status UNKNOWN, sales blocked). */
-    payment: z.enum(['mock', 'none']).default('mock'),
+    /**
+     * mock = simulated card reader. none = no SDK configured (status UNKNOWN, sales blocked).
+     * helper = Windows/Node only: a helper program around the bank's PC-POS SDK (docs/payment-helper.md).
+     */
+    payment: z.enum(['mock', 'none', 'helper']).default('mock'),
+    /** helper: path of the helper executable, and its arguments (e.g. terminal IP and port). */
+    paymentHelperPath: z.string().optional(),
+    paymentHelperArgs: z.array(z.string()).default([]),
     /**
      * mock = simulated (receipts written to <dataDir>/receipts); windows = silent print through the
      * Windows driver (Electron); browser = system print dialog / kiosk-printing browser (web app).

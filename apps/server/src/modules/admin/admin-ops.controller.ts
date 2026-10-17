@@ -22,6 +22,7 @@ import {
   SubscriptionsQuery,
   SyncEvent,
   SyncOverview,
+  SystemInfo,
   localDayRange,
   maskMobile,
   normalizeDigits,
@@ -34,11 +35,13 @@ import { AuditService, CounterService, SettingsService } from '../../common/core
 import { ApiError } from '../../common/errors';
 import { PrismaService } from '../../common/prisma.service';
 import { ZodPipe } from '../../common/zod.pipe';
+import { config } from '../../config';
 import { DevicesService, toDeviceRow } from '../sales/devices.service';
 import { toOrderDto, toPaymentRow } from '../sales/mappers';
 import { OrdersService, orderInclude } from '../sales/orders.service';
 import { PaymentsService } from '../sales/payments.service';
 import { SyncService } from '../sales/sync.service';
+import { APP_VERSION, kioskInstallerUrl } from '../../version';
 
 const UpdateDeviceRequest = z.object({ name: z.string().trim().min(2).max(80).optional(), active: z.boolean().optional() });
 const SyncQuery = z.object({ status: z.enum(['APPLIED', 'REJECTED', 'CONFLICT']).optional(), deviceId: z.string().optional() });
@@ -421,6 +424,11 @@ export class AdminOpsController {
   }
 
   // ------------------------------------------------------------------ A15 devices
+
+  @Get('system')
+  system(): SystemInfo {
+    return { version: APP_VERSION, kioskInstallerUrl: kioskInstallerUrl(config().KIOSK_INSTALLER_URL) };
+  }
 
   @Get('devices')
   async listDevices() {

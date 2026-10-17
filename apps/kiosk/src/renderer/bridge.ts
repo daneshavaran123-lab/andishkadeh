@@ -5,12 +5,19 @@
  *    with attachApi() once the device has been set up.
  *  - Browser development / E2E: the dev bridge over HTTP + SSE.
  */
+import type { SetupCheck, SetupValues } from '../core/setup-check';
 import type { IpcChannel, IpcChannels, IpcEvent, IpcEvents } from '../core/types';
 
 export interface KioskApi {
   platform: string;
   invoke(channel: IpcChannel, req: unknown): Promise<unknown>;
   on(event: IpcEvent, cb: (data: unknown) => void): () => void;
+  /** Windows app, first run only (see electron/main.ts). */
+  setup?: {
+    printers(): Promise<string[]>;
+    verify(s: Pick<SetupValues, 'serverUrl' | 'deviceId' | 'deviceKey'>): Promise<SetupCheck>;
+    save(values: SetupValues): Promise<{ ok: true }>;
+  };
 }
 
 declare global {
