@@ -154,14 +154,14 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.5</span> · ۲۵ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.3.0</span> · ۲۵ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
   <div class="facts">
     <span class="fact">کیوسک: <b>ویندوز · وب‌اپ · اندروید</b></span>
     <span class="fact">سرور: <b>NestJS + PostgreSQL</b></span>
-    <span class="fact">تست پذیرش: <b class="num">۳۳ از ۳۳ موفق</b></span>
+    <span class="fact">تست پذیرش: <b class="num">۳۴ از ۳۴ موفق</b></span>
     <span class="fact">بدون رزرو و نوبت‌دهی</span>
   </div>
 </header>
@@ -173,6 +173,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
     <li><a href="#overview">نمای کلی</a></li>
     <li><a href="#dev">راه‌اندازی توسعه</a></li>
     <li><a href="#architecture">معماری و مدل داده</a></li>
+    <li><a href="#golive">بهره‌برداری روی لیارا</a></li>
     <li><a href="#server">راه‌اندازی سرور</a></li>
     <li><a href="#kiosk">نصب کیوسک ویندوز</a></li>
     <li><a href="#platforms">وب‌اپ و اندروید</a></li>
@@ -601,6 +602,32 @@ sequenceDiagram
   </div>
 </section>
 
+<!-- ============================================================ go-live -->
+<section id="golive">
+  <h2>بهره‌برداری روی لیارا</h2>
+  <p class="lede">سرور و پنل روی لیارا، کیوسک ویندوز، کارتخوان آسان پرداخت / بانک شهر. راهنمای کامل: <a href="go-live.md">راه‌اندازی برای بهره‌برداری</a> و <a href="liara-deploy.md">استقرار روی لیارا</a>.</p>
+  <ol class="steps">
+    <li><strong>لیارا:</strong>
+      <ul>
+        <li>در یک شبکه خصوصی: دیتابیس PostgreSQL، برنامه Docker و دیسک <code>media</code></li>
+        <li>متغیرها: <code>DATABASE_URL</code> (آدرس شبکه خصوصی)، <code>JWT_SECRET</code> (دست‌کم ۳۲ نویسه)، <code>PUBLIC_BASE_URL</code> (<code>https://&lt;برنامه&gt;.liara.run</code>)، <code>SEED_ADMIN_PASSWORD</code> و <code>SEED_OPERATOR_PASSWORD</code></li>
+        <li>استقرار با <code>liara deploy</code> یا از Actions با گزینه deploy</li>
+      </ul>
+    </li>
+    <li><strong>بررسی:</strong> <code>/api/v1/health</code> با <code>"db":"ok"</code>، سپس ورود به <code>/admin</code>. رمزها را عوض و متغیرهای <code>SEED_*_PASSWORD</code> را حذف کنید.</li>
+    <li><strong>پنل:</strong> قیمت خدمات بدون تعرفه، تنظیمات، و «ثبت کیوسک جدید» (کلید فقط یک بار).</li>
+    <li><strong>کیوسک ویندوز:</strong>
+      <ul>
+        <li>نصب‌کننده از «کیوسک و تجهیزات» ← «برنامه کیوسک ویندوز»</li>
+        <li>صفحه راه‌اندازی: آدرس سرور، شناسه، کلید و چاپگر رسید</li>
+        <li>قفل حساب <code>kiosk</code></li>
+      </ul>
+    </li>
+    <li><strong>کارتخوان:</strong> پس از تحویل SDK آسان پرداخت، برنامه کمکی و <code>"payment": "helper"</code>، سپس آزمون با پایانه واقعی (<a href="payment-helper.md">کارتخوان</a>).</li>
+  </ol>
+  <div class="note warn"><p>در <code>NODE_ENV=production</code> (پیش‌فرض image) سرور با مقدار نمونه یا ناامن اجرا نمی‌شود و علت را در لاگ می‌نویسد: <code>JWT_SECRET</code> کوتاه، <code>PUBLIC_BASE_URL</code> بدون https، یا رمز اولیه <code>CHANGE_ME</code>.</p></div>
+</section>
+
 <!-- ============================================================ server -->
 <section id="server">
   <h2>راه‌اندازی سرور مرکزی و پنل</h2>
@@ -699,7 +726,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.2.5",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.3.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -708,13 +735,13 @@ WantedBy=multi-user.target</code></pre></div>
   <h3>ثبت کیوسک جدید</h3>
   <ol class="steps">
     <li>در پنل به «کیوسک و تجهیزات» بروید و «ثبت کیوسک جدید» را بزنید. شناسه را مثلاً <code>KIOSK-02</code> بگذارید.</li>
-    <li>کلید دستگاه فقط یک بار نمایش داده می‌شود. آن را در <code>kiosk.config.json</code> همان کیوسک قرار دهید.</li>
+    <li>کلید دستگاه فقط یک بار نمایش داده می‌شود. آن را در صفحه راه‌اندازی همان کیوسک وارد کنید.</li>
     <li>اگر کلید لو رفت یا دستگاه تعویض شد، از دکمه «کلید جدید» در ردیف همان دستگاه استفاده کنید. کلید قبلی بلافاصله باطل می‌شود.</li>
   </ol>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.2.5
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.3.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -751,13 +778,23 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
   </ol>
 
   <h3>نصب برنامه و پوشه داده</h3>
-  <p>نصب‌کننده را با حساب مدیر اجرا کنید. برنامه در اجرای اول خودش را در Startup حساب جاری ثبت می‌کند؛ برای حساب <code>kiosk</code> یک بار با همان حساب اجرا کنید.</p>
+  <p>نصب‌کننده هم‌نسخه با سرور از پنل ← «کیوسک و تجهیزات» ← «برنامه کیوسک ویندوز» دانلود می‌شود. آن را با حساب مدیر اجرا کنید. برنامه در اجرای اول خودش را در Startup حساب جاری ثبت می‌کند؛ برای حساب <code>kiosk</code> یک بار با همان حساب اجرا کنید.</p>
   <div class="code"><button type="button" data-copy>کپی</button><pre><code>%APPDATA%\AndishkadehKiosk\
-  kiosk.config.json     ← پیکربندی (شما می‌سازید)
+  kiosk.config.json     ← پیکربندی (صفحه راه‌اندازی می‌سازد)
   kiosk.sqlite          ← سفارش‌ها، ژورنال پرداخت، صف همگام‌سازی، کش اشتراک‌ها
   media\                ← کش تصاویر (بررسی‌شده با sha256)
   receipts\             ← فقط در حالت چاپگر شبیه‌سازی‌شده</code></pre></div>
   <p>برای مسیر دیگر، متغیر محیطی سیستمی <code>KIOSK_DATA_DIR</code> را تنظیم کنید.</p>
+
+  <h3>صفحه راه‌اندازی (اجرای اول)</h3>
+  <p>در اجرای اول، چون <code>kiosk.config.json</code> وجود ندارد، صفحه «راه‌اندازی کیوسک» باز می‌شود. تکنسین این‌ها را وارد می‌کند:</p>
+  <ul>
+    <li>آدرس سرور (مثلاً <code>https://andishkadeh.liara.run</code>)</li>
+    <li>شناسه و کلید کیوسک</li>
+    <li>کارتخوان، چاپگر و اسکنر</li>
+    <li>چاپگر رسید، از فهرست چاپگرهای ویندوز</li>
+  </ul>
+  <p>برنامه کلید را با سرور بررسی می‌کند، فایل را می‌سازد و دوباره اجرا می‌شود. تغییرات بعدی در خود فایل انجام می‌شود.</p>
 
   <h3>پیکربندی kiosk.config.json</h3>
   <div class="code"><span class="lang">json</span><button type="button" data-copy>کپی</button><pre><code>{
@@ -801,8 +838,8 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
     <li>برنامه ورودی سریع اسکنر را از تایپ انسان تشخیص می‌دهد (کمتر از ۳۰۰ میلی‌ثانیه بین کلیدها).</li>
   </ul>
   <h4>کارتخوان بانکی</h4>
-  <div class="note risk"><p><strong>SDK یا پروتکل کارتخوان هنوز تحویل نشده است.</strong> تا آن زمان حالت <code>mock</code> فقط برای آزمون و نمایش است (نوار زرد «حالت آزمایشی» همیشه دیده می‌شود) و حالت <code>none</code> فروش را آغاز نمی‌کند.</p></div>
-  <p>افزودن آداپتر واقعی یعنی پیاده‌سازی رابط <code>PaymentAdapter</code> (<code>initiate</code>، <code>inquire</code>، <code>status</code>). شناسه یکتای تلاش (<code>attemptId</code>) باید به‌عنوان شماره مرجع به پایانه داده شود تا استعلام بعدی ممکن باشد، و هر پاسخ مبهم یا پایان مهلت باید <code>UNKNOWN</code> برگرداند، نه <code>FAILED</code>.</p>
+  <p>کیوسک با پایانه بانک از طریق یک <strong>برنامه کمکی</strong> کار می‌کند که SDK شرکت پرداخت (آسان پرداخت / بانک شهر) را صدا می‌زند (<code>"payment": "helper"</code>، <code>paymentHelperPath</code>). کیوسک و برنامه کمکی با JSON خط‌به‌خط حرف می‌زنند. مبلغ به ریال فرستاده می‌شود. پاسخ مبهم، توقف برنامه یا پایان مهلت پس از ارسال فروش <code>UNKNOWN</code> است و استعلام می‌شود. پروتکل و اسکلت برنامه: <a href="payment-helper.md">کارتخوان و برنامه کمکی</a>.</p>
+  <div class="note risk"><p><strong>SDK و مستند PC-POS آسان پرداخت هنوز تحویل نشده است</strong> (عمومی نیست). سمت کیوسک آماده و آزموده است. تا نوشتن برنامه کمکی، حالت <code>mock</code> فقط برای آزمون و نمایش است (نوار زرد «حالت آزمایشی») و حالت <code>none</code> فروش را آغاز نمی‌کند.</p></div>
 
   <h3>حالت کیوسک قفل‌شده</h3>
   <ul>
@@ -837,7 +874,7 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
     <tbody>
       <tr><td>نصب</td><td>نصب‌کننده NSIS</td><td><code>http(s)://&lt;سرور&gt;/kiosk/</code> در Chrome یا Edge</td><td>فایل APK</td></tr>
       <tr><td>پایگاه محلی</td><td>فایل SQLite (WAL، <code>synchronous=FULL</code>)</td><td>SQLite در WebAssembly، ذخیره در IndexedDB</td><td>مانند وب‌اپ</td></tr>
-      <tr><td>پیکربندی</td><td><code>kiosk.config.json</code></td><td>صفحه راه‌اندازی تکنسین</td><td>صفحه راه‌اندازی تکنسین</td></tr>
+      <tr><td>پیکربندی</td><td>صفحه راه‌اندازی در اجرای اول، سپس <code>kiosk.config.json</code></td><td>صفحه راه‌اندازی تکنسین</td><td>صفحه راه‌اندازی تکنسین</td></tr>
       <tr><td>چاپ رسید</td><td>درایور ویندوز، بی‌صدا</td><td>چاپ مرورگر (با <code>--kiosk-printing</code> بی‌صدا)</td><td>سرویس چاپ اندروید</td></tr>
       <tr><td>اسکنر QR</td><td colspan="3">USB HID در حالت صفحه‌کلید (در اندروید با OTG)</td></tr>
       <tr><td>کارتخوان</td><td colspan="3">آداپتر؛ تا رسیدن SDK بانک فقط «شبیه‌ساز» با نوار حالت آزمایشی یا «متصل نشده»</td></tr>
@@ -920,7 +957,7 @@ flowchart TB
   <div class="table-wrap"><table>
     <thead><tr><th>لایه</th><th>کجا تغییر می‌کند</th><th>چه کسی</th><th>چه زمانی اعمال می‌شود</th></tr></thead>
     <tbody>
-      <tr><td>پیکربندی محلی دستگاه</td><td>ویندوز: <code>kiosk.config.json</code>. وب و اندروید: صفحه راه‌اندازی</td><td>تکنسین</td><td>پس از اجرای دوباره برنامه</td></tr>
+      <tr><td>پیکربندی محلی دستگاه</td><td>ویندوز: صفحه راه‌اندازی در اجرای اول، سپس <code>kiosk.config.json</code>. وب و اندروید: صفحه راه‌اندازی</td><td>تکنسین</td><td>پس از اجرای دوباره برنامه</td></tr>
       <tr><td>تنظیمات مرکز</td><td>پنل ← «تنظیمات»</td><td>فقط مدیر اصلی (ثبت در سوابق تغییرات)</td><td>همه کیوسک‌ها، در اولین heartbeat یا pull (به‌طور پیش‌فرض حداکثر ۳۰ ثانیه)</td></tr>
       <tr><td>ثبت و کلید دستگاه</td><td>پنل ← «کیوسک‌ها»</td><td>فقط مدیر اصلی</td><td>فوری؛ کلید باطل‌شده درخواست بعدی را رد می‌کند</td></tr>
     </tbody>
@@ -943,7 +980,7 @@ flowchart LR
   <ol class="steps">
     <li>در پنل ← «کیوسک‌ها» گزینه «ثبت کیوسک جدید» را بزنید و شناسه (مثلاً <code>KIOSK-02</code>) و نام بدهید.</li>
     <li><strong>کلید دستگاه فقط یک بار نمایش داده می‌شود.</strong> سرور فقط هش sha256 آن را نگه می‌دارد و مقایسه را با زمان ثابت انجام می‌دهد. اگر کلید گم شد، «کلید جدید» بسازید.</li>
-    <li>کلید را روی دستگاه وارد کنید: ویندوز در <code>kiosk.config.json</code>، وب‌اپ و اندروید در صفحه راه‌اندازی.</li>
+    <li>کلید را روی دستگاه وارد کنید: در صفحه راه‌اندازی (ویندوز در اجرای اول، وب‌اپ و اندروید) یا در <code>kiosk.config.json</code>.</li>
     <li>با اولین heartbeat دستگاه در پنل «آنلاین» می‌شود. دستگاهی که <span class="num">۲</span> دقیقه heartbeat نفرستد «قطع ارتباط» نمایش داده می‌شود.</li>
   </ol>
 
@@ -1306,9 +1343,9 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
     <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
     <tbody>
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۳۵</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API</td><td>Vitest</td><td class="num">۲۹</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ و پنل تولیدی زیر CSP)</td><td>Playwright</td><td class="num">۳۳</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۴۳</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API + برنامه کمکی کارتخوان + صفحه راه‌اندازی ویندوز</td><td>Vitest</td><td class="num">۴۰</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP و صفحه راه‌اندازی ویندوز)</td><td>Playwright</td><td class="num">۳۴</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1363,7 +1400,7 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
   <div class="table-wrap"><table>
     <thead><tr><th>مورد</th><th>وضعیت فعلی</th><th>اقدام لازم</th></tr></thead>
     <tbody>
-      <tr><td>SDK یا پروتکل کارتخوان (PSP، مدل، روش اتصال)</td><td><span class="chip open">باز</span> فقط پشت رابط <code>PaymentAdapter</code>؛ <code>mock</code> با نوار آزمایشی، <code>none</code> فروش را متوقف می‌کند</td><td>تحویل SDK و مستند PSP، پیاده‌سازی و آزمون با پایانه واقعی</td></tr>
+      <tr><td>SDK کارتخوان آسان پرداخت / بانک شهر (PC-POS)</td><td><span class="chip open">باز</span> سمت کیوسک آماده (آداپتر <code>helper</code> با برنامه کمکی)؛ برنامه کمکی به SDK آسان پرداخت نیاز دارد</td><td>فعال‌سازی PC-POS و تحویل SDK و مستند، نوشتن برنامه کمکی و آزمون با پایانه واقعی</td></tr>
       <tr><td>مدل چاپگر حرارتی</td><td><span class="chip open">باز</span> چاپ با درایور ویندوز؛ گزارش «بی‌کاغذ» به درایور وابسته است</td><td>اعلام مدل؛ اگر SDK وضعیت دارد، آداپتر دقیق اضافه می‌شود</td></tr>
       <tr><td>مدل اسکنر QR</td><td><span class="chip open">باز</span> HID keyboard-wedge با پسوند Enter</td><td>اعلام مدل و تأیید تنظیمات</td></tr>
       <tr><td>تعرفه‌های ناقص</td><td><span class="chip open">باز</span> <span class="num">۲۸</span> خدمت عملکرد و <span class="num">۱۰</span> ماژول مانیتورینگ بدون قیمت؛ غیرفعال و در کیوسک پنهان</td><td>ورود قیمت در پنل ← «خدمات و تعرفه‌ها» (فیلتر «بدون تعرفه»)</td></tr>
@@ -1408,7 +1445,15 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.2.5</span></h2>
+  <h2>تغییرات نسخه <span class="tag">1.3.0</span></h2>
+  <p class="lede">۲۵ مهر ۱۴۰۵ — آماده‌سازی برای بهره‌برداری.</p>
+  <ul>
+    <li><strong>لیارا:</strong> <code>Dockerfile</code> و <code>liara.json</code> برای سرور و پنل؛ migration و داده اولیه در هر اجرا؛ دیسک <code>media</code>. CI image را با تنظیمات production اجرا و بررسی می‌کند و با گزینه deploy روی لیارا مستقر می‌کند.</li>
+    <li><strong>ایمنی production:</strong> سرور با <code>JWT_SECRET</code> نمونه، <code>DATABASE_URL</code> نمونه یا <code>PUBLIC_BASE_URL</code> بدون https اجرا نمی‌شود؛ رمز اولیه نمونه پذیرفته نمی‌شود و پس از اولین ورود لازم نیست.</li>
+    <li><strong>کیوسک ویندوز:</strong> صفحه راه‌اندازی در اجرای اول (بدون نوشتن دستی JSON) و دانلود نصب‌کننده هم‌نسخه از پنل.</li>
+    <li><strong>کارتخوان:</strong> آداپتر <code>helper</code> برای برنامه کمکی SDK شرکت پرداخت (آسان پرداخت / بانک شهر)، با رفتار ایمن در توقف یا بی‌پاسخی.</li>
+  </ul>
+  <h3>نسخه 1.2.5</h3>
   <p class="lede">۲۵ مهر ۱۴۰۵ — نسخه آماده انتشار.</p>
   <ul>
     <li><strong>انتشار:</strong> یک نسخه برای همه بخش‌ها (<code>pnpm version:set</code> و <code>version:check</code>)؛ اجرای دستی CI یک پیش‌نویس GitHub Release با همه فایل‌ها و یادداشت CHANGELOG می‌سازد (<a href="#release">انتشار نسخه</a>).</li>
