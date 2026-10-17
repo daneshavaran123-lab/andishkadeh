@@ -508,6 +508,7 @@ pnpm --filter @andishkadeh/shared build
 | --- | --- |
 | `pnpm build` | ساخت همه بسته‌ها |
 | `pnpm typecheck` | بررسی نوع‌ها در همه بسته‌ها |
+| `pnpm knip` | یافتن کد مرده (فایل، export و وابستگی بی‌استفاده) با تنظیم `knip.jsonc`؛ در CI هم اجرا می‌شود |
 | `pnpm test` | تست‌های واحد و یکپارچه (shared، server روی پایگاه `*_test`، هسته کیوسک روی هر دو درایور SQLite) |
 | `pnpm e2e` | تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های 3200/5283/5284/5285 و وب‌اپ روی `3200/kiosk/`) |
 | `pnpm --filter @andishkadeh/server openapi` | تولید `docs/openapi.json` |
@@ -541,7 +542,7 @@ flowchart LR
 | واحد (قیمت، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن) | Vitest (`packages/shared`) | ۳۷ |
 | یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون) | Vitest (`apps/server`) | ۳۳ |
 | یکپارچه هسته کیوسک روی `better-sqlite3` و `sql.js` + درایور `sql.js` + کلاینت API | Vitest (`apps/kiosk`) | ۲۹ |
-| پذیرش E2E (ماتریس T01 تا T15، پنل، وب‌اپ و پنل تولیدی زیر CSP) | Playwright (`e2e`) | ۳۲ |
+| پذیرش E2E (ماتریس T01 تا T15، پنل، وب‌اپ و پنل تولیدی زیر CSP) | Playwright (`e2e`) | ۳۳ |
 
 جزئیات و ماتریس پذیرش: [گزارش تست](docs/test-report.md). آخرین QA مرورگری و API با روش gstack: [گزارش QA](docs/qa/gstack-qa-2026-10-16.md).
 
