@@ -3,7 +3,7 @@ dist/
 dist-electron/
 dist-renderer/
 dist-web/
-release/
+apps/kiosk/release/
 build/
 coverage/
 *.log
