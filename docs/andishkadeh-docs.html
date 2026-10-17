@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.3</span> · ۲۵ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.2.4</span> · ۲۵ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -265,6 +265,7 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
     <tbody>
       <tr><td><code>pnpm build</code></td><td>ساخت همه بسته‌ها</td></tr>
       <tr><td><code>pnpm typecheck</code></td><td>بررسی نوع‌ها در همه بسته‌ها</td></tr>
+      <tr><td><code>pnpm lint</code></td><td>ESLint با تنظیم <code>eslint.config.mjs</code>: قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React؛ در CI هم اجرا می‌شود</td></tr>
       <tr><td><code>pnpm knip</code></td><td>یافتن کد مرده (فایل، export و وابستگی بی‌استفاده) با تنظیم <code>knip.jsonc</code>؛ در CI هم اجرا می‌شود</td></tr>
       <tr><td><code>pnpm test</code></td><td>تست‌های واحد و یکپارچه (shared، server روی پایگاه <code>*_test</code>، هسته کیوسک روی هر دو درایور SQLite)</td></tr>
       <tr><td><code>pnpm e2e</code></td><td>تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های <span class="num">3200 / 5283 / 5284 / 5285</span>)</td></tr>
@@ -874,7 +875,7 @@ KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
   <figure class="diagram">
 <pre class="mermaid">
 flowchart LR
-  PUSH["push به مخزن"] --&gt; T["تست‌ها&lt;br/&gt;typecheck + واحد + یکپارچه&lt;br/&gt;با PostgreSQL"]
+  PUSH["push به مخزن"] --&gt; T["تست‌ها&lt;br/&gt;typecheck + lint + knip&lt;br/&gt;واحد و یکپارچه با PostgreSQL"]
   PUSH --&gt; WEB["وب‌اپ و پنل&lt;br/&gt;ubuntu"]
   PUSH --&gt; AND["APK اندروید&lt;br/&gt;ubuntu + Android SDK"]
   PUSH --&gt; WIN["نصب‌کننده ویندوز&lt;br/&gt;windows"]
@@ -1365,7 +1366,13 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.2.3</span></h2>
+  <h2>تغییرات نسخه <span class="tag">1.2.4</span></h2>
+  <p class="lede">۲۵ مهر ۱۴۰۵ — ESLint برای همه بسته‌ها و در CI.</p>
+  <ul>
+    <li><strong>ESLint:</strong> <code>pnpm lint</code> قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React را بررسی می‌کند (پیش‌تر همان typecheck بود) و در CI اجرا می‌شود.</li>
+    <li><strong>یافته‌ها:</strong> ۱۲ خطا و ۱۲ هشدار، بدون باگ رفتاری؛ همه رفع یا با دلیل علامت‌گذاری شدند و lint اکنون بدون یافته است.</li>
+  </ul>
+  <h3>نسخه 1.2.3</h3>
   <p class="lede">۲۵ مهر ۱۴۰۵ — گروه‌بندی «خدمات و تعرفه‌ها» و پاک‌سازی کد مرده.</p>
   <ul>
     <li><strong>خدمات و تعرفه‌ها:</strong> سرگروه هر حوزه با تعداد و وضعیت خدمت‌ها، زیرگروه‌ها به ترتیب پنل؛ بسته به‌طور پیش‌فرض، حوزه‌های باز به خاطر سپرده می‌شوند، جست‌وجو و فیلتر حوزه‌های دارای نتیجه را باز می‌کند.</li>

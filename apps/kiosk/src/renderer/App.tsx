@@ -218,7 +218,7 @@ export function App() {
       offCatalog();
       window.removeEventListener('kiosk:help', onHelp);
     };
-  }, []);
+  }, [setState, setStatus]);
 
   return (
     <div className={`stage${CALM.includes(routeId) ? ' calm' : ''}`} style={{ transform: `scale(${scale})`, left: (window.innerWidth - 1080 * scale) / 2 }}>

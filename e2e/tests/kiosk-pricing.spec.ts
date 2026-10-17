@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { addService, adminApi, adminToken, checkoutWithMobile, devControl, orderDetail, ordersByMobile, randomMobile, resetDevices, startSession, tomanOf } from './helpers';
+import { adminApi, adminToken, checkoutWithMobile, devControl, orderDetail, ordersByMobile, randomMobile, resetDevices, startSession, tomanOf } from './helpers';
 
 test.beforeEach(async () => {
   await resetDevices();

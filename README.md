@@ -508,6 +508,7 @@ pnpm --filter @andishkadeh/shared build
 | --- | --- |
 | `pnpm build` | ساخت همه بسته‌ها |
 | `pnpm typecheck` | بررسی نوع‌ها در همه بسته‌ها |
+| `pnpm lint` | ESLint با تنظیم `eslint.config.mjs`: قواعد پیشنهادی JavaScript و TypeScript و قواعد hookهای React؛ در CI هم اجرا می‌شود |
 | `pnpm knip` | یافتن کد مرده (فایل، export و وابستگی بی‌استفاده) با تنظیم `knip.jsonc`؛ در CI هم اجرا می‌شود |
 | `pnpm test` | تست‌های واحد و یکپارچه (shared، server روی پایگاه `*_test`، هسته کیوسک روی هر دو درایور SQLite) |
 | `pnpm e2e` | تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های 3200/5283/5284/5285 و وب‌اپ روی `3200/kiosk/`) |
@@ -522,7 +523,7 @@ pnpm --filter @andishkadeh/shared build
 
 ```mermaid
 flowchart LR
-  PUSH["push به مخزن"] --> T["تست‌ها<br/>typecheck + واحد + یکپارچه<br/>با PostgreSQL"]
+  PUSH["push به مخزن"] --> T["تست‌ها<br/>typecheck + lint + knip<br/>واحد و یکپارچه با PostgreSQL"]
   PUSH --> WEB["وب‌اپ و پنل<br/>ubuntu"]
   PUSH --> AND["APK اندروید<br/>ubuntu + Android SDK"]
   PUSH --> WIN["نصب‌کننده ویندوز<br/>windows"]

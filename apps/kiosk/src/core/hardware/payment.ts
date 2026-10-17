@@ -32,17 +32,17 @@ export class MockPaymentAdapter implements PaymentAdapter {
     return { state: HardwareState.OK, adapter: this.name, detail: 'کارتخوان شبیه‌سازی‌شده' };
   }
 
-  private paid(req: PaymentRequest): TerminalResult {
+  private paid(): TerminalResult {
     const ref = `MOCK-${++this.seq}`;
     return { outcome: TerminalOutcome.PAID, terminalRef: ref, rrn: String(100000000000 + this.seq), traceNo: String(this.seq), message: null };
   }
 
   async initiate(req: PaymentRequest, signal: AbortSignal): Promise<TerminalResult> {
     await sleep(this.delayMs, signal).catch(() => undefined);
-    const truth = this.hiddenTruth === 'PAID' ? this.paid(req) : failed('رد شده توسط بانک');
+    const truth = this.hiddenTruth === 'PAID' ? this.paid() : failed('رد شده توسط بانک');
     switch (this.scenario) {
       case 'approve': {
-        const r = this.paid(req);
+        const r = this.paid();
         this.ledger.set(req.attemptId, r);
         return r;
       }

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { formatToman, toPersianDigits } from '@andishkadeh/shared';
 import { Icon } from '../components/Icon';
 import { Notice, Screen, Stepper } from '../components/ui';
@@ -9,7 +9,7 @@ export function Cart() {
   const bootstrap = useApp((s) => s.bootstrap);
   const { cart, setQty, removeFromCart, removeMany, backTo, go, set, showToast } = useSession();
   const idx = indexServices(bootstrap);
-  const p = cartPreview(bootstrap, cart);
+  const p = useMemo(() => cartPreview(bootstrap, cart), [bootstrap, cart]);
   const max = bootstrap?.settings.maxItemQuantity ?? 5;
 
   // Items that disappeared from the catalogue (deactivated/price removed) leave the cart.
@@ -18,7 +18,7 @@ export function Cart() {
       removeMany(p.missing);
       showToast('برخی خدمات دیگر در دسترس نیستند و از سبد حذف شدند');
     }
-  }, [p.missing.join(',')]);
+  }, [p.missing, removeMany, showToast]);
 
   return (
     <Screen

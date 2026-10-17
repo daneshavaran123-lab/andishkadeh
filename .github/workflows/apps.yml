@@ -52,6 +52,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:shared
       - run: pnpm typecheck
+      - run: pnpm lint
       - run: pnpm knip
       - run: pnpm test
 

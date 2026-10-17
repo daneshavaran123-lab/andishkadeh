@@ -117,6 +117,8 @@ export function Review() {
       setError({ code: r.code, message: r.message });
       setState('error');
     });
+    // Once on entry, with the cart and mobile as they were then (the order is price-locked here).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const edit = async () => {
@@ -264,6 +266,8 @@ export function Paying() {
         setError(r);
       }
     });
+    // Once per visit, for the order shown on entry: a re-run must never start a second payment.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useAllowIdleTimeout(!!error);
 
@@ -455,13 +459,14 @@ export function Printing() {
     });
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- print once on entry; reprints come from the button
   useEffect(print, []);
   useAllowIdleTimeout(state === 'failed');
   useEffect(() => {
     if (state !== 'done') return;
     const t = setTimeout(() => replace('end'), 4000);
     return () => clearTimeout(t);
-  }, [state]);
+  }, [state, replace]);
 
   if (!order) return null;
   return (
@@ -532,7 +537,7 @@ export function End({ reason }: { reason?: string }) {
   }, []);
   useEffect(() => {
     if (left <= 0) reset();
-  }, [left]);
+  }, [left, reset]);
 
   const title = reason === 'cancel' ? 'خرید لغو شد' : reason === 'unknown' ? 'سفارش شما ثبت شده است' : 'از خرید شما سپاسگزاریم';
   const text =

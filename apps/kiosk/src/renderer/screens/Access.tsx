@@ -56,6 +56,8 @@ export function Scan() {
       window.removeEventListener('keydown', onKey);
       off();
     };
+    // Registered once: `submit` only touches refs, state setters and store actions, which never change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const scannerDown = status?.hardware.scanner.state === 'ERROR';
@@ -98,7 +100,7 @@ export function AccessResultScreen() {
     if (access?.result !== AccessResult.ACTIVE) return;
     const t = setTimeout(reset, 12000);
     return () => clearTimeout(t);
-  }, [access]);
+  }, [access, reset]);
 
   if (!access) return null;
   const date = (d: string | null) => (d ? formatJalaliLong(d, tz) : '');

@@ -11,7 +11,7 @@
     "build:shared": "pnpm --filter @andishkadeh/shared run build",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r --workspace-concurrency=1 --filter \"!@andishkadeh/e2e\" run test",
-    "lint": "pnpm -r run typecheck",
+    "lint": "eslint .",
     "knip": "knip",
     "db:migrate": "pnpm --filter @andishkadeh/server run db:migrate",
     "db:seed": "pnpm --filter @andishkadeh/server run db:seed",
@@ -22,6 +22,11 @@
     "docs:uml": "bash tools/uml/render.sh"
   },
   "devDependencies": {
-    "knip": "6.38.0"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "knip": "6.38.0",
+    "typescript-eslint": "8.71.0"
   }
 }
