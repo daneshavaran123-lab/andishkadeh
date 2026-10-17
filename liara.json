@@ -1,0 +1,13 @@
+{
+  "platform": "docker",
+  "port": 3000,
+  "build": {
+    "location": "germany"
+  },
+  "disks": [
+    {
+      "name": "media",
+      "mountTo": "/app/storage/media"
+    }
+  ]
+}

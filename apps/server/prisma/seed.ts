@@ -20,6 +20,13 @@ function env(name: string, fallback?: string): string {
   return v;
 }
 
+/** Initial passwords and keys: the example placeholders and short values are refused. */
+function secret(name: string, minLength: number): string {
+  const v = env(name);
+  if (/CHANGE_ME/i.test(v) || v.length < minLength) throw new Error(`${name}: set a real value of at least ${minLength} characters (not the example)`);
+  return v;
+}
+
 async function seedMedia(file: string): Promise<string> {
   const mediaDir = resolve(process.cwd(), env('MEDIA_DIR', './storage/media'));
   mkdirSync(mediaDir, { recursive: true });
@@ -149,26 +156,31 @@ async function main() {
     });
   }
 
+  // Initial passwords are read only while the account does not exist yet, so after the first run
+  // the SEED_*_PASSWORD variables can be removed (the server may re-run this seed on every start).
   const users = [
-    { username: env('SEED_ADMIN_USERNAME', 'admin'), password: env('SEED_ADMIN_PASSWORD'), displayName: 'مدیر سامانه', role: 'ADMIN' as const },
-    { username: env('SEED_OPERATOR_USERNAME', 'operator'), password: env('SEED_OPERATOR_PASSWORD'), displayName: 'اپراتور پذیرش', role: 'OPERATOR' as const },
+    { username: env('SEED_ADMIN_USERNAME', 'admin'), passwordEnv: 'SEED_ADMIN_PASSWORD', displayName: 'مدیر سامانه', role: 'ADMIN' as const },
+    { username: env('SEED_OPERATOR_USERNAME', 'operator'), passwordEnv: 'SEED_OPERATOR_PASSWORD', displayName: 'اپراتور پذیرش', role: 'OPERATOR' as const },
   ];
   for (const u of users) {
     const exists = await prisma.adminUser.findUnique({ where: { username: u.username } });
     if (!exists) {
       await prisma.adminUser.create({
-        data: { username: u.username, displayName: u.displayName, role: u.role, passwordHash: await bcrypt.hash(u.password, 10) },
+        data: { username: u.username, displayName: u.displayName, role: u.role, passwordHash: await bcrypt.hash(secret(u.passwordEnv, 8), 10) },
       });
     }
   }
 
-  const deviceId = env('SEED_DEVICE_ID', 'KIOSK-01');
-  const deviceKeyHash = createHash('sha256').update(env('SEED_DEVICE_KEY'), 'utf8').digest('hex');
-  await prisma.device.upsert({
-    where: { id: deviceId },
-    update: {},
-    create: { id: deviceId, name: 'کیوسک لابی اصلی', apiKeyHash: deviceKeyHash },
-  });
+  // Optional: in production kiosks are registered in the panel, which shows each key once.
+  if (process.env.SEED_DEVICE_KEY) {
+    const deviceId = env('SEED_DEVICE_ID', 'KIOSK-01');
+    const deviceKeyHash = createHash('sha256').update(secret('SEED_DEVICE_KEY', 16), 'utf8').digest('hex');
+    await prisma.device.upsert({
+      where: { id: deviceId },
+      update: {},
+      create: { id: deviceId, name: 'کیوسک لابی اصلی', apiKeyHash: deviceKeyHash },
+    });
+  }
 
   if (catalogChanged) await prisma.counter.update({ where: { key: 'catalogRevision' }, data: { value: { increment: 1 } } });
 

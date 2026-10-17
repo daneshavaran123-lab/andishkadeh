@@ -3,8 +3,10 @@
 #   web      — kiosk web app (PWA, served by the server at /kiosk/) + admin panel
 #   android  — Android kiosk app (Capacitor): debug APK, plus a signed release APK when the keystore secrets exist
 #   windows  — Windows kiosk installer (Electron, NSIS)
+#   image    — the server + admin panel Docker image (Liara), started against PostgreSQL and checked
 #   release  — manual runs with "release" ticked: a draft GitHub Release v<version> with all of the above
 #              (see docs/release.md); nothing is published until someone presses "Publish release"
+#   liara    — manual runs with "deploy to Liara" ticked: uploads this commit to the Liara app (docs/liara-deploy.md)
 name: Apps
 
 on:
@@ -16,6 +18,10 @@ on:
     inputs:
       release:
         description: 'Create a draft GitHub Release from this commit'
+        type: boolean
+        default: false
+      deploy:
+        description: 'Deploy the server and admin panel to Liara (secret LIARA_API_TOKEN, variable LIARA_APP)'
         type: boolean
         default: false
 
@@ -167,10 +173,77 @@ jobs:
           path: apps/kiosk/release/*.exe
           if-no-files-found: error
 
+  image:
+    name: Server image (Docker)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: andishkadeh
+          POSTGRES_PASSWORD: andishkadeh
+          POSTGRES_DB: andishkadeh
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U andishkadeh"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t andishkadeh-server .
+      - name: Start it as on Liara (production settings, empty database) and check it
+        run: |
+          docker run -d --name app --network host \
+            -e DATABASE_URL='postgresql://andishkadeh:andishkadeh@localhost:5432/andishkadeh?schema=public' \
+            -e JWT_SECRET=ci-only-secret-0123456789abcdefghijklmnop \
+            -e PUBLIC_BASE_URL=https://andishkadeh.example.ir \
+            -e SEED_ADMIN_PASSWORD=Admin@12345 -e SEED_OPERATOR_PASSWORD=Operator@12345 \
+            andishkadeh-server
+          for i in $(seq 1 60); do curl -sf localhost:3000/api/v1/health >/dev/null && break; sleep 2; done
+          version=$(node -p "require('./apps/server/package.json').version")
+          curl -sf localhost:3000/api/v1/health | tee /dev/stderr | grep -q "\"db\":\"ok\".*\"version\":\"$version\""
+          curl -sf localhost:3000/admin/login | grep -q '<div id="root">'
+          curl -sf -X POST localhost:3000/api/v1/admin/auth/login -H 'Content-Type: application/json' \
+            -d '{"username":"admin","password":"Admin@12345"}' | grep -q '"token"'
+          # A restart (new deploy) runs migrations and the seed again without the initial passwords.
+          docker rm -f app >/dev/null
+          docker run -d --name app --network host \
+            -e DATABASE_URL='postgresql://andishkadeh:andishkadeh@localhost:5432/andishkadeh?schema=public' \
+            -e JWT_SECRET=ci-only-secret-0123456789abcdefghijklmnop \
+            -e PUBLIC_BASE_URL=https://andishkadeh.example.ir \
+            andishkadeh-server
+          for i in $(seq 1 60); do curl -sf localhost:3000/api/v1/health >/dev/null && break; sleep 2; done
+          curl -sf localhost:3000/api/v1/health | grep -q '"db":"ok"'
+      - name: Container log
+        if: always()
+        run: docker logs app 2>&1 | tail -60 || true
+
+  liara:
+    name: Deploy to Liara
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    needs: [test, image]
+    runs-on: ubuntu-latest
+    env:
+      LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+      LIARA_APP: ${{ vars.LIARA_APP }}
+    steps:
+      - name: Settings present
+        run: |
+          if [ -z "$LIARA_API_TOKEN" ] || [ -z "$LIARA_APP" ]; then
+            echo "::error::Add the repository secret LIARA_API_TOKEN and the variable LIARA_APP (docs/liara-deploy.md)"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i -g @liara/cli@9
+      # liara.json supplies platform, port, build location and the media disk.
+      - run: liara deploy --app "$LIARA_APP" --api-token "$LIARA_API_TOKEN" --no-app-logs
+
   release:
     name: Draft release
     if: github.event_name == 'workflow_dispatch' && inputs.release
-    needs: [test, web, android, windows]
+    needs: [test, web, android, windows, image]
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -1,0 +1,19 @@
+# Build context of the Dockerfile, and what `liara deploy` uploads (it reads this file instead of .gitignore).
+**/node_modules
+**/dist
+**/dist-*
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.gstack
+apps/kiosk/android
+apps/kiosk/release
+apps/kiosk/.kiosk-data
+apps/server/storage
+e2e/test-results
+e2e/playwright-report
+docs
+tools/uml/.cache
+**/*.log
+**/*.sqlite*

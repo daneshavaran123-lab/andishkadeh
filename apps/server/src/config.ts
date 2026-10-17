@@ -18,6 +18,8 @@ const EnvSchema = z.object({
   ADMIN_DIST_DIR: z.string().default(''),
   /** Optional: built kiosk web app (apps/kiosk/dist-web) served at /kiosk/ for browser kiosks. */
   KIOSK_WEB_DIST_DIR: z.string().default(''),
+  /** Optional: where the panel links the Windows kiosk installer (default: this release on GitHub). */
+  KIOSK_INSTALLER_URL: z.string().default(''),
   NODE_ENV: z.string().default('development'),
 });
 
@@ -30,12 +32,25 @@ export type AppConfig = z.infer<typeof EnvSchema> & {
 
 let cached: AppConfig | null = null;
 
+/** Settings that are fine on a developer machine but must never reach production (NODE_ENV=production). */
+export function productionProblems(env: z.infer<typeof EnvSchema>): string[] {
+  const problems: string[] = [];
+  if (/CHANGE_ME/i.test(env.JWT_SECRET) || env.JWT_SECRET.length < 32) problems.push('JWT_SECRET: set a random value of at least 32 characters');
+  if (/CHANGE_ME/i.test(env.DATABASE_URL)) problems.push('DATABASE_URL: still the example value');
+  if (!/^https:\/\//.test(env.PUBLIC_BASE_URL)) problems.push('PUBLIC_BASE_URL: must be the public https:// address of this server');
+  return problems;
+}
+
 export function config(): AppConfig {
   if (cached) return cached;
   const parsed = EnvSchema.safeParse(process.env);
   if (!parsed.success) {
     const msg = parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
     throw new Error(`Invalid environment: ${msg}`);
+  }
+  if (parsed.data.NODE_ENV === 'production') {
+    const problems = productionProblems(parsed.data);
+    if (problems.length) throw new Error(`Refusing to start in production: ${problems.join('; ')}`);
   }
   cached = {
     ...parsed.data,
