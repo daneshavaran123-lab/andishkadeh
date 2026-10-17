@@ -13,8 +13,10 @@
       "ignoreDependencies": ["electron-builder-squirrel-windows", "vazirmatn"]
     },
     "e2e": {
-      // Started by playwright.config.ts (webServer commands).
-      "entry": ["scripts/*.mjs"]
+      // The Playwright plugin would execute playwright.config.ts, which needs a database URL; list the entries instead.
+      // scripts/*.mjs are started by its webServer commands.
+      "playwright": false,
+      "entry": ["playwright.config.ts", "tests/**/*.spec.ts", "scripts/*.mjs"]
     }
   }
 }
