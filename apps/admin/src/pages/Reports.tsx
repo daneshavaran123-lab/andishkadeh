@@ -16,7 +16,7 @@ import {
 import { api, errorMessage, qs } from '../api';
 import { BarList, DailyColumns } from '../components/charts';
 import { Icon } from '../components/Icon';
-import { Alert, Card, DateRangeFilter, ErrorBox, Field, Loading, PageHead, presetRange, useToast, type RangePreset } from '../components/ui';
+import { Alert, Card, DateRangeFilter, ErrorBox, Field, Loading, PageHead, presetRange, useAction, useToast, type RangePreset } from '../components/ui';
 import { useCategories } from './Catalog';
 
 function BucketTable({ rows, label }: { rows: ReportBucket[]; label: string }) {
@@ -51,6 +51,7 @@ function BucketTable({ rows, label }: { rows: ReportBucket[]; label: string }) {
 export function Reports() {
   const [sp] = useSearchParams();
   const toast = useToast();
+  const action = useAction();
   const initialFrom = sp.get('from');
   const initialTo = sp.get('to');
   const [range, setRange] = useState<{ preset: RangePreset; from: string; to: string }>(
@@ -79,11 +80,11 @@ export function Reports() {
         subtitle={`${formatJalaliDate(localDayRange(range.from).from)} تا ${formatJalaliDate(localDayRange(range.to).from)} — فروش قطعی فقط پرداخت‌های تأییدشده`}
         actions={
           <>
-            <button className="btn" onClick={() => exportFile('csv')} data-testid="export-csv">
+            <button className="btn" onClick={action(() => exportFile('csv'))} data-testid="export-csv">
               <Icon name="download" />
               خروجی CSV
             </button>
-            <button className="btn" onClick={() => exportFile('xlsx')} data-testid="export-xlsx">
+            <button className="btn" onClick={action(() => exportFile('xlsx'))} data-testid="export-xlsx">
               <Icon name="download" />
               خروجی Excel
             </button>
@@ -136,7 +137,7 @@ export function Reports() {
       {q.isLoading ? (
         <Loading />
       ) : q.error || !q.data || !s ? (
-        <ErrorBox error={q.error} retry={() => q.refetch()} />
+        <ErrorBox error={q.error} retry={() => void q.refetch()} />
       ) : (
         <div className={q.isFetching ? 'refetching' : ''}>
           <div className="grid grid-4" style={{ marginBottom: 18 }}>

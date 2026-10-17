@@ -52,7 +52,7 @@ function Stat({ to, icon, label, value, unit, foot, testid }: { to: string; icon
 export function Dashboard() {
   const q = useQuery({ queryKey: ['dashboard'], queryFn: () => api.get<DashboardResponse>('/admin/dashboard'), refetchInterval: 60_000 });
   if (q.isLoading) return <Loading />;
-  if (q.error || !q.data) return <ErrorBox error={q.error} retry={() => q.refetch()} />;
+  if (q.error || !q.data) return <ErrorBox error={q.error} retry={() => void q.refetch()} />;
   const d = q.data;
   const a = d.alerts;
   const month = d.salesSeries.reduce((s, x) => s + x.total, 0);

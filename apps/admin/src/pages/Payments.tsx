@@ -11,7 +11,7 @@ import {
 import { api, errorMessage, qs } from '../api';
 import { AdminOnly } from '../auth';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, PageHead, Pagination, ReasonDialog, Segmented, useToast, type RangePreset } from '../components/ui';
+import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, PageHead, Pagination, ReasonDialog, Segmented, useAction, useToast, type RangePreset } from '../components/ui';
 import { PAYMENT_TONE } from './Dashboard';
 
 /** Documented manual resolution of an UNKNOWN payment (ADMIN, reason required, audited). */
@@ -65,12 +65,13 @@ export function ReconcileDialog({ payment, onClose, onDone }: { payment: Payment
 export function PaymentActions({ p, onChanged }: { p: PaymentRow; onChanged: () => void }) {
   const [reconcile, setReconcile] = useState(false);
   const toast = useToast();
+  const action = useAction();
   if (p.status !== 'UNKNOWN' && p.status !== 'INITIATED') return null;
   return (
     <div style={{ display: 'flex', gap: 6 }}>
       <button
         className="btn btn-sm"
-        onClick={async () => {
+        onClick={action(async () => {
           try {
             await api.post(`/admin/payments/${p.id}/inquire`);
             toast.push('فرمان استعلام برای کیوسک ارسال شد؛ نتیجه پس از دریافت ثبت می‌شود');
@@ -78,7 +79,7 @@ export function PaymentActions({ p, onChanged }: { p: PaymentRow; onChanged: () 
           } catch (e) {
             toast.push(errorMessage(e), true);
           }
-        }}
+        })}
       >
         <Icon name="sync" />
         استعلام
@@ -164,7 +165,7 @@ export function Payments() {
         {q.isLoading ? (
           <Loading />
         ) : q.error ? (
-          <ErrorBox error={q.error} retry={() => q.refetch()} />
+          <ErrorBox error={q.error} retry={() => void q.refetch()} />
         ) : !q.data?.items.length ? (
           <Empty>تراکنشی با این مشخصات یافت نشد</Empty>
         ) : (
@@ -207,7 +208,7 @@ export function Payments() {
                     <td>{p.terminalRef ? <Code>{p.terminalRef}</Code> : <span className="muted">—</span>}</td>
                     <td className="n">{formatToman(p.amount)}</td>
                     <td>
-                      <PaymentActions p={p} onChanged={() => qc.invalidateQueries({ queryKey: ['payments'] })} />
+                      <PaymentActions p={p} onChanged={() => void qc.invalidateQueries({ queryKey: ['payments'] })} />
                     </td>
                   </tr>
                 ))}

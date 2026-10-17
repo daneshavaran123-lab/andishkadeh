@@ -21,7 +21,7 @@ import {
 import { api, errorMessage, qs } from '../api';
 import { AdminOnly } from '../auth';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, Pagination, ReasonDialog, useToast, type RangePreset, type Tone } from '../components/ui';
+import { Alert, Badge, Card, Code, DateRangeFilter, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, Pagination, ReasonDialog, useAction, useToast, type RangePreset, type Tone } from '../components/ui';
 import { PAYMENT_TONE } from './Dashboard';
 import { PaymentActions } from './Payments';
 import { escapeHtml, printWhenReady } from '../html';
@@ -136,7 +136,7 @@ export function Orders() {
         {q.isLoading ? (
           <Loading />
         ) : q.error ? (
-          <ErrorBox error={q.error} retry={() => q.refetch()} />
+          <ErrorBox error={q.error} retry={() => void q.refetch()} />
         ) : !q.data?.items.length ? (
           <Empty>سفارشی یافت نشد</Empty>
         ) : (
@@ -156,7 +156,7 @@ export function Orders() {
               </thead>
               <tbody>
                 {q.data.items.map((o) => (
-                  <tr key={o.id} className="clickable" onClick={() => nav(`/orders/${o.id}`)} data-testid="order-row">
+                  <tr key={o.id} className="clickable" onClick={() => void nav(`/orders/${o.id}`)} data-testid="order-row">
                     <td>
                       <Code>{o.orderNumber}</Code>{' '}
                       {o.offline && <Badge icon="wifiOff">آفلاین</Badge>} {o.conflictFlag && <Badge tone="danger">مغایرت</Badge>}
@@ -217,6 +217,7 @@ function KioskPrintDialog({ orderId, onClose }: { orderId: string; onClose: () =
   const devices = useQuery({ queryKey: ['devices'], queryFn: () => api.get<DeviceRow[]>('/admin/devices') });
   const [deviceId, setDeviceId] = useState('');
   const toast = useToast();
+  const action = useAction();
   const list = devices.data?.filter((d) => d.active) ?? [];
   return (
     <Modal
@@ -230,7 +231,7 @@ function KioskPrintDialog({ orderId, onClose }: { orderId: string; onClose: () =
           <button
             className="btn btn-primary"
             disabled={!(deviceId || list[0]?.id)}
-            onClick={async () => {
+            onClick={action(async () => {
               try {
                 await api.post(`/admin/orders/${orderId}/print`, { deviceId: deviceId || list[0].id });
                 toast.push('فرمان چاپ برای کیوسک ارسال شد');
@@ -238,7 +239,7 @@ function KioskPrintDialog({ orderId, onClose }: { orderId: string; onClose: () =
               } catch (e) {
                 toast.push(errorMessage(e), true);
               }
-            }}
+            })}
           >
             <Icon name="printer" />
             ارسال فرمان چاپ
@@ -264,13 +265,14 @@ export function OrderDetailPage() {
   const { id } = useParams();
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [kioskPrint, setKioskPrint] = useState(false);
   const [resolve, setResolve] = useState(false);
   const q = useQuery({ queryKey: ['order', id], queryFn: () => api.get<OrderDetail>(`/admin/orders/${id}`) });
   if (q.isLoading) return <Loading />;
-  if (q.error || !q.data) return <ErrorBox error={q.error} retry={() => q.refetch()} />;
+  if (q.error || !q.data) return <ErrorBox error={q.error} retry={() => void q.refetch()} />;
   const o = q.data;
-  const refresh = () => qc.invalidateQueries({ queryKey: ['order', id] });
+  const refresh = () => void qc.invalidateQueries({ queryKey: ['order', id] });
 
   return (
     <>
@@ -286,13 +288,13 @@ export function OrderDetailPage() {
             <>
               <button
                 className="btn"
-                onClick={async () => {
+                onClick={action(async () => {
                   try {
                     printReceiptInBrowser(await api.get<ReceiptData>(`/admin/orders/${o.id}/receipt`));
                   } catch (e) {
                     toast.push(errorMessage(e), true);
                   }
-                }}
+                })}
               >
                 <Icon name="printer" />
                 چاپ رسید در پذیرش

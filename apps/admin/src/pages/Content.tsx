@@ -5,7 +5,7 @@ import { api, errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Card, ErrorBox, Field, Loading, PageHead, useToast } from '../components/ui';
+import { Card, ErrorBox, Field, Loading, PageHead, useAction, useToast } from '../components/ui';
 import { KioskPreview, MediaPicker } from './Media';
 
 function ListEditor({ value, onChange, disabled, placeholder }: { value: string[]; onChange: (v: string[]) => void; disabled?: boolean; placeholder?: string }) {
@@ -27,6 +27,7 @@ export function Content() {
   const media = useQuery({ queryKey: ['media'], queryFn: () => api.get<MediaRow[]>('/admin/media') });
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const [c, setC] = useState<KioskContent | null>(null);
   const [busy, setBusy] = useState(false);
@@ -43,7 +44,7 @@ export function Content() {
     try {
       await api.put('/admin/content', c);
       toast.push('محتوا ذخیره و برای کیوسک منتشر شد');
-      qc.invalidateQueries({ queryKey: ['content'] });
+      void qc.invalidateQueries({ queryKey: ['content'] });
     } catch (e) {
       toast.push(errorMessage(e), true);
     } finally {
@@ -58,7 +59,7 @@ export function Content() {
         subtitle="متن‌ها و تصویر صفحه شروع، منوی اصلی و معرفی اشتراک"
         actions={
           isAdmin && (
-            <button className="btn btn-primary" onClick={save} disabled={busy}>
+            <button className="btn btn-primary" onClick={action(save)} disabled={busy}>
               {busy ? <span className="spinner" /> : <Icon name="check" />}
               ذخیره و انتشار
             </button>

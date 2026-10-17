@@ -5,12 +5,13 @@ import { api, errorMessage } from '../api';
 import { AdminOnly, useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, ErrorBox, Field, Loading, Modal, PageHead, Switch, useToast } from '../components/ui';
+import { Alert, Badge, Card, Code, ErrorBox, Field, Loading, Modal, PageHead, Switch, useAction, useToast } from '../components/ui';
 import { MoneyInput } from './Catalog';
 
 function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [f, setF] = useState<PlanUpsert>(
     initial
       ? { code: initial.code, title: initial.title, description: initial.description, durationDays: initial.durationDays, durationMonths: initial.durationMonths, price: initial.price, badge: initial.badge, active: initial.active, sortOrder: initial.sortOrder }
@@ -21,7 +22,7 @@ function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: 
       if (initial) await api.patch(`/admin/plans/${initial.id}`, f);
       else await api.post('/admin/plans', f);
       toast.push('پلن ذخیره و منتشر شد');
-      qc.invalidateQueries({ queryKey: ['plans'] });
+      void qc.invalidateQueries({ queryKey: ['plans'] });
       onClose();
     } catch (e) {
       toast.push(errorMessage(e), true);
@@ -36,7 +37,7 @@ function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: 
           <button className="btn" onClick={onClose}>
             انصراف
           </button>
-          <button className="btn btn-primary" onClick={save} data-testid="save-plan">
+          <button className="btn btn-primary" onClick={action(save)} data-testid="save-plan">
             ذخیره و انتشار
           </button>
         </>

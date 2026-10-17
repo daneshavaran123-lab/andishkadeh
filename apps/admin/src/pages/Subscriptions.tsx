@@ -103,7 +103,7 @@ export function Subscriptions() {
               </thead>
               <tbody>
                 {q.data.items.map((s) => (
-                  <tr key={s.id} className="clickable" onClick={() => nav(`/subscriptions/${s.id}`)}>
+                  <tr key={s.id} className="clickable" onClick={() => void nav(`/subscriptions/${s.id}`)}>
                     <td>
                       <span className="ltr num">{s.mobileMasked}</span>
                     </td>
@@ -180,7 +180,7 @@ export function SubscriptionDetailPage() {
   const done = (msg: string) => {
     setAction(null);
     toast.push(msg);
-    qc.invalidateQueries({ queryKey: ['subscription', id] });
+    void qc.invalidateQueries({ queryKey: ['subscription', id] });
   };
   return (
     <>
@@ -346,7 +346,7 @@ export function SubscriptionDetailPage() {
             const r = await api.post<{ qrToken: string; planTitle: string; expiresAt: string }>(`/admin/subscriptions/${s.id}/reissue-qr`, { reason });
             setAction(null);
             setQr(r);
-            qc.invalidateQueries({ queryKey: ['subscription', id] });
+            void qc.invalidateQueries({ queryKey: ['subscription', id] });
           }}
         />
       )}

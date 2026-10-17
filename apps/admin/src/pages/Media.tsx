@@ -5,7 +5,7 @@ import { api, errorMessage } from '../api';
 import { AdminOnly, useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Alert, Card, Empty, ErrorBox, JDate, Loading, Modal, PageHead, useToast } from '../components/ui';
+import { Alert, Card, Empty, ErrorBox, JDate, Loading, Modal, PageHead, useAction, useToast } from '../components/ui';
 
 const kb = (n: number) => `${formatNumberFa(Math.round(n / 1024))} KB`;
 
@@ -17,6 +17,7 @@ function UploadButton({ onUploaded }: { onUploaded?: (m: MediaRow) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
+  const action = useAction();
   const qc = useQueryClient();
   return (
     <>
@@ -26,7 +27,7 @@ function UploadButton({ onUploaded }: { onUploaded?: (m: MediaRow) => void }) {
         accept="image/jpeg,image/png,image/webp"
         hidden
         data-testid="media-file"
-        onChange={async (e) => {
+        onChange={action(async (e) => {
           const file = e.target.files?.[0];
           e.target.value = '';
           if (!file) return;
@@ -44,7 +45,7 @@ function UploadButton({ onUploaded }: { onUploaded?: (m: MediaRow) => void }) {
           } finally {
             setBusy(false);
           }
-        }}
+        })}
       />
       <button className="btn btn-primary" type="button" disabled={busy} onClick={() => input.current?.click()}>
         {busy ? <span className="spinner" /> : <Icon name="upload" />}
@@ -88,6 +89,7 @@ export function MediaLibrary() {
   const q = useMedia();
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const [preview, setPreview] = useState<MediaRow | null>(null);
   return (
@@ -135,16 +137,16 @@ export function MediaLibrary() {
                 className="btn btn-danger"
                 disabled={preview.usage > 0}
                 title={preview.usage > 0 ? 'تصویر در حال استفاده قابل حذف نیست' : undefined}
-                onClick={async () => {
+                onClick={action(async () => {
                   try {
                     await api.del(`/admin/media/${preview.id}`);
                     toast.push('تصویر حذف شد');
                     setPreview(null);
-                    qc.invalidateQueries({ queryKey: ['media'] });
+                    void qc.invalidateQueries({ queryKey: ['media'] });
                   } catch (e) {
                     toast.push(errorMessage(e), true);
                   }
-                }}
+                })}
               >
                 <Icon name="trash" />
                 حذف

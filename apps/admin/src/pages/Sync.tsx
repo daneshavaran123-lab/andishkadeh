@@ -4,7 +4,7 @@ import { SYNC_STATUS_LABEL, toPersianDigits, type SyncOverview } from '@andishka
 import { api, errorMessage, qs } from '../api';
 import { AdminOnly } from '../auth';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JDateTime, Loading, PageHead, relativeAge, useToast } from '../components/ui';
+import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JDateTime, Loading, PageHead, relativeAge, useAction, useToast } from '../components/ui';
 
 const TYPE_LABEL: Record<string, string> = {
   ORDER_OFFLINE: 'سفارش آفلاین',
@@ -20,6 +20,7 @@ export function Sync() {
   const status = sp.get('status') ?? '';
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const query = qs({ status });
   const q = useQuery({ queryKey: ['sync', query], queryFn: () => api.get<SyncOverview>(`/admin/sync${query}`), refetchInterval: 15_000 });
   if (q.isLoading) return <Loading />;
@@ -70,14 +71,14 @@ export function Sync() {
                   <AdminOnly>
                     <button
                       className="btn btn-sm"
-                      onClick={async () => {
+                      onClick={action(async () => {
                         try {
                           await api.post(`/admin/devices/${dev.id}/sync-now`);
                           toast.push('فرمان «همگام‌سازی فوری و تلاش مجدد ناموفق‌ها» ارسال شد');
                         } catch (e) {
                           toast.push(errorMessage(e), true);
                         }
-                      }}
+                      })}
                     >
                       <Icon name="sync" />
                       تلاش مجدد
@@ -155,15 +156,15 @@ export function Sync() {
                       <AdminOnly>
                         <button
                           className="btn btn-sm"
-                          onClick={async () => {
+                          onClick={action(async () => {
                             try {
                               await api.post(`/admin/sync/events/${e.id}/retry`);
                               toast.push('رویداد دوباره اعمال شد');
-                              qc.invalidateQueries({ queryKey: ['sync'] });
+                              void qc.invalidateQueries({ queryKey: ['sync'] });
                             } catch (err) {
                               toast.push(errorMessage(err), true);
                             }
-                          }}
+                          })}
                         >
                           اعمال مجدد
                         </button>

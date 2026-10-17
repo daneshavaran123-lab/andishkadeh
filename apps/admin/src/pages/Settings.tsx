@@ -5,7 +5,7 @@ import { ApiError, api, errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Alert, Card, ErrorBox, Field, Loading, PageHead, Segmented, Switch, useToast } from '../components/ui';
+import { Alert, Card, ErrorBox, Field, Loading, PageHead, Segmented, Switch, useAction, useToast } from '../components/ui';
 import { MediaPicker } from './Media';
 
 /** A16 — centre identity, receipt texts, timeouts and the policies marked "needs approval" in the PRD. */
@@ -13,6 +13,7 @@ export function Settings() {
   const q = useQuery({ queryKey: ['settings'], queryFn: () => api.get<KioskSettings>('/admin/settings') });
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const [s, setS] = useState<KioskSettings | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -33,7 +34,7 @@ export function Settings() {
     try {
       await api.put('/admin/settings', s);
       toast.push('تنظیمات ذخیره شد و در همگام‌سازی بعدی روی کیوسک اعمال می‌شود');
-      qc.invalidateQueries({ queryKey: ['settings'] });
+      void qc.invalidateQueries({ queryKey: ['settings'] });
     } catch (e) {
       if (e instanceof ApiError && Array.isArray(e.details)) setErrors(Object.fromEntries((e.details as Array<{ path: string; message: string }>).map((d) => [d.path, d.message])));
       toast.push(errorMessage(e), true);
@@ -46,7 +47,7 @@ export function Settings() {
         title="تنظیمات"
         actions={
           isAdmin && (
-            <button className="btn btn-primary" onClick={save} data-testid="save-settings">
+            <button className="btn btn-primary" onClick={action(save)} data-testid="save-settings">
               <Icon name="check" />
               ذخیره تنظیمات
             </button>

@@ -32,6 +32,17 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none', ignoreRestSiblings: true }],
     },
   },
+  // Promises (type-aware): an unawaited, unhandled promise loses its error. Event handlers wrap async
+  // functions with `action(fn)` in the admin panel, or use `() => void fn()` where fn handles its own errors.
+  {
+    files: ['**/*.{ts,tsx}'],
+    ignores: ['**/*.config.ts'], // tool configs are not part of a tsconfig project
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+    },
+  },
   // Tests read untyped JSON bodies and use the Prisma client generated in another package.
   {
     files: ['apps/*/test/**', '**/*.test.ts', 'e2e/**'],
@@ -58,7 +69,7 @@ export default defineConfig([
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
-  // Node: server, Electron shell, Node host and dev bridge of the kiosk, build scripts, tests, tool configs.
+  // Node: server, Electron shell, Node host and dev bridge of the kiosk, build and release scripts, tests, tool configs.
   {
     files: [
       'apps/server/**',
@@ -69,6 +80,7 @@ export default defineConfig([
       'apps/kiosk/test/**',
       'packages/shared/src/node.ts',
       'e2e/**',
+      'tools/**',
       '**/*.config.{ts,mjs,js}',
     ],
     languageOptions: { globals: globals.node },

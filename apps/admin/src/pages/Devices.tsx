@@ -12,7 +12,7 @@ import {
 import { api, errorMessage } from '../api';
 import { AdminOnly } from '../auth';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, relativeAge, useToast, type Tone } from '../components/ui';
+import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, relativeAge, useAction, useToast, type Tone } from '../components/ui';
 import { DeviceHealthBadge } from './Dashboard';
 
 const HW_TONE: Record<HardwareStatus['state'], Tone> = { OK: 'success', WARNING: 'warning', ERROR: 'danger', UNKNOWN: 'neutral' };
@@ -79,12 +79,13 @@ export function Devices() {
   const q = useQuery({ queryKey: ['devices'], queryFn: () => api.get<DeviceRow[]>('/admin/devices'), refetchInterval: 15_000 });
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [create, setCreate] = useState(false);
   const [newId, setNewId] = useState('KIOSK-02');
   const [newName, setNewName] = useState('');
   const [key, setKey] = useState<{ apiKey: string; deviceId: string } | null>(null);
   const [history, setHistory] = useState<DeviceRow | null>(null);
-  const refresh = () => qc.invalidateQueries({ queryKey: ['devices'] });
+  const refresh = () => void qc.invalidateQueries({ queryKey: ['devices'] });
   const act = async (fn: () => Promise<unknown>, ok: string) => {
     try {
       await fn();
@@ -160,13 +161,13 @@ export function Devices() {
                 سوابق فرمان‌ها
               </button>
               <AdminOnly>
-                <button className="btn btn-sm" onClick={() => act(() => api.post(`/admin/devices/${d.id}/sync-now`), 'فرمان همگام‌سازی ارسال شد')}>
+                <button className="btn btn-sm" onClick={action(() => act(() => api.post(`/admin/devices/${d.id}/sync-now`), 'فرمان همگام‌سازی ارسال شد'))}>
                   <Icon name="sync" />
                   همگام‌سازی فوری
                 </button>
                 <button
                   className="btn btn-sm"
-                  onClick={async () => {
+                  onClick={action(async () => {
                     if (!window.confirm('کلید فعلی باطل می‌شود و کیوسک تا وارد کردن کلید جدید قطع می‌شود. ادامه می‌دهید؟')) return;
                     try {
                       const r = await api.post<{ apiKey: string }>(`/admin/devices/${d.id}/rotate-key`);
@@ -174,12 +175,12 @@ export function Devices() {
                     } catch (e) {
                       toast.push(errorMessage(e), true);
                     }
-                  }}
+                  })}
                 >
                   <Icon name="key" />
                   کلید جدید
                 </button>
-                <button className="btn btn-sm btn-ghost" onClick={() => act(() => api.patch(`/admin/devices/${d.id}`, { active: !d.active }), d.active ? 'دستگاه غیرفعال شد' : 'دستگاه فعال شد')}>
+                <button className="btn btn-sm btn-ghost" onClick={action(() => act(() => api.patch(`/admin/devices/${d.id}`, { active: !d.active }), d.active ? 'دستگاه غیرفعال شد' : 'دستگاه فعال شد'))}>
                   {d.active ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
                 </button>
               </AdminOnly>
@@ -198,7 +199,7 @@ export function Devices() {
               </button>
               <button
                 className="btn btn-primary"
-                onClick={async () => {
+                onClick={action(async () => {
                   try {
                     const r = await api.post<{ apiKey: string; device: DeviceRow }>('/admin/devices', { id: newId.trim().toUpperCase(), name: newName.trim() });
                     setCreate(false);
@@ -207,7 +208,7 @@ export function Devices() {
                   } catch (e) {
                     toast.push(errorMessage(e), true);
                   }
-                }}
+                })}
               >
                 ثبت و دریافت کلید
               </button>

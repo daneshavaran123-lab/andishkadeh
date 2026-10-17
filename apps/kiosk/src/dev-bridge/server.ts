@@ -47,7 +47,7 @@ async function readJson(req: IncomingMessage): Promise<unknown> {
   return raw ? JSON.parse(raw) : undefined;
 }
 
-const server = createServer(async (req, res) => {
+async function handle(req: IncomingMessage, res: ServerResponse) {
   cors(req, res);
   if (req.method === 'OPTIONS') {
     res.writeHead(204).end();
@@ -101,7 +101,9 @@ const server = createServer(async (req, res) => {
   } catch (e) {
     res.writeHead(500, { 'Content-Type': 'application/json' }).end(JSON.stringify({ error: (e as Error).message }));
   }
-});
+}
+
+const server = createServer((req, res) => void handle(req, res));
 
 server.listen(PORT, HOST, () => {
   console.log(`[kiosk-bridge] core running, device=${cfg.deviceId} server=${cfg.serverUrl} data=${dataDir} → http://${HOST}:${PORT}`);

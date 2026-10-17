@@ -4,7 +4,7 @@ import { AdminRole, ROLE_LABEL, type AdminUserDto, type CreateUserRequest } from
 import { api, errorMessage, tokenStore } from '../api';
 import { useAuth } from '../auth';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, useToast } from '../components/ui';
+import { Alert, Badge, Card, ErrorBox, Field, JDateTime, Loading, Modal, PageHead, useAction, useToast } from '../components/ui';
 
 const PERMISSIONS: Array<[string, boolean, string]> = [
   ['مشاهده داشبورد', true, 'بله'],
@@ -24,6 +24,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
   const [next, setNext] = useState('');
   const [err, setErr] = useState<string | null>(null);
   const toast = useToast();
+  const action = useAction();
   return (
     <Modal
       title="تغییر رمز عبور"
@@ -36,7 +37,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
           <button
             className="btn btn-primary"
             disabled={next.length < 8 || !current}
-            onClick={async () => {
+            onClick={action(async () => {
               try {
                 const r = await api.post<{ token: string }>('/admin/auth/change-password', { currentPassword: current, newPassword: next });
                 tokenStore.set(r.token);
@@ -45,7 +46,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
               } catch (e) {
                 setErr(errorMessage(e));
               }
-            }}
+            })}
           >
             تغییر رمز
           </button>
@@ -68,6 +69,7 @@ export function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
 function UserDialog({ initial, onClose }: { initial: AdminUserDto | null; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [f, setF] = useState<CreateUserRequest>({ username: initial?.username ?? '', displayName: initial?.displayName ?? '', password: '', role: initial?.role ?? AdminRole.OPERATOR });
   const save = async () => {
     try {
@@ -77,7 +79,7 @@ function UserDialog({ initial, onClose }: { initial: AdminUserDto | null; onClos
         await api.post('/admin/users', f);
       }
       toast.push('کاربر ذخیره شد');
-      qc.invalidateQueries({ queryKey: ['users'] });
+      void qc.invalidateQueries({ queryKey: ['users'] });
       onClose();
     } catch (e) {
       toast.push(errorMessage(e), true);
@@ -92,7 +94,7 @@ function UserDialog({ initial, onClose }: { initial: AdminUserDto | null; onClos
           <button className="btn" onClick={onClose}>
             انصراف
           </button>
-          <button className="btn btn-primary" onClick={save}>
+          <button className="btn btn-primary" onClick={action(save)}>
             ذخیره
           </button>
         </>
@@ -124,13 +126,14 @@ export function Users() {
   const q = useQuery({ queryKey: ['users'], queryFn: () => api.get<AdminUserDto[]>('/admin/users') });
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { user } = useAuth();
   const [edit, setEdit] = useState<AdminUserDto | null | 'new'>(null);
   const patch = async (u: AdminUserDto, body: Record<string, unknown>, ok: string) => {
     try {
       await api.patch(`/admin/users/${u.id}`, body);
       toast.push(ok);
-      qc.invalidateQueries({ queryKey: ['users'] });
+      void qc.invalidateQueries({ queryKey: ['users'] });
     } catch (e) {
       toast.push(errorMessage(e), true);
     }
@@ -180,7 +183,7 @@ export function Users() {
                   <td>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                       {u.lockedUntil && (
-                        <button className="btn btn-sm" onClick={() => patch(u, { unlock: true }, 'قفل حساب برداشته شد')}>
+                        <button className="btn btn-sm" onClick={action(() => patch(u, { unlock: true }, 'قفل حساب برداشته شد'))}>
                           رفع قفل
                         </button>
                       )}
@@ -188,7 +191,7 @@ export function Users() {
                         ویرایش
                       </button>
                       {u.id !== user?.id && (
-                        <button className="btn btn-sm btn-ghost" onClick={() => patch(u, { active: !u.active }, u.active ? 'کاربر غیرفعال شد' : 'کاربر فعال شد')}>
+                        <button className="btn btn-sm btn-ghost" onClick={action(() => patch(u, { active: !u.active }, u.active ? 'کاربر غیرفعال شد' : 'کاربر فعال شد'))}>
                           {u.active ? 'غیرفعال‌سازی' : 'فعال‌سازی'}
                         </button>
                       )}

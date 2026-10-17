@@ -19,7 +19,7 @@ import { api, errorMessage } from '../api';
 import { AdminOnly, useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JalaliDateTimeInput, Loading, Modal, PageHead, Segmented, Switch, useToast } from '../components/ui';
+import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, JalaliDateTimeInput, Loading, Modal, PageHead, Segmented, Switch, useAction, useToast } from '../components/ui';
 import { MoneyInput, useCategories } from './Catalog';
 
 function TargetPicker({ targets, onChange, cats, services, plans }: { targets: DiscountUpsert['targets']; onChange: (t: DiscountUpsert['targets']) => void; cats: AdminCategory[]; services: AdminService[]; plans: AdminPlan[] }) {
@@ -94,6 +94,7 @@ function TargetPicker({ targets, onChange, cats, services, plans }: { targets: D
 function DiscountDialog({ initial, onClose }: { initial: AdminDiscount | null; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const cats = useCategories();
   const services = useQuery({ queryKey: ['services', ''], queryFn: () => api.get<AdminService[]>('/admin/services') });
   const plans = useQuery({ queryKey: ['plans'], queryFn: () => api.get<AdminPlan[]>('/admin/plans') });
@@ -118,7 +119,7 @@ function DiscountDialog({ initial, onClose }: { initial: AdminDiscount | null; o
       if (initial) await api.patch(`/admin/discounts/${initial.id}`, f);
       else await api.post('/admin/discounts', f);
       toast.push('تخفیف ذخیره و منتشر شد');
-      qc.invalidateQueries({ queryKey: ['discounts'] });
+      void qc.invalidateQueries({ queryKey: ['discounts'] });
       onClose();
     } catch (e) {
       toast.push(errorMessage(e), true);
@@ -137,11 +138,11 @@ function DiscountDialog({ initial, onClose }: { initial: AdminDiscount | null; o
           <button className="btn" onClick={onClose}>
             انصراف
           </button>
-          <button className="btn" onClick={runPreview} disabled={!f.targets.length} data-testid="preview-discount">
+          <button className="btn" onClick={action(runPreview)} disabled={!f.targets.length} data-testid="preview-discount">
             <Icon name="eye" />
             پیش‌نمایش مبلغ نهایی
           </button>
-          <button className="btn btn-primary" onClick={save} disabled={busy || !f.targets.length || !f.title} data-testid="save-discount">
+          <button className="btn btn-primary" onClick={action(save)} disabled={busy || !f.targets.length || !f.title} data-testid="save-discount">
             ذخیره و انتشار
           </button>
         </>
@@ -228,6 +229,7 @@ export function Discounts() {
   const settings = useQuery({ queryKey: ['settings'], queryFn: () => api.get<{ discountPolicy: string }>('/admin/settings') });
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const [edit, setEdit] = useState<AdminDiscount | null | 'new'>(null);
   return (
@@ -293,16 +295,16 @@ export function Discounts() {
                         </button>
                         <button
                           className="btn btn-sm btn-danger"
-                          onClick={async () => {
+                          onClick={action(async () => {
                             if (!window.confirm(`تخفیف «${d.title}» حذف شود؟ سفارش‌های قبلی تغییری نمی‌کنند.`)) return;
                             try {
                               await api.del(`/admin/discounts/${d.id}`);
                               toast.push('تخفیف حذف شد');
-                              qc.invalidateQueries({ queryKey: ['discounts'] });
+                              void qc.invalidateQueries({ queryKey: ['discounts'] });
                             } catch (e) {
                               toast.push(errorMessage(e), true);
                             }
-                          }}
+                          })}
                         >
                           حذف
                         </button>

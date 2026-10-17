@@ -12,6 +12,7 @@ import {
   toPersianDigits,
   zonedMidnight,
 } from '@andishkadeh/shared';
+import { errorMessage } from '../api';
 import { Icon, type IconName } from './Icon';
 
 // ------------------------------------------------------------------ layout bits
@@ -298,6 +299,7 @@ export function ReasonDialog({
   onConfirm: (reason: string) => Promise<void>;
   extra?: ReactNode;
 }) {
+  const action = useAction();
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -314,7 +316,7 @@ export function ReasonDialog({
           <button
             className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`}
             disabled={!ok || busy}
-            onClick={async () => {
+            onClick={action(async () => {
               setBusy(true);
               setErr(null);
               try {
@@ -324,7 +326,7 @@ export function ReasonDialog({
               } finally {
                 setBusy(false);
               }
-            }}
+            })}
           >
             {busy ? <span className="spinner" /> : null}
             {confirmLabel}
@@ -376,6 +378,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 export const useToast = () => useContext(ToastCtx);
+
+/**
+ * Wraps an async event handler (`onClick={action(save)}`). React ignores the promise a handler returns, so an
+ * error the handler does not catch itself would be lost; here it is shown as an error toast.
+ */
+export function useAction() {
+  const { push } = useToast();
+  return useCallback(
+    <A extends unknown[]>(fn: (...args: A) => Promise<unknown>) =>
+      (...args: A): void => {
+        fn(...args).catch((e: unknown) => push(errorMessage(e), true));
+      },
+    [push],
+  );
+}
 
 // ------------------------------------------------------------------ pagination
 

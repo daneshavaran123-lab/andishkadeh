@@ -112,9 +112,9 @@ function HelpModal({ onClose }: { onClose: () => void }) {
           <button
             className="btn btn-ghost"
             style={{ borderColor: 'rgba(255,40,76,.5)', color: '#ff8a9c' }}
-            onClick={async () => {
+            onClick={() => {
               onClose();
-              await endSession();
+              void endSession();
             }}
             data-testid="cancel-purchase"
           >
@@ -203,10 +203,11 @@ export function App() {
   useEffect(() => {
     if (platform === 'electron') document.body.classList.add('touch-only');
     let alive = true;
-    const load = () =>
+    const load = (): void => {
       invoke('app:getState')
         .then((s) => alive && setState(s))
         .catch(() => alive && setTimeout(load, 2000));
+    };
     load();
     const offStatus = onEvent('status', setStatus);
     const offCatalog = onEvent('catalog', setState);

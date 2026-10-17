@@ -160,10 +160,10 @@ export function Review() {
     <Screen
       title="تأیید نهایی"
       subtitle="مبلغ زیر قفل شده و هنگام پرداخت تغییر نمی‌کند"
-      onBack={edit}
+      onBack={() => void edit()}
       footer={
         <div className="footer-row">
-          <button className="btn btn-ghost" onClick={edit} data-testid="edit-order" style={{ flex: '0 0 300px' }}>
+          <button className="btn btn-ghost" onClick={() => void edit()} data-testid="edit-order" style={{ flex: '0 0 300px' }}>
             ویرایش
           </button>
           <button className="btn btn-success" onClick={() => go('paying')} data-testid="pay">
@@ -385,7 +385,7 @@ export function PaymentResult() {
             <button className="btn btn-ghost" disabled={!inquiredOnce || busy} onClick={() => replace('end', { reason: 'unknown' })} data-testid="unknown-finish">
               پایان و مراجعه به پذیرش
             </button>
-            <button className="btn btn-primary" disabled={busy} onClick={inquire} data-testid="inquire">
+            <button className="btn btn-primary" disabled={busy} onClick={() => void inquire()} data-testid="inquire">
               <Icon name="refresh" />
               {busy ? 'در حال استعلام…' : 'استعلام مجدد'}
             </button>
@@ -418,7 +418,7 @@ export function PaymentResult() {
       center
       footer={
         <div className="footer-row">
-          <button className="btn btn-ghost" onClick={abandon} data-testid="abandon">
+          <button className="btn btn-ghost" onClick={() => void abandon()} data-testid="abandon">
             انصراف از خرید
           </button>
           <button className="btn btn-primary" onClick={() => replace('paying')} data-testid="retry">

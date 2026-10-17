@@ -17,7 +17,7 @@ import { ApiError, api, errorMessage, qs } from '../api';
 import { AdminOnly, useAuth } from '../auth';
 import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
-import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, Loading, Modal, PageHead, Switch, useToast } from '../components/ui';
+import { Alert, Badge, Card, Code, Empty, ErrorBox, Field, Loading, Modal, PageHead, Switch, useAction, useToast } from '../components/ui';
 import { MediaPicker } from './Media';
 
 export function useCategories() {
@@ -260,7 +260,7 @@ export function Services() {
                           </td>
                         </tr>
                         {sub.services.map((s) => (
-                          <tr key={s.id} className="clickable" onClick={() => nav(`/catalog/services/${s.id}`)} data-testid={`service-row-${s.code}`}>
+                          <tr key={s.id} className="clickable" onClick={() => void nav(`/catalog/services/${s.id}`)} data-testid={`service-row-${s.code}`}>
                             <td style={{ width: 56 }}>{s.mediaUrl ? <img className="thumb" src={s.mediaUrl} alt="" /> : <div className="thumb" />}</td>
                             <td>
                               <Code>{s.code}</Code>
@@ -304,6 +304,7 @@ export function ServiceForm() {
   const nav = useNavigate();
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const cats = useCategories();
   const existing = useQuery({ queryKey: ['service', id], queryFn: () => api.get<AdminService>(`/admin/services/${id}`), enabled: !isNew });
@@ -333,8 +334,8 @@ export function ServiceForm() {
       const saved = isNew ? await api.post<AdminService>('/admin/services', body) : await api.patch<AdminService>(`/admin/services/${id}`, body);
       toast.push(isNew ? 'خدمت ایجاد شد' : 'تغییرات ذخیره و برای کیوسک منتشر شد');
       await qc.invalidateQueries({ queryKey: ['services'] });
-      qc.invalidateQueries({ queryKey: ['service', saved.id] });
-      if (isNew) nav(`/catalog/services/${saved.id}`, { replace: true });
+      void qc.invalidateQueries({ queryKey: ['service', saved.id] });
+      if (isNew) void nav(`/catalog/services/${saved.id}`, { replace: true });
     } catch (e) {
       if (e instanceof ApiError && Array.isArray(e.details)) {
         setErrors(Object.fromEntries((e.details as Array<{ path: string; message: string }>).map((d) => [d.path, d.message])));
@@ -363,7 +364,7 @@ export function ServiceForm() {
               </button>
             )}
             {isAdmin && (
-              <button className="btn btn-primary" onClick={save} disabled={busy} data-testid="save-service">
+              <button className="btn btn-primary" onClick={action(save)} disabled={busy} data-testid="save-service">
                 {busy ? <span className="spinner" /> : <Icon name="check" />}
                 ذخیره و انتشار
               </button>
@@ -437,16 +438,16 @@ export function ServiceForm() {
               </button>
               <button
                 className="btn btn-danger"
-                onClick={async () => {
+                onClick={action(async () => {
                   try {
                     await api.del(`/admin/services/${id}`);
                     toast.push('خدمت حذف شد');
                     await qc.invalidateQueries({ queryKey: ['services'] });
-                    nav('/catalog/services');
+                    void nav('/catalog/services');
                   } catch (e) {
                     toast.push(errorMessage(e), true);
                   }
-                }}
+                })}
               >
                 حذف
               </button>
@@ -470,6 +471,7 @@ const THEMES: Array<{ value: CategoryTheme; label: string; color: string }> = [
 function CategoryDialog({ initial, onClose }: { initial: AdminCategory | null; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [f, setF] = useState<CategoryUpsert>(
     initial
       ? { code: initial.code, title: initial.title, subtitle: initial.subtitle, description: initial.description, theme: initial.theme as CategoryTheme, mediaId: initial.mediaId, sortOrder: initial.sortOrder, active: initial.active, salesEnabled: initial.salesEnabled, subscriptionCovered: initial.subscriptionCovered }
@@ -480,7 +482,7 @@ function CategoryDialog({ initial, onClose }: { initial: AdminCategory | null; o
       if (initial) await api.patch(`/admin/categories/${initial.id}`, f);
       else await api.post('/admin/categories', f);
       toast.push('حوزه ذخیره شد');
-      qc.invalidateQueries({ queryKey: ['categories'] });
+      void qc.invalidateQueries({ queryKey: ['categories'] });
       onClose();
     } catch (e) {
       toast.push(errorMessage(e), true);
@@ -496,7 +498,7 @@ function CategoryDialog({ initial, onClose }: { initial: AdminCategory | null; o
           <button className="btn" onClick={onClose}>
             انصراف
           </button>
-          <button className="btn btn-primary" onClick={save}>
+          <button className="btn btn-primary" onClick={action(save)}>
             ذخیره و انتشار
           </button>
         </>
@@ -542,6 +544,7 @@ function CategoryDialog({ initial, onClose }: { initial: AdminCategory | null; o
 function SubcategoryDialog({ categoryId, initial, onClose }: { categoryId: string; initial: AdminSubcategory | null; onClose: () => void }) {
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const [f, setF] = useState<SubcategoryUpsert>(
     initial ? { categoryId, code: initial.code, title: initial.title, description: initial.description, mediaId: initial.mediaId, sortOrder: initial.sortOrder, active: initial.active } : { categoryId, code: '', title: '', description: '', mediaId: null, sortOrder: 99, active: true },
   );
@@ -550,7 +553,7 @@ function SubcategoryDialog({ categoryId, initial, onClose }: { categoryId: strin
       if (initial) await api.patch(`/admin/subcategories/${initial.id}`, f);
       else await api.post('/admin/subcategories', f);
       toast.push('زیرگروه ذخیره شد');
-      qc.invalidateQueries({ queryKey: ['categories'] });
+      void qc.invalidateQueries({ queryKey: ['categories'] });
       onClose();
     } catch (e) {
       toast.push(errorMessage(e), true);
@@ -565,7 +568,7 @@ function SubcategoryDialog({ categoryId, initial, onClose }: { categoryId: strin
           <button className="btn" onClick={onClose}>
             انصراف
           </button>
-          <button className="btn btn-primary" onClick={save}>
+          <button className="btn btn-primary" onClick={action(save)}>
             ذخیره
           </button>
         </>
@@ -594,6 +597,7 @@ export function Categories() {
   const q = useCategories();
   const qc = useQueryClient();
   const toast = useToast();
+  const action = useAction();
   const { isAdmin } = useAuth();
   const [editCat, setEditCat] = useState<AdminCategory | null | 'new'>(null);
   const [editSub, setEditSub] = useState<{ categoryId: string; sub: AdminSubcategory | null } | null>(null);
@@ -605,7 +609,7 @@ export function Categories() {
     [next[idx], next[j]] = [next[j], next[idx]];
     try {
       await api.post(`/admin/${kind}/reorder`, { ids: next });
-      qc.invalidateQueries({ queryKey: ['categories'] });
+      void qc.invalidateQueries({ queryKey: ['categories'] });
     } catch (e) {
       toast.push(errorMessage(e), true);
     }
@@ -647,10 +651,10 @@ export function Categories() {
                 {!c.salesEnabled && <Badge tone="info">فقط معرفی</Badge>}
                 {isAdmin && (
                   <>
-                    <button className="btn btn-sm icon-only" onClick={() => move('categories', catIds, i, -1)} disabled={i === 0} aria-label="بالا">
+                    <button className="btn btn-sm icon-only" onClick={action(() => move('categories', catIds, i, -1))} disabled={i === 0} aria-label="بالا">
                       <Icon name="up" />
                     </button>
-                    <button className="btn btn-sm icon-only" onClick={() => move('categories', catIds, i, 1)} disabled={i === catIds.length - 1} aria-label="پایین">
+                    <button className="btn btn-sm icon-only" onClick={action(() => move('categories', catIds, i, 1))} disabled={i === catIds.length - 1} aria-label="پایین">
                       <Icon name="down" />
                     </button>
                     <button className="btn btn-sm" onClick={() => setEditCat(c)}>
@@ -683,10 +687,10 @@ export function Categories() {
                     <td style={{ width: 180 }}>
                       {isAdmin && (
                         <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                          <button className="btn btn-sm icon-only" onClick={() => move('subcategories', c.subcategories.map((x) => x.id), si, -1)} disabled={si === 0} aria-label="بالا">
+                          <button className="btn btn-sm icon-only" onClick={action(() => move('subcategories', c.subcategories.map((x) => x.id), si, -1))} disabled={si === 0} aria-label="بالا">
                             <Icon name="up" />
                           </button>
-                          <button className="btn btn-sm icon-only" onClick={() => move('subcategories', c.subcategories.map((x) => x.id), si, 1)} disabled={si === c.subcategories.length - 1} aria-label="پایین">
+                          <button className="btn btn-sm icon-only" onClick={action(() => move('subcategories', c.subcategories.map((x) => x.id), si, 1))} disabled={si === c.subcategories.length - 1} aria-label="پایین">
                             <Icon name="down" />
                           </button>
                           <button className="btn btn-sm" onClick={() => setEditSub({ categoryId: c.id, sub: s })}>
