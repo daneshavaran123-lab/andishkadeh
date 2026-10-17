@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -63,7 +63,64 @@ const STATUS_OPTIONS = [
   { value: 'noprice', label: 'بدون تعرفه (نیازمند تکمیل)' },
 ];
 
-/** A04 — services and tariffs. */
+interface ServiceGroup {
+  id: string;
+  title: string;
+  subgroups: { id: string; title: string; services: AdminService[] }[];
+  total: number;
+  active: number;
+  noPrice: number;
+}
+
+/** Services grouped by domain, then subcategory, in the order the panel shows them (sort order). */
+function groupServices(services: AdminService[], categories: AdminCategory[] | undefined): ServiceGroup[] {
+  const catRank = new Map(categories?.map((c, i) => [c.id, i]));
+  const subRank = new Map(categories?.flatMap((c) => c.subcategories.map((s, i) => [s.id, i] as const)));
+  const rank = (m: Map<string, number>, id: string) => m.get(id) ?? Number.MAX_SAFE_INTEGER;
+  const groups = new Map<string, ServiceGroup>();
+  for (const s of services) {
+    let g = groups.get(s.categoryId);
+    if (!g) groups.set(s.categoryId, (g = { id: s.categoryId, title: s.categoryTitle, subgroups: [], total: 0, active: 0, noPrice: 0 }));
+    let sub = g.subgroups.find((x) => x.id === s.subcategoryId);
+    if (!sub) g.subgroups.push((sub = { id: s.subcategoryId, title: s.subcategoryTitle, services: [] }));
+    sub.services.push(s);
+    g.total++;
+    if (s.price === null) g.noPrice++;
+    else if (s.active) g.active++;
+  }
+  const list = [...groups.values()].sort((a, b) => rank(catRank, a.id) - rank(catRank, b.id));
+  for (const g of list) g.subgroups.sort((a, b) => rank(subRank, a.id) - rank(subRank, b.id));
+  return list;
+}
+
+/** Open domains of the unfiltered list, kept for this tab: editing a service and coming back keeps them open. */
+const OPEN_GROUPS_KEY = 'andishkadeh.admin.services.open';
+
+function readOpenGroups(): Set<string> {
+  try {
+    return new Set(JSON.parse(sessionStorage.getItem(OPEN_GROUPS_KEY) ?? '[]') as string[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveOpenGroups(ids: Set<string>): Set<string> {
+  try {
+    sessionStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Storage unavailable: the state still works for this visit.
+  }
+  return ids;
+}
+
+const flip = (set: Set<string>, id: string) => {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+};
+
+/** A04 — services and tariffs, grouped by domain and subcategory. */
 export function Services() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
@@ -78,6 +135,19 @@ export function Services() {
     setSp(n);
   };
   const noPrice = q.data?.filter((s) => s.price === null).length ?? 0;
+  const groups = useMemo(() => groupServices(q.data ?? [], cats.data), [q.data, cats.data]);
+  // Unfiltered: domains start closed (the user's choice is remembered). Search or filter: matching domains open.
+  const filtered = Boolean(sp.get('q') || sp.get('status') || sp.get('categoryId'));
+  const [open, setOpen] = useState<Set<string>>(readOpenGroups);
+  const [closed, setClosed] = useState<Set<string>>(new Set());
+  useEffect(() => setClosed(new Set()), [query]);
+  const isOpen = (id: string) => (filtered ? !closed.has(id) : open.has(id));
+  const toggle = (id: string) => (filtered ? setClosed(flip(closed, id)) : setOpen(saveOpenGroups(flip(open, id))));
+  const setAll = (expand: boolean) => {
+    const ids = new Set(groups.map((g) => g.id));
+    if (filtered) setClosed(expand ? new Set() : ids);
+    else setOpen(saveOpenGroups(expand ? ids : new Set()));
+  };
 
   return (
     <>
@@ -124,6 +194,16 @@ export function Services() {
             ))}
           </select>
         </Field>
+        {groups.length > 1 && (
+          <div className="toolbar-end">
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAll(true)} data-testid="groups-open-all">
+              باز کردن همه
+            </button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAll(false)} data-testid="groups-close-all">
+              بستن همه
+            </button>
+          </div>
+        )}
       </div>
       {noPrice > 0 && !sp.get('status') && (
         <div style={{ marginBottom: 14 }}>
@@ -143,35 +223,59 @@ export function Services() {
         ) : !q.data?.length ? (
           <Empty>خدمتی یافت نشد</Empty>
         ) : (
-          <table className="table">
+          <table className="table services-table">
             <thead>
               <tr>
                 <th />
                 <th>کد</th>
                 <th>عنوان</th>
-                <th>حوزه / زیرگروه</th>
                 <th>واحد</th>
                 <th>وضعیت</th>
                 <th className="n">تعرفه</th>
               </tr>
             </thead>
-            <tbody>
-              {q.data.map((s) => (
-                <tr key={s.id} className="clickable" onClick={() => nav(`/catalog/services/${s.id}`)} data-testid={`service-row-${s.code}`}>
-                  <td style={{ width: 56 }}>{s.mediaUrl ? <img className="thumb" src={s.mediaUrl} alt="" /> : <div className="thumb" />}</td>
-                  <td>
-                    <Code>{s.code}</Code>
-                  </td>
-                  <td style={{ maxWidth: 380 }}>{s.title}</td>
-                  <td className="muted">
-                    {s.categoryTitle} / {s.subcategoryTitle}
-                  </td>
-                  <td>{s.unit}</td>
-                  <td>{s.price === null ? <Badge tone="warning">بدون تعرفه</Badge> : s.active ? <Badge tone="success">فعال</Badge> : <Badge>غیرفعال</Badge>}</td>
-                  <td className="n">{s.price === null ? '—' : formatToman(s.price)}</td>
-                </tr>
-              ))}
-            </tbody>
+            {groups.map((g) => {
+              const expanded = isOpen(g.id);
+              const inactive = g.total - g.active - g.noPrice;
+              return (
+                <tbody key={g.id} data-testid={`service-group-${g.id}`}>
+                  <tr className="group-row">
+                    <th colSpan={6} scope="rowgroup">
+                      <button type="button" className="group-toggle" aria-expanded={expanded} onClick={() => toggle(g.id)}>
+                        <Icon name="chevron" className="chevron" />
+                        <b>{g.title}</b>
+                        <span className="muted">{toPersianDigits(g.total)} خدمت</span>
+                        {g.active > 0 && <Badge tone="success">{toPersianDigits(g.active)} فعال</Badge>}
+                        {inactive > 0 && <Badge>{toPersianDigits(inactive)} غیرفعال</Badge>}
+                        {g.noPrice > 0 && <Badge tone="warning">{toPersianDigits(g.noPrice)} بدون تعرفه</Badge>}
+                      </button>
+                    </th>
+                  </tr>
+                  {expanded &&
+                    g.subgroups.map((sub) => (
+                      <Fragment key={sub.id}>
+                        <tr className="subgroup-row">
+                          <td colSpan={6}>
+                            {sub.title} <span className="muted">({toPersianDigits(sub.services.length)} خدمت)</span>
+                          </td>
+                        </tr>
+                        {sub.services.map((s) => (
+                          <tr key={s.id} className="clickable" onClick={() => nav(`/catalog/services/${s.id}`)} data-testid={`service-row-${s.code}`}>
+                            <td style={{ width: 56 }}>{s.mediaUrl ? <img className="thumb" src={s.mediaUrl} alt="" /> : <div className="thumb" />}</td>
+                            <td>
+                              <Code>{s.code}</Code>
+                            </td>
+                            <td style={{ maxWidth: 380 }}>{s.title}</td>
+                            <td>{s.unit}</td>
+                            <td>{s.price === null ? <Badge tone="warning">بدون تعرفه</Badge> : s.active ? <Badge tone="success">فعال</Badge> : <Badge>غیرفعال</Badge>}</td>
+                            <td className="n">{s.price === null ? '—' : formatToman(s.price)}</td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                </tbody>
+              );
+            })}
           </table>
         )}
       </Card>

@@ -94,6 +94,7 @@ const P: Record<string, ReactElement> = {
   logout: <path d="M15 4h4v16h-4M10 17l5-5-5-5M15 12H3" />,
   menu: <path d="M3 6h18M3 12h18M3 18h18" />,
   up: <path d="M12 19V5M6 11l6-6 6 6" />,
+  chevron: <path d="M15 6l-6 6 6 6" />,
   down: <path d="M12 5v14M6 13l6 6 6-6" />,
   qr: (
     <>
