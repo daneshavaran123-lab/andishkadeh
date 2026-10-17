@@ -5,8 +5,6 @@ import {
   addLocalDays,
   formatJalaliDate,
   formatJalaliDateTime,
-  formatNumberFa,
-  formatToman,
   jalaliMonthLength,
   jalaliOf,
   jalaliToDateKey,
@@ -107,12 +105,8 @@ export function ErrorBox({ error, retry }: { error: unknown; retry?: () => void 
 
 // ------------------------------------------------------------------ values
 
-export const Money = ({ v, unit = true }: { v: number | null | undefined; unit?: boolean }) =>
-  v === null || v === undefined ? <span className="muted">—</span> : <span className="num">{unit ? formatToman(v) : formatNumberFa(v)}</span>;
-
 export const JDate = ({ v }: { v: string | null | undefined }) => (v ? <span className="num">{formatJalaliDate(v)}</span> : <span className="muted">—</span>);
 export const JDateTime = ({ v }: { v: string | null | undefined }) => (v ? <span className="num">{formatJalaliDateTime(v)}</span> : <span className="muted">—</span>);
-export const Fa = ({ v }: { v: number | string }) => <span className="num">{toPersianDigits(typeof v === 'number' ? formatNumberFa(v) : v)}</span>;
 export const Code = ({ children }: { children: ReactNode }) => <span className="code">{children}</span>;
 
 export function relativeAge(iso: string | null | undefined): string {

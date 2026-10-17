@@ -1,0 +1,20 @@
+{
+  // Dead-code check (pnpm knip): unused files, exports and dependencies across the workspace.
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // An export also used inside its own file is not dead code.
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    "apps/kiosk": {
+      // Bundled by scripts/build-electron.mjs, which knip does not read.
+      "entry": ["electron/main.ts", "electron/preload.ts"],
+      // Read as text by vite.config.ts (the service worker is generated from it).
+      "ignore": ["src/renderer/sw-template.js"],
+      // electron-builder loads the Squirrel plugin by name; tools/uml/render.sh uses the Vazirmatn TTF files.
+      "ignoreDependencies": ["electron-builder-squirrel-windows", "vazirmatn"]
+    },
+    "e2e": {
+      // Started by playwright.config.ts (webServer commands).
+      "entry": ["scripts/*.mjs"]
+    }
+  }
+}

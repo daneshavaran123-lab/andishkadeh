@@ -12,6 +12,7 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r --workspace-concurrency=1 --filter \"!@andishkadeh/e2e\" run test",
     "lint": "pnpm -r run typecheck",
+    "knip": "knip",
     "db:migrate": "pnpm --filter @andishkadeh/server run db:migrate",
     "db:seed": "pnpm --filter @andishkadeh/server run db:seed",
     "dev:server": "pnpm --filter @andishkadeh/server run dev",
@@ -19,5 +20,8 @@
     "dev:kiosk": "pnpm --filter @andishkadeh/kiosk run dev:web",
     "e2e": "pnpm --filter @andishkadeh/e2e run test",
     "docs:uml": "bash tools/uml/render.sh"
+  },
+  "devDependencies": {
+    "knip": "6.38.0"
   }
 }

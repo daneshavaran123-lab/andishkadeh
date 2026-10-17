@@ -2,7 +2,6 @@ import { expect, type Page } from '@playwright/test';
 
 export const API = 'http://localhost:3200/api/v1';
 export const BRIDGE = 'http://localhost:5285';
-export const DEVICE = 'Device KIOSK-01:test-device-key-0123456789';
 
 /** Simulated hardware / network controls of the kiosk core (dev bridge only). */
 export async function devControl(body: Record<string, unknown>) {

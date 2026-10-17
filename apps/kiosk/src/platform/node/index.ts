@@ -13,7 +13,6 @@ import type { SqlDatabase } from '../../core/sql';
 import { openNodeDatabase } from './sqlite';
 
 export { loadConfig } from './config';
-export { openNodeDatabase } from './sqlite';
 
 export class FsMediaStore implements MediaStore {
   constructor(private readonly dir: string) {}

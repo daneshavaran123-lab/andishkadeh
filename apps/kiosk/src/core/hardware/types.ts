@@ -21,6 +21,7 @@ export interface PaymentRequest {
   attemptId: string;
 }
 
+/** Bank card terminal. Card details (PAN/CVV) never reach this code: terminals only return references. */
 export interface PaymentAdapter {
   readonly name: string;
   readonly isMock: boolean;
@@ -47,6 +48,3 @@ export interface ScannerAdapter {
   /** Subscribe to scans produced by the adapter itself (serial / mock). Keyboard-wedge scans arrive from the UI. */
   onScan(cb: (payload: string) => void): () => void;
 }
-
-/** Card details (PAN/CVV) never reach this code: terminals only return references. */
-export const NO_CARD_DATA_NOTICE = 'PAN/CVV are never read, stored or logged by the kiosk.';

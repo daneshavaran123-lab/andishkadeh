@@ -153,11 +153,6 @@ export function useAllowIdleTimeout(allowed: boolean) {
   }, [allowed]);
 }
 
-export const currentRoute = () => {
-  const s = useSession.getState().stack;
-  return s[s.length - 1];
-};
-
 // ------------------------------------------------------------------ catalogue helpers
 
 export interface ServiceRef {
