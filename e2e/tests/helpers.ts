@@ -15,10 +15,26 @@ export async function kioskStatus() {
   return (await (await fetch(`${BRIDGE}/health`)).json()) as { online: boolean; catalogRevision: number; outbox: { pending: number; failed: number } };
 }
 
-export async function adminToken(username = 'admin', password = 'Admin@12345'): Promise<string> {
-  const r = await fetch(`${API}/admin/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
-  const j = (await r.json()) as { token: string };
-  return j.token;
+const tokens = new Map<string, Promise<string>>();
+
+/**
+ * Admin API token, one login per account for the whole run: the server limits logins per IP
+ * (30 per 10 minutes), which a full suite logging in for every call would exceed.
+ */
+export function adminToken(username = 'admin', password = 'Admin@12345'): Promise<string> {
+  const key = `${username}\n${password}`;
+  let token = tokens.get(key);
+  if (!token) {
+    token = (async () => {
+      const r = await fetch(`${API}/admin/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      const j = (await r.json()) as { token?: string; error?: { code: string; message: string } };
+      if (!r.ok || !j.token) throw new Error(`admin login failed (${r.status} ${j.error?.code ?? ''}): ${j.error?.message ?? ''}`);
+      return j.token;
+    })();
+    tokens.set(key, token);
+    token.catch(() => tokens.delete(key));
+  }
+  return token;
 }
 
 export async function adminApi<T = unknown>(token: string, method: string, path: string, body?: unknown): Promise<{ status: number; body: T }> {
