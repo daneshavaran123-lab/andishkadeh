@@ -303,8 +303,9 @@ jobs:
           echo "::add-mask::$token"
           liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
       - name: Check the deployed server
-        # First start runs the migrations and the seed; a failed start reports its reason here.
-        run: bash .github/scripts/liara-health.sh "$LIARA_APP"
+        # First start runs the migrations and the seed; a failed start reports its reason here. Waits
+        # for this version: the previous release answers until the new container is up.
+        run: bash .github/scripts/liara-health.sh "$LIARA_APP" "$(node -p "require('./package.json').version")"
 
   liara-check:
     name: Check the server on Liara
