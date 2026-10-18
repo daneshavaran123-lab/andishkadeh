@@ -21,6 +21,8 @@ e2e/playwright-report/
 *.tsbuildinfo
 e2e/.kiosk-data/
 tools/uml/.cache/
+# Runtime packages for the Docker image (tools/deploy/runtime-bundle.sh)
+.liara/
 
 # gstack QA reports and screenshots (local evidence)
 .gstack/

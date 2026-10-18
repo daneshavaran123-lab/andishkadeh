@@ -32,8 +32,10 @@ on:
 permissions:
   contents: read
 
+# A newer push replaces an older push's run; a dispatched run (deploy, check, release) is never
+# cancelled by another run and cancels none: a deploy stopped mid-way leaves Liara half-done.
 concurrency:
-  group: apps-${{ github.ref }}
+  group: apps-${{ github.ref }}${{ github.event_name == 'workflow_dispatch' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 env:
@@ -205,9 +207,13 @@ jobs:
           pnpm --filter @andishkadeh/server run build
           pnpm --filter @andishkadeh/kiosk run build:web
           pnpm --filter @andishkadeh/admin run build
+      - name: Runtime packages shipped with the image, as in the Liara deploy
+        run: bash tools/deploy/runtime-bundle.sh
       - name: Use CRLF line endings in the start script, as in a Windows working copy uploaded by `liara deploy`
         run: sed -i 's/$/\r/' apps/server/scripts/docker-start.sh && file apps/server/scripts/docker-start.sh
-      - run: docker build -t andishkadeh-server .
+      - run: docker build --build-arg RUNTIME=.liara/runtime.tgz -t andishkadeh-server .
+      - name: The image also builds without the bundle (installs the packages itself, as `liara deploy` from a computer)
+        run: docker build -t andishkadeh-server-installs .
       - name: Start it as on Liara (production settings, empty database) and check it
         run: |
           docker run -d --name app --network host \
@@ -287,8 +293,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      # Built here and uploaded with the source (.dockerignore lets them through): Liara's build then
-      # only installs and compiles the server, which keeps it inside the plan's build-time limit.
+      # Built here and uploaded with the source (.dockerignore lets them through), with the server's
+      # runtime packages (.liara/runtime.tgz): Liara's build then only unpacks and copies, well inside
+      # the plan's build-time limit and without its slow way to npm.
       - name: Build the server, the web app and the panel
         run: |
           pnpm install --frozen-lockfile
@@ -296,6 +303,7 @@ jobs:
           pnpm --filter @andishkadeh/server run build
           pnpm --filter @andishkadeh/kiosk run build:web
           pnpm --filter @andishkadeh/admin run build
+          bash tools/deploy/runtime-bundle.sh
       - run: npm i -g @liara/cli@9
       # liara.json supplies platform, port, build location and the media disk. An app owned by a Liara
       # team is only found with the team id (variable LIARA_TEAM_ID).
@@ -303,7 +311,8 @@ jobs:
         run: |
           token=$(printf '%s' "$LIARA_API_TOKEN" | tr -d '[:space:]')
           echo "::add-mask::$token"
-          liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
+          liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} \
+            --build-arg RUNTIME=.liara/runtime.tgz --no-app-logs
       - name: Check the deployed server
         # First start runs the migrations and the seed; a failed start reports its reason here. Waits
         # for this version: the previous release answers until the new container is up.
