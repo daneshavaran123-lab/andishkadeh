@@ -198,10 +198,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Build the web app and the panel (copied into the image, as in the Liara deploy)
+      - name: Build the server, the web app and the panel (copied into the image, as in the Liara deploy)
         run: |
           pnpm install --frozen-lockfile
           pnpm build:shared
+          pnpm --filter @andishkadeh/server run build
           pnpm --filter @andishkadeh/kiosk run build:web
           pnpm --filter @andishkadeh/admin run build
       - name: Use CRLF line endings in the start script, as in a Windows working copy uploaded by `liara deploy`
@@ -288,10 +289,11 @@ jobs:
           cache: pnpm
       # Built here and uploaded with the source (.dockerignore lets them through): Liara's build then
       # only installs and compiles the server, which keeps it inside the plan's build-time limit.
-      - name: Build the web app and the panel
+      - name: Build the server, the web app and the panel
         run: |
           pnpm install --frozen-lockfile
           pnpm build:shared
+          pnpm --filter @andishkadeh/server run build
           pnpm --filter @andishkadeh/kiosk run build:web
           pnpm --filter @andishkadeh/admin run build
       - run: npm i -g @liara/cli@9
