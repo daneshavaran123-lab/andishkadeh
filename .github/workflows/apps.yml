@@ -24,6 +24,10 @@ on:
         description: 'Deploy the server and admin panel to Liara (secret LIARA_API_TOKEN, variables LIARA_APP and, for a team, LIARA_TEAM_ID)'
         type: boolean
         default: false
+      check:
+        description: 'Only check the server on Liara, without deploying (e.g. after changing its variables in the Liara console)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -275,24 +279,18 @@ jobs:
           echo "::add-mask::$token"
           liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
       - name: Check the deployed server
-        # First start runs the migrations and the seed. A failed start answers 503 with the step and
-        # the reason (apps/server/scripts/startup-failed.mjs), which is shown here as the error.
-        run: |
-          url="https://$LIARA_APP.liara.run/api/v1/health"
-          code=""
-          for i in $(seq 1 60); do
-            out=$(curl -s -m 10 -w '\n%{http_code}' "$url" || true)
-            code=$(printf '%s' "$out" | tail -n1)
-            body=$(printf '%s' "$out" | sed '$d')
-            if [ "$code" = "200" ]; then echo "$body"; exit 0; fi
-            if [ "$code" = "503" ] && printf '%s' "$body" | grep -q '"step"'; then
-              echo "::error::The server did not start: $body"
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "::error::No healthy answer from $url within 5 minutes (last HTTP status: ${code:-none}). See the app's logs in the Liara console."
-          exit 1
+        # First start runs the migrations and the seed; a failed start reports its reason here.
+        run: bash .github/scripts/liara-health.sh "$LIARA_APP"
+
+  liara-check:
+    name: Check the server on Liara
+    if: github.event_name == 'workflow_dispatch' && inputs.check && !inputs.deploy
+    runs-on: ubuntu-latest
+    env:
+      LIARA_APP: ${{ vars.LIARA_APP || secrets.LIARA_APP }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/scripts/liara-health.sh "$LIARA_APP"
 
   release:
     name: Draft release
