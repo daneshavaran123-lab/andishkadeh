@@ -202,6 +202,11 @@ export type DeviceCommandDto = z.infer<typeof DeviceCommandDto>;
 export const HeartbeatResponse = z.object({
   serverTime: IsoDate,
   catalogRevision: z.number().int(),
+  /**
+   * Latest subscription change (cancel, extend, new QR): the kiosk pulls when this is ahead of its
+   * cache. Optional because servers before 1.4.0 do not send it.
+   */
+  subscriptionRev: z.number().int().optional(),
   commands: z.array(DeviceCommandDto),
 });
 export type HeartbeatResponse = z.infer<typeof HeartbeatResponse>;

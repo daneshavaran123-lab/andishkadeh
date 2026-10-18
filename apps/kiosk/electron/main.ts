@@ -5,15 +5,19 @@
  * Lifecycle: fullscreen kiosk window, renderer crash → reload, single instance, no sleep.
  * First run (no kiosk.config.json): the setup screen asks for the server address and device key,
  * writes the file and restarts the app.
+ * Staff: the gear on the welcome screen signs in and opens the existing admin panel in its own
+ * window (admin-window.ts); the kiosk returns to its welcome screen and syncs when it closes.
  */
 import { app, BrowserWindow, ipcMain, net, powerSaveBlocker, protocol, session } from 'electron';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { KioskConfig } from '../src/core/config';
 import type { KioskCore } from '../src/core/kiosk-core';
+import { adminPanelBase, type AdminLoginResult } from '../src/core/admin-access';
 import { verifySetup } from '../src/core/setup-check';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../src/core/types';
 import { createNodeCore, isConfigured, loadConfig, writeSetupConfig } from '../src/platform/node';
+import { openAdminWindow } from './admin-window';
 import { WindowsDriverPrinter } from './printer-windows';
 
 protocol.registerSchemesAsPrivileged([
@@ -29,6 +33,7 @@ const dataDir = process.env.KIOSK_DATA_DIR ?? join(app.getPath('appData'), 'Andi
 let cfg: KioskConfig;
 let core: KioskCore;
 let win: BrowserWindow | null = null;
+let adminWin: BrowserWindow | null = null;
 
 const rendererUrl = process.env.KIOSK_RENDERER_URL; // dev only (vite dev server)
 const rendererFile = join(__dirname, '../dist-renderer/index.html');
@@ -126,6 +131,7 @@ async function start() {
     ipcMain.handle(`kiosk:${channel}`, async (event, req) => {
       if (!isTrustedSender(event.senderFrame?.url ?? '')) throw new Error('untrusted sender');
       if (channel === 'dev:control' && !cfg.devControls) return { ok: false, message: 'dev controls disabled' };
+      if (channel === 'admin:login') return openAdminPanel(req);
       return core.handle(channel as IpcChannel, req as never);
     });
   }
@@ -137,6 +143,35 @@ async function start() {
   if (app.isPackaged && cfg.kioskMode) {
     app.setLoginItemSettings({ openAtLogin: true });
   }
+}
+
+/** Gear on the welcome screen: sign in, then show the existing admin panel over the kiosk. */
+async function openAdminPanel(req: unknown): Promise<AdminLoginResult> {
+  if (adminWin) {
+    adminWin.focus();
+    return { ok: false, code: 'ALREADY_OPEN', message: 'پنل مدیریت هم‌اکنون باز است' };
+  }
+  const r = await core.handle('admin:login', req as never);
+  if (!r.ok || !r.token) return r.ok ? { ok: false, code: 'ERROR', message: 'ورود انجام نشد' } : r;
+  const { token, ...reply } = r;
+  adminWin = openAdminWindow({
+    parent: win,
+    kioskMode: cfg.kioskMode,
+    panelBase: adminPanelBase(cfg),
+    startUrl: r.startUrl,
+    token,
+    expiresAt: r.expiresAt,
+    idleMinutes: r.idleMinutes,
+    onClosed: (message) => {
+      adminWin = null;
+      win?.focus();
+      win?.webContents.send('kiosk:event:admin', { open: false, message });
+      // Prices, services, plans and subscriptions changed in the panel reach the kiosk at once.
+      void core.sync.cycle().catch(() => undefined);
+    },
+  });
+  // The token stays in the main process and the panel window; the kiosk UI only learns who signed in.
+  return reply;
 }
 
 app.on('second-instance', () => {

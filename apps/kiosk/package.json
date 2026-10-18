@@ -1,6 +1,6 @@
 {
   "name": "@andishkadeh/kiosk",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "کیوسک سلف‌سرویس ۴۳ اینچ عمودی اندیشکده کشتی ایران (Electron + React)",
   "author": "Andishkadeh Koshti Iran",

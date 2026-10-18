@@ -24,9 +24,9 @@ RUN pnpm --filter @andishkadeh/shared build \
  && VITE_API_URL= pnpm --filter @andishkadeh/admin build
 
 ENV NODE_ENV=production \
-    PORT=3000 \
+    PORT=3001 \
     TRUST_PROXY=1 \
     ADMIN_DIST_DIR=/app/apps/admin/dist \
     MEDIA_DIR=/app/storage/media
-EXPOSE 3000
+EXPOSE 3001
 CMD ["sh", "apps/server/scripts/docker-start.sh"]

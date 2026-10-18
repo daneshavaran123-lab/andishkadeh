@@ -34,14 +34,15 @@ cp apps/server/.env.example apps/server/.env
 | متغیر | توضیح |
 | --- | --- |
 | `DATABASE_URL` | رشته اتصال PostgreSQL |
-| `PORT` | پورت داخلی سرور (پیش‌فرض 3000) |
+| `PORT` | پورت داخلی سرور (پیش‌فرض 3001؛ 3000 در ویندوز اغلب در اختیار EonVPN و سرویس‌های دیگر است) |
 | `JWT_SECRET` | رشته تصادفی بلند (حداقل ۳۲ نویسه). تعویض آن همه مدیران را خارج می‌کند |
 | `ADMIN_SESSION_HOURS` | طول نشست مدیر (ساعت) |
+| `KIOSK_ADMIN_SESSION_MINUTES` | طول نشست مدیری که از چرخ‌دنده کیوسک وارد شده (دقیقه، پیش‌فرض ۳۰) |
 | `LOGIN_MAX_ATTEMPTS`، `LOGIN_LOCK_MINUTES` | قفل موقت پس از ورود ناموفق |
 | `MEDIA_DIR` | پوشه تصاویر؛ باید در پشتیبان‌گیری باشد |
 | `PUBLIC_BASE_URL` | آدرس عمومی سرور که کیوسک تصاویر را از آن دانلود می‌کند (مثلاً `https://kiosk-api.example.ir`) |
 | `TRUST_PROXY` | پشت IIS/nginx مقدار `1` بگذارید تا IP واقعی ثبت شود |
-| `CORS_ORIGINS` | فقط اگر پنل روی دامنه دیگری میزبانی می‌شود. برای برنامه اندروید کیوسک `https://localhost` را اضافه کنید |
+| `CORS_ORIGINS` | مبدأهای مجاز، با ویرگول. فقط اگر پنل روی دامنه دیگری میزبانی می‌شود. برای برنامه اندروید کیوسک `https://localhost` را اضافه کنید. اگر خالی باشد: در production هیچ مبدأ دیگری مجاز نیست؛ در توسعه پورت‌های 5173، 5174 و 5176 روی `localhost` و `127.0.0.1` مجازند |
 | `ADMIN_DIST_DIR` | مسیر بیلد پنل (`apps/admin/dist`) برای ارائه روی `/admin` |
 | `KIOSK_WEB_DIST_DIR` | مسیر بیلد وب‌اپ کیوسک (`apps/kiosk/dist-web`) برای ارائه روی `/kiosk/` (ر.ک. [سه نسخه کیوسک](kiosk-platforms.md)) |
 | `SEED_*` | فقط برای نصب اول: نام کاربری و رمز مدیر و اپراتور، شناسه و کلید دستگاه کیوسک |
@@ -116,7 +117,7 @@ server {
   ssl_certificate_key /etc/ssl/kiosk-api.key;
   client_max_body_size 10m;            # بارگذاری تصویر (MEDIA_MAX_MB)
   location / {
-    proxy_pass http://127.0.0.1:3000;
+    proxy_pass http://127.0.0.1:3001;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
@@ -130,7 +131,7 @@ server {
 
 | آدرس | انتظار |
 | --- | --- |
-| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.3.0",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
+| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.4.0",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
 | `/api/docs` | مستند تعاملی API (OpenAPI) |
 | `/admin/` | صفحه ورود پنل مدیریت (اگر `ADMIN_DIST_DIR` تنظیم شده باشد) |
 | `/kiosk/` | وب‌اپ کیوسک، صفحه راه‌اندازی در اجرای اول (اگر `KIOSK_WEB_DIST_DIR` تنظیم شده باشد) |
@@ -146,7 +147,7 @@ server {
 نسخه‌ها با برچسب `v<نسخه>` منتشر می‌شوند (ر.ک. [انتشار نسخه](release.md)). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:
 
 ```bash
-git fetch --tags && git checkout v1.3.0
+git fetch --tags && git checkout v1.4.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند

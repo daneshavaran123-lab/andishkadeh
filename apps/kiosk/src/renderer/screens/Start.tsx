@@ -1,4 +1,5 @@
 import { OrderKind } from '@andishkadeh/shared';
+import { AdminGear } from '../components/AdminAccess';
 import { Icon } from '../components/Icon';
 import { Notice, Screen } from '../components/ui';
 import matFloor from '../assets/img/mat-floor.jpg';
@@ -15,6 +16,7 @@ export function Welcome() {
 
   return (
     <div className="screen" style={{ alignItems: 'center' }}>
+      <AdminGear />
       <div
         style={{
           position: 'absolute',

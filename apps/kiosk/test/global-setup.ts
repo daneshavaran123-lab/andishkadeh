@@ -3,7 +3,6 @@
  * Non-destructive: migrations are applied with `migrate deploy` and the seed is idempotent.
  */
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config as loadEnv } from 'dotenv';
 
@@ -37,7 +36,8 @@ export default async function setup() {
   };
   execSync('npx prisma migrate deploy', { cwd: serverDir, env, stdio: 'pipe' });
   execSync('npx tsx prisma/seed.ts', { cwd: serverDir, env, stdio: 'pipe' });
-  if (!existsSync(resolve(serverDir, 'dist/main.js'))) execSync('npx tsc -p tsconfig.build.json', { cwd: serverDir, stdio: 'pipe' });
+  // Always rebuild: a dist left over from an older checkout would test old server code.
+  execSync('npx tsc -p tsconfig.build.json', { cwd: serverDir, stdio: 'pipe' });
 
   child = spawn(process.execPath, ['dist/main.js'], { cwd: serverDir, env, stdio: 'pipe' });
   for (let i = 0; i < 60; i++) {

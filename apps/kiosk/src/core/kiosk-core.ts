@@ -6,6 +6,7 @@
  */
 import { HardwareState, OrderKind } from '@andishkadeh/shared';
 import { AccessService } from './access';
+import { adminLogin, type AdminLoginRequest } from './admin-access';
 import { ApiClient } from './api-client';
 import { CatalogStore } from './catalog';
 import type { KioskConfig } from './config';
@@ -177,6 +178,8 @@ export class KioskCore {
         return { ok: true } as R;
       case 'dev:control':
         return (await this.devControl(req as DevControl)) as R;
+      case 'admin:login':
+        return (await adminLogin(this.api, this.cfg, req as AdminLoginRequest)) as R;
       default:
         throw new Error(`channel not allowed: ${String(channel)}`);
     }

@@ -24,7 +24,7 @@ export function loadConfig(dataDir: string, overrides: Partial<KioskConfig> = {}
     ...(env.KIOSK_SCANNER_ADAPTER ? { scanner: env.KIOSK_SCANNER_ADAPTER } : {}),
   };
   return KioskConfigSchema.parse({
-    serverUrl: 'http://localhost:3000',
+    serverUrl: 'http://localhost:3001',
     deviceId: 'KIOSK-01',
     ...fromFile,
     ...overrides,

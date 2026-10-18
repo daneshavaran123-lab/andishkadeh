@@ -2,10 +2,10 @@
  * Admin API client. The JWT lives in sessionStorage (gone when the browser closes);
  * every call is authorised server-side — hiding a button is never the only protection.
  */
-// Production builds default to the same origin (panel served by the API at /admin); dev talks to :3000.
-export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? (import.meta.env.PROD ? '' : 'http://localhost:3000')).replace(/\/$/, '');
+import { ADMIN_TOKEN_STORAGE_KEY } from '@andishkadeh/shared';
 
-const TOKEN_KEY = 'andishkadeh.admin.token';
+// Production builds default to the same origin (panel served by the API at /admin); dev talks to :3001.
+export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? (import.meta.env.PROD ? '' : 'http://localhost:3001')).replace(/\/$/, '');
 
 export class ApiError extends Error {
   constructor(
@@ -19,9 +19,9 @@ export class ApiError extends Error {
 }
 
 export const tokenStore = {
-  get: () => sessionStorage.getItem(TOKEN_KEY),
-  set: (t: string) => sessionStorage.setItem(TOKEN_KEY, t),
-  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+  get: () => sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY),
+  set: (t: string) => sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, t),
+  clear: () => sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY),
 };
 
 let onUnauthorized: (() => void) | null = null;

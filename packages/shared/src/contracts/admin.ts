@@ -33,6 +33,8 @@ const DateKey = z
 export const LoginRequest = z.object({
   username: z.string().trim().min(1).max(40),
   password: z.string().min(1).max(200),
+  /** kiosk = signed in from the kiosk's gear: a short session (KIOSK_ADMIN_SESSION_MINUTES). */
+  client: z.enum(['panel', 'kiosk']).optional(),
 });
 export type LoginRequest = z.infer<typeof LoginRequest>;
 

@@ -71,6 +71,7 @@ export class DevicesService {
     return {
       serverTime: now.toISOString(),
       catalogRevision: await this.counters.current(this.prisma, 'catalogRevision'),
+      subscriptionRev: await this.counters.current(this.prisma, 'subscriptionRev'),
       commands: commands.map(
         (c): DeviceCommandDto => ({
           id: c.id,

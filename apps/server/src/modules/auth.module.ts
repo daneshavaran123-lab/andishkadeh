@@ -99,12 +99,14 @@ export class AuthService {
       where: { id: user.id },
       data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: now },
     });
-    const { token, expiresAt } = signAdminToken(updated);
+    const client = input.client ?? 'panel';
+    const { token, expiresAt } = signAdminToken(updated, client === 'kiosk' ? config().KIOSK_ADMIN_SESSION_MINUTES * 60 : undefined);
     await this.audit.log(this.prisma, { ...updated, tokenVersion: updated.tokenVersion }, {
       action: 'auth.login',
       entityType: 'AdminUser',
       entityId: user.id,
       ip,
+      after: { client },
     });
     return { token, expiresAt: expiresAt.toISOString(), user: toUserDto(updated) };
   }

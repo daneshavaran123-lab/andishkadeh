@@ -198,11 +198,11 @@ jobs:
             -e PUBLIC_BASE_URL=https://andishkadeh.example.ir \
             -e SEED_ADMIN_PASSWORD=Admin@12345 -e SEED_OPERATOR_PASSWORD=Operator@12345 \
             andishkadeh-server
-          for i in $(seq 1 60); do curl -sf localhost:3000/api/v1/health >/dev/null && break; sleep 2; done
+          for i in $(seq 1 60); do curl -sf localhost:3001/api/v1/health >/dev/null && break; sleep 2; done
           version=$(node -p "require('./apps/server/package.json').version")
-          curl -sf localhost:3000/api/v1/health | tee /dev/stderr | grep -q "\"db\":\"ok\".*\"version\":\"$version\""
-          curl -sf localhost:3000/admin/login | grep -q '<div id="root">'
-          curl -sf -X POST localhost:3000/api/v1/admin/auth/login -H 'Content-Type: application/json' \
+          curl -sf localhost:3001/api/v1/health | tee /dev/stderr | grep -q "\"db\":\"ok\".*\"version\":\"$version\""
+          curl -sf localhost:3001/admin/login | grep -q '<div id="root">'
+          curl -sf -X POST localhost:3001/api/v1/admin/auth/login -H 'Content-Type: application/json' \
             -d '{"username":"admin","password":"Admin@12345"}' | grep -q '"token"'
           # A restart (new deploy) runs migrations and the seed again without the initial passwords.
           docker rm -f app >/dev/null
@@ -211,8 +211,8 @@ jobs:
             -e JWT_SECRET=ci-only-secret-0123456789abcdefghijklmnop \
             -e PUBLIC_BASE_URL=https://andishkadeh.example.ir \
             andishkadeh-server
-          for i in $(seq 1 60); do curl -sf localhost:3000/api/v1/health >/dev/null && break; sleep 2; done
-          curl -sf localhost:3000/api/v1/health | grep -q '"db":"ok"'
+          for i in $(seq 1 60); do curl -sf localhost:3001/api/v1/health >/dev/null && break; sleep 2; done
+          curl -sf localhost:3001/api/v1/health | grep -q '"db":"ok"'
       - name: Container log
         if: always()
         run: docker logs app 2>&1 | tail -60 || true

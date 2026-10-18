@@ -51,7 +51,7 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
       url = new URL(f.serverUrl.trim());
       if (!/^https?:$/.test(url.protocol)) throw new Error();
     } catch {
-      setError({ message: 'آدرس سرور معتبر نیست (مثال: http://192.168.1.10:3000)', canForce: false });
+      setError({ message: 'آدرس سرور معتبر نیست (مثال: http://192.168.1.10:3001)', canForce: false });
       return;
     }
     if (f.deviceKey.length < 8) {
@@ -96,7 +96,7 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
         </p>
         <label>
           آدرس سرور
-          <input dir="ltr" inputMode="url" autoComplete="off" required value={f.serverUrl} onChange={(e) => set('serverUrl', e.target.value)} placeholder="http://192.168.1.10:3000" data-testid="setup-server" />
+          <input dir="ltr" inputMode="url" autoComplete="off" required value={f.serverUrl} onChange={(e) => set('serverUrl', e.target.value)} placeholder="http://192.168.1.10:3001" data-testid="setup-server" />
         </label>
         <label>
           شناسه کیوسک

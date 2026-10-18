@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ROLE_LABEL, toPersianDigits, type DashboardResponse } from '@andishkadeh/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
+import { kioskSession, useKioskSessionTimers } from '../kiosk';
 import { ChangePasswordDialog } from '../pages/Users';
 import { Icon, type IconName } from './Icon';
 
@@ -67,6 +68,8 @@ export function Layout() {
   const loc = useLocation();
   const dash = useQuery({ queryKey: ['dashboard'], queryFn: () => api.get<DashboardResponse>('/admin/dashboard'), refetchInterval: 60_000 });
   const settings = useQuery({ queryKey: ['settings'], queryFn: () => api.get<{ centerName: string }>('/admin/settings') });
+  const onKiosk = !!kioskSession();
+  useKioskSessionTimers(useCallback(() => logout(), [logout]));
 
   return (
     <div className="app">
@@ -106,6 +109,11 @@ export function Layout() {
             <Icon name="menu" />
           </button>
           <span className="center">{settings.data?.centerName ?? 'اندیشکده کشتی ایران'}</span>
+          {onKiosk && (
+            <span className="badge warning" title="پس از چند دقیقه بی‌فعالیتی، خروج خودکار و بازگشت به کیوسک" data-testid="kiosk-mode">
+              روی کیوسک
+            </span>
+          )}
           <span className="spacer" />
           {user && (
             <div className="user-chip">
@@ -120,7 +128,7 @@ export function Layout() {
               </button>
               <button className="btn btn-sm" onClick={() => logout()} data-testid="logout">
                 <Icon name="logout" />
-                خروج
+                {onKiosk ? 'خروج و بازگشت به کیوسک' : 'خروج'}
               </button>
             </div>
           )}

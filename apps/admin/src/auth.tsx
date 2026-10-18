@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { AdminRole, type AdminUserDto, type LoginResponse } from '@andishkadeh/shared';
 import { api, setUnauthorizedHandler, tokenStore } from './api';
+import { kioskSession, returnToKiosk } from './kiosk';
 
 interface AuthState {
   user: AdminUserDto | null;
@@ -20,17 +21,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback((reason?: string) => {
     tokenStore.clear();
+    // Opened from a kiosk: logout, idle timeout and expiry all go back to the kiosk.
+    const kiosk = kioskSession();
+    if (kiosk) return returnToKiosk(kiosk);
     setUser(null);
     setNotice(reason ?? null);
   }, []);
 
   useEffect(() => {
     setUnauthorizedHandler(() => logout('نشست شما منقضی شده است؛ لطفاً دوباره وارد شوید.'));
-    if (!tokenStore.get()) return;
+    if (!tokenStore.get()) {
+      const kiosk = kioskSession();
+      if (kiosk) returnToKiosk(kiosk);
+      return;
+    }
     api
       .get<AdminUserDto>('/admin/auth/me')
       .then(setUser)
-      .catch(() => tokenStore.clear())
+      .catch(() => logout())
       .finally(() => setLoading(false));
   }, [logout]);
 

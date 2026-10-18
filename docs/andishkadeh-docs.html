@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.3.0</span> · ۲۵ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.4.0</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -202,6 +202,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
         <li>خرید اشتراک کامل و دریافت کارت عضویت QR</li>
         <li>بررسی اعتبار اشتراک با اسکن QR</li>
         <li>ادامه فروش خدمات در قطع شبکه و همگام‌سازی بعدی</li>
+        <li>ورود مدیر و اپراتور از چرخ‌دنده صفحه اصلی به همان پنل مدیریت</li>
       </ul>
     </div>
     <div>
@@ -251,7 +252,7 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>دستور</th><th>آدرس</th></tr></thead>
     <tbody>
-      <tr><td><code>pnpm dev:server</code></td><td>API: <code>http://localhost:3000/api/v1</code> · مستند API: <code>http://localhost:3000/api/docs</code></td></tr>
+      <tr><td><code>pnpm dev:server</code></td><td>API: <code>http://localhost:3001/api/v1</code> · مستند API: <code>http://localhost:3001/api/docs</code></td></tr>
       <tr><td><code>pnpm dev:admin</code></td><td>پنل مدیریت: <code>http://localhost:5173/admin/</code></td></tr>
       <tr><td><code>pnpm dev:kiosk</code></td><td>کیوسک در مرورگر: <code>http://localhost:5174</code> · هسته کیوسک (bridge) روی پورت <span class="num">5175</span></td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/kiosk dev:app</code></td><td>نسخه وب‌اپ/اندروید (هسته داخل صفحه، صفحه راه‌اندازی): <code>http://localhost:5176</code></td></tr>
@@ -260,6 +261,7 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
 
   <p>در حالت توسعه، <code>pnpm dev:kiosk</code> همان هسته کیوسک (SQLite، صف همگام‌سازی، ژورنال پرداخت) را در Node اجرا می‌کند. کارتخوان، چاپگر و اسکنر شبیه‌سازی می‌شوند و نوار «حالت آزمایشی» همیشه روی صفحه دیده می‌شود. شبیه‌سازها هرگز اتصال واقعی معرفی نمی‌شوند.</p>
   <p>نام کاربری و رمز ورود به پنل همان <code>SEED_ADMIN_*</code> و <code>SEED_OPERATOR_*</code> در فایل <code>.env</code> است. کلید دستگاه کیوسک توسعه در <code>SEED_DEVICE_KEY</code> تعریف می‌شود و باید با <code>KIOSK_DEVICE_KEY</code> یکی باشد. مقدار پیش‌فرض bridge توسعه <code>dev-kiosk-key-0123456789</code> است.</p>
+  <p>سرور به‌طور پیش‌فرض روی پورت <span class="num">3001</span> اجرا می‌شود؛ پورت <span class="num">3000</span> در ویندوز اغلب در اختیار EonVPN و سرویس‌های دیگر است. پنل و کیوسک توسعه همین آدرس را پیش‌فرض دارند. اگر <code>CORS_ORIGINS</code> خالی باشد، در توسعه مبدأهای 5173، 5174 و 5176 روی <code>localhost</code> و <code>127.0.0.1</code> مجازند. در production فقط فهرست صریح <code>CORS_ORIGINS</code> مجاز است.</p>
 
   <h3>دستورها</h3>
   <div class="table-wrap"><table>
@@ -564,8 +566,8 @@ sequenceDiagram
   end
   loop هر heartbeatSec
     C-&gt;&gt;S: devices/heartbeat (نسخه، تجهیزات، صف، پرداخت‌های نامشخص)
-    S--&gt;&gt;C: catalogRevision + فرمان‌های پنل
-    Note over C: اگر نسخه کاتالوگ جدیدتر بود، pull فوری
+    S--&gt;&gt;C: catalogRevision + subscriptionRev + فرمان‌های پنل
+    Note over C: اگر کاتالوگ یا اشتراک‌ها جدیدتر بودند، pull فوری
   end
   loop هر recoverySec
     C-&gt;&gt;C: استعلام پرداخت‌های IN_FLIGHT و UNKNOWN
@@ -574,6 +576,7 @@ sequenceDiagram
     <figcaption>ارسال همیشه پیش از دریافت؛ هر رویداد eventId یکتا دارد و ارسال دوباره سفارش تکراری نمی‌سازد</figcaption>
   </figure>
   <ul>
+    <li><strong>تغییرات پنل:</strong> هر تغییر خدمات، قیمت‌ها، حوزه‌ها، پلن‌ها، تخفیف‌ها، محتوا و تنظیمات نسخه کاتالوگ را بالا می‌برد. هر ابطال، تمدید یا صدور مجدد QR اشتراک هم <code>subscriptionRev</code> را. کیوسک با heartbeat بعدی (پیش‌فرض ۳۰ ثانیه) عقب بودن را می‌بیند و فوراً دریافت می‌کند.</li>
     <li><strong>انواع رویداد:</strong> <code>ORDER_OFFLINE</code>، <code>PAYMENT_RESULT</code>، <code>ACCESS_LOG</code>، <code>RECEIPT_PRINT</code> و <code>COMMAND_RESULT</code>.</li>
     <li><strong>یکتایی:</strong> هر رویداد با <code>eventId</code> و هر سفارش آفلاین با <code>(deviceId, localId)</code> یکتا ثبت می‌شود. ارسال دوباره هرگز سفارش تکراری نمی‌سازد (تست T11).</li>
     <li>خطاهای قابل تکرار با تأخیر دوباره ارسال می‌شوند. خطاهای غیرقابل تکرار در پنل «همگام‌سازی» برای بررسی و اعمال مجدد نمایش داده می‌شوند.</li>
@@ -587,6 +590,7 @@ sequenceDiagram
         <li>IPC محدود به فهرست مجاز؛ ناوبری و پنجره جدید مسدود</li>
         <li>CSP در بیلد تولید</li>
         <li>کلید دستگاه فقط در main process</li>
+        <li>ورود مدیر از کیوسک: نشست کوتاه، رمز و توکن روی کیوسک ذخیره نمی‌شوند</li>
         <li>پاک شدن QR خام و ماسک شدن موبایل در پایان نشست</li>
       </ul>
     </div>
@@ -653,14 +657,15 @@ cp apps/server/.env.example apps/server/.env</code></pre></div>
     <thead><tr><th>متغیر</th><th>توضیح</th></tr></thead>
     <tbody>
       <tr><td><code>DATABASE_URL</code></td><td>رشته اتصال PostgreSQL</td></tr>
-      <tr><td><code>PORT</code></td><td>پورت داخلی سرور (پیش‌فرض 3000)</td></tr>
+      <tr><td><code>PORT</code></td><td>پورت داخلی سرور (پیش‌فرض 3001؛ 3000 در ویندوز اغلب در اختیار EonVPN و سرویس‌های دیگر است)</td></tr>
       <tr><td><code>JWT_SECRET</code></td><td>رشته تصادفی بلند (حداقل ۳۲ نویسه). تعویض آن همه مدیران را خارج می‌کند</td></tr>
       <tr><td><code>ADMIN_SESSION_HOURS</code></td><td>طول نشست مدیر (ساعت)</td></tr>
+      <tr><td><code>KIOSK_ADMIN_SESSION_MINUTES</code></td><td>طول نشست مدیری که از چرخ‌دنده کیوسک وارد شده (دقیقه، پیش‌فرض ۳۰)</td></tr>
       <tr><td><code>LOGIN_MAX_ATTEMPTS</code> · <code>LOGIN_LOCK_MINUTES</code></td><td>قفل موقت پس از ورود ناموفق</td></tr>
       <tr><td><code>MEDIA_DIR</code></td><td>پوشه تصاویر؛ باید در پشتیبان‌گیری باشد</td></tr>
       <tr><td><code>PUBLIC_BASE_URL</code></td><td>آدرس عمومی سرور که کیوسک تصاویر را از آن دانلود می‌کند</td></tr>
       <tr><td><code>TRUST_PROXY</code></td><td>پشت IIS/nginx مقدار <code>1</code> بگذارید تا IP واقعی ثبت شود</td></tr>
-      <tr><td><code>CORS_ORIGINS</code></td><td>فقط اگر پنل روی دامنه دیگری میزبانی می‌شود</td></tr>
+      <tr><td><code>CORS_ORIGINS</code></td><td>مبدأهای مجاز، با ویرگول؛ فقط اگر پنل روی دامنه دیگری میزبانی می‌شود. خالی: در production هیچ مبدأ دیگری، در توسعه پورت‌های 5173، 5174 و 5176</td></tr>
       <tr><td><code>ADMIN_DIST_DIR</code></td><td>مسیر بیلد پنل (<code>apps/admin/dist</code>) برای ارائه روی <code>/admin</code></td></tr>
       <tr><td><code>SEED_*</code></td><td>فقط برای نصب اول: نام کاربری و رمز مدیر و اپراتور، شناسه و کلید دستگاه کیوسک</td></tr>
     </tbody>
@@ -714,7 +719,7 @@ WantedBy=multi-user.target</code></pre></div>
   ssl_certificate_key /etc/ssl/kiosk-api.key;
   client_max_body_size 10m;            # بارگذاری تصویر (MEDIA_MAX_MB)
   location / {
-    proxy_pass http://127.0.0.1:3000;
+    proxy_pass http://127.0.0.1:3001;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
@@ -726,7 +731,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.3.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.4.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -741,7 +746,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.3.0
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.4.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -999,10 +1004,10 @@ flowchart LR
   <div class="table-wrap"><table>
     <thead><tr><th>کلید</th><th>مقادیر مجاز</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
     <tbody>
-      <tr><td><code>serverUrl</code></td><td>آدرس کامل <code>http://</code> یا <code>https://</code></td><td><code>http://localhost:3000</code></td><td>آدرس سرور مرکزی، بدون <code>/api/v1</code>. در بهره‌برداری HTTPS باشد</td></tr>
+      <tr><td><code>serverUrl</code></td><td>آدرس کامل <code>http://</code> یا <code>https://</code></td><td><code>http://localhost:3001</code></td><td>آدرس سرور مرکزی، بدون <code>/api/v1</code>. در بهره‌برداری HTTPS باشد</td></tr>
       <tr><td><code>deviceId</code></td><td>متن</td><td><code>KIOSK-01</code></td><td>دقیقاً همان شناسه ثبت‌شده در پنل</td></tr>
       <tr><td><code>deviceKey</code></td><td>حداقل ۸ نویسه</td><td><strong>اجباری</strong></td><td>کلیدی که پنل یک بار نشان داده. بدون آن برنامه اجرا نمی‌شود. فقط در فرایند اصلی خوانده می‌شود و به رابط نمی‌رسد</td></tr>
-      <tr><td><code>adapters.payment</code></td><td><code>mock</code> · <code>none</code></td><td><code>mock</code></td><td><code>mock</code>: کارتخوان شبیه‌سازی‌شده با نوار «حالت آزمایشی». <code>none</code>: بدون SDK؛ فروش متوقف و وضعیت کارتخوان «نامشخص»</td></tr>
+      <tr><td><code>adapters.payment</code></td><td><code>mock</code> · <code>none</code> · <code>helper</code></td><td><code>mock</code></td><td><code>mock</code>: کارتخوان شبیه‌سازی‌شده با نوار «حالت آزمایشی». <code>none</code>: بدون SDK؛ فروش متوقف و وضعیت کارتخوان «نامشخص»</td></tr>
       <tr><td><code>adapters.printer</code></td><td><code>windows</code> · <code>mock</code></td><td><code>mock</code></td><td><code>windows</code>: چاپ بی‌صدا با درایور. <code>mock</code>: رسید به‌صورت فایل در پوشه <code>receipts</code></td></tr>
       <tr><td><code>adapters.printerName</code></td><td>نام چاپگر</td><td>—</td><td>نام دقیق چاپگر در Devices and Printers. برای <code>windows</code> لازم است؛ بدون آن وضعیت چاپگر «هشدار» است</td></tr>
       <tr><td><code>adapters.scanner</code></td><td><code>keyboard</code> · <code>mock</code></td><td><code>keyboard</code></td><td><code>keyboard</code>: اسکنر USB HID در حالت صفحه‌کلید با پسوند Enter. <code>mock</code>: فقط برای آزمون</td></tr>
@@ -1013,6 +1018,8 @@ flowchart LR
       <tr><td><code>requestTimeoutMs</code></td><td>حداقل ۱۰۰۰</td><td><code>8000</code></td><td>مهلت هر درخواست به سرور؛ پس از آن کیوسک آفلاین فرض می‌شود</td></tr>
       <tr><td><code>kioskMode</code></td><td><code>true</code> · <code>false</code></td><td><code>true</code></td><td>تمام‌صفحه بدون قاب، منو و ابزار توسعه، اجرای خودکار با ورود به ویندوز</td></tr>
       <tr><td><code>devControls</code></td><td><code>true</code> · <code>false</code></td><td><code>false</code></td><td>کنترل‌های شبیه‌سازی برای آزمون. <strong>در بهره‌برداری باید <code>false</code> باشد</strong></td></tr>
+      <tr><td><code>adminPanelUrl</code></td><td>آدرس کامل</td><td><code>&lt;serverUrl&gt;/admin</code></td><td>پنلی که چرخ‌دنده باز می‌کند. فقط اگر پنل جای دیگری میزبانی می‌شود</td></tr>
+      <tr><td><code>adminIdleMinutes</code></td><td>۱ تا ۶۰</td><td><code>5</code></td><td>خروج خودکار مدیر از پنل روی کیوسک پس از این مدت بی‌فعالیتی</td></tr>
     </tbody>
   </table></div>
   <p><strong>ترتیب اولویت</strong> (پایین‌تر برنده است): مقادیر پیش‌فرض ← <code>kiosk.config.json</code> ← متغیرهای محیطی.</p>
@@ -1059,7 +1066,7 @@ flowchart TD
   <div class="table-wrap"><table>
     <thead><tr><th>فیلد</th><th>مقادیر</th><th>پیش‌فرض</th><th>توضیح</th></tr></thead>
     <tbody>
-      <tr><td>آدرس سرور</td><td><code>http(s)://…</code></td><td>وب‌اپ: آدرس همان سرور. اندروید: خالی</td><td>مثلاً <code>http://192.168.1.10:3000</code>. اسلش انتهایی حذف می‌شود</td></tr>
+      <tr><td>آدرس سرور</td><td><code>http(s)://…</code></td><td>وب‌اپ: آدرس همان سرور. اندروید: خالی</td><td>مثلاً <code>http://192.168.1.10:3001</code>. اسلش انتهایی حذف می‌شود</td></tr>
       <tr><td>شناسه کیوسک</td><td>متن، حداکثر ۶۴ نویسه</td><td><code>KIOSK-01</code></td><td>همان شناسه پنل</td></tr>
       <tr><td>کلید دستگاه</td><td>حداقل ۸ نویسه</td><td>—</td><td>در قالب رمز نمایش داده می‌شود</td></tr>
       <tr><td>کارتخوان</td><td>شبیه‌ساز (آزمایشی) · متصل نشده</td><td>شبیه‌ساز</td><td>معادل <code>mock</code> و <code>none</code> نسخه ویندوز</td></tr>
@@ -1140,6 +1147,24 @@ flowchart TD
   </table></div>
   <p>اقدام‌ها فقط برای مدیر اصلی است؛ اپراتور مشاهده می‌کند و فقط استعلام و چاپ مجدد دارد. فرمان‌ها با heartbeat بعدی به کیوسک می‌رسند؛ هر فرمان شناسه یکتا دارد و اجرای دوباره‌اش بی‌اثر است.</p>
 
+  <h4>ورود مدیر از روی کیوسک (چرخ‌دنده)</h4>
+  <p>در گوشه بالای صفحه اصلی کیوسک یک چرخ‌دنده کوچک هست. با لمس آن پنجره «ورود مدیر» با صفحه‌کلید لمسی باز می‌شود. پس از ورود، <strong>همان پنل مدیریت</strong> باز می‌شود؛ پنل دومی وجود ندارد.</p>
+  <ul>
+    <li><strong>نقش‌ها:</strong> مدیر اصلی به داشبورد و اپراتور به «سفارش‌ها» می‌رود. دسترسی‌ها همان دسترسی‌های پنل است و سرور آن‌ها را بررسی می‌کند.</li>
+    <li><strong>امنیت:</strong> ورود فقط با اتصال به سرور ممکن است. رمز و توکن هرگز روی کیوسک ذخیره نمی‌شوند (نه در SQLite، نه در فایل).</li>
+    <li><strong>نشست کوتاه:</strong> توکن ورود از کیوسک <code>KIOSK_ADMIN_SESSION_MINUTES</code> (پیش‌فرض ۳۰ دقیقه) اعتبار دارد. پس از <code>adminIdleMinutes</code> (پیش‌فرض ۵ دقیقه) بی‌فعالیتی هم خروج خودکار است.</li>
+    <li><strong>خروج:</strong> «خروج و بازگشت به کیوسک»، بی‌فعالیتی یا پایان نشست، کیوسک را به صفحه اصلی برمی‌گرداند و همگام‌سازی همان لحظه انجام می‌شود.</li>
+  </ul>
+  <div class="table-wrap"><table>
+    <thead><tr><th>نسخه</th><th>رفتار</th></tr></thead>
+    <tbody>
+      <tr><td>ویندوز</td><td>پنل در پنجره‌ای جدا روی کیوسک (در <code>kioskMode</code> تمام‌صفحه)، با نشستی فقط در حافظه که با بستن پنجره پاک می‌شود. فقط صفحه‌های پنل باز می‌شوند. دانلود خروجی و پنجره چاپ پنل در این پنجره مسدود است. اگر پنل باز نشود، پنجره خودش بسته می‌شود و علت روی کیوسک نمایش داده می‌شود</td></tr>
+      <tr><td>وب‌اپ (<code>/kiosk/</code> همان سرور)</td><td>پنل در همان زبانه باز می‌شود و پس از خروج به کیوسک برمی‌گردد</td></tr>
+      <tr><td>اندروید</td><td>چرخ‌دنده نمایش داده نمی‌شود؛ از پنل روی دستگاه دیگر استفاده کنید</td></tr>
+    </tbody>
+  </table></div>
+  <p>پیش‌نیاز: پنل روی سرور در <code>/admin</code> ارائه شود (<code>ADMIN_DIST_DIR</code>؛ در image لیارا از قبل تنظیم شده است).</p>
+
   <h3>فهرست بررسی پیش از بهره‌برداری</h3>
   <ol class="steps">
     <li><code>serverUrl</code> با HTTPS و <code>PUBLIC_BASE_URL</code> سرور از روی کیوسک در دسترس است.</li>
@@ -1161,6 +1186,9 @@ flowchart TD
       <tr><td>وب‌اپ: «کیوسک در زبانه یا پنجره دیگری باز است»</td><td>دو زبانه هم‌زمان</td><td>زبانه دیگر را ببندید و «تلاش دوباره» را بزنید</td></tr>
       <tr><td>وب‌اپ بدون سرور بالا نمی‌آید</td><td>Service Worker فقط روی HTTPS فعال است</td><td>سرور را با HTTPS ارائه کنید</td></tr>
       <tr><td>اندروید: «سرور در دسترس نیست» با آدرس درست</td><td>CORS سرور</td><td><code>https://localhost</code> را به <code>CORS_ORIGINS</code> اضافه کنید</td></tr>
+      <tr><td>ورود مدیر: «ورود مدیر فقط با اتصال به مرکز ممکن است»</td><td>کیوسک آفلاین است</td><td>شبکه را بررسی کنید یا از پنل روی دستگاه دیگر استفاده کنید</td></tr>
+      <tr><td>ورود مدیر: «پنل مدیریت باز نشد»</td><td>پنل روی سرور ارائه نمی‌شود یا سرور در دسترس نیست</td><td><code>ADMIN_DIST_DIR</code> سرور و آدرس <code>&lt;serverUrl&gt;/admin</code> را بررسی کنید</td></tr>
+      <tr><td>سرور اجرا نمی‌شود: <code>EADDRINUSE</code></td><td>پورت در اختیار برنامه دیگری است (3000 در ویندوز اغلب در اختیار EonVPN است)</td><td>پورت پیش‌فرض 3001 است. در صورت تداخل، <code>PORT</code> را عوض و <code>serverUrl</code> کیوسک را به‌روز کنید</td></tr>
       <tr><td>پرداخت «نامشخص»</td><td>پاسخ کارتخوان نرسیده</td><td>کیوسک خودکار استعلام می‌کند؛ از پنل هم «استعلام» یا «تطبیق دستی» ممکن است</td></tr>
     </tbody>
   </table></div>
@@ -1336,16 +1364,16 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ tests -->
 <section id="tests">
-  <h2>گزارش تست <span class="tag">2026-10-17</span></h2>
+  <h2>گزارش تست <span class="tag">2026-10-18</span></h2>
   <p class="lede">Node 22 · PostgreSQL 16 · Chromium (Playwright 1.56.1). همه لایه‌ها موفق.</p>
 
   <div class="table-wrap"><table>
     <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
     <tbody>
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۴۳</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API + برنامه کمکی کارتخوان + صفحه راه‌اندازی ویندوز</td><td>Vitest</td><td class="num">۴۰</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP و صفحه راه‌اندازی ویندوز)</td><td>Playwright</td><td class="num">۳۴</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۵۱</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API + برنامه کمکی کارتخوان + صفحه راه‌اندازی ویندوز + ورود مدیر از کیوسک</td><td>Vitest</td><td class="num">۵۲</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP، صفحه راه‌اندازی ویندوز و ورود مدیر از کیوسک)</td><td>Playwright</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1380,6 +1408,9 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
   <h3>اشکال‌هایی که تست‌ها پیدا کردند و رفع شد</h3>
   <ul>
+    <li><strong>توکن پنل در برنامه ویندوز:</strong> preload پنجره پنل در سند خالی اولیه هم اجرا می‌شد و توکن را پیش از صفحه پنل مصرف می‌کرد. اکنون توکن فقط به صفحه اصلی پنل داده می‌شود.</li>
+    <li><strong>پنجره پنل بدون راه خروج:</strong> اگر صفحه پنل بارگذاری نمی‌شد، پنجره تمام‌صفحه تا پایان نشست می‌ماند. اکنون خودش بسته می‌شود و علت روی کیوسک نمایش داده می‌شود.</li>
+    <li><strong>پیام کوتاه کیوسک:</strong> انیمیشن ورود، پیام را از وسط به راست جابه‌جا می‌کرد و بریده می‌شد.</li>
     <li><strong>هشدار پایان مهلت:</strong> لمس «ادامه می‌دهم» از زیر هشدار رد می‌شد و می‌توانست دکمه زیر آن را بزند. اکنون لمس فقط زمان فعالیت را ثبت می‌کند و هشدار در چرخه بعدی بسته می‌شود.</li>
     <li><strong>چاپ مجدد از پنل:</strong> پس از چاپ موفق، وضعیت رسید «چاپ‌شده» نمی‌شد و هشدار داشبورد باقی می‌ماند. اکنون <code>PRINTED</code> ثبت می‌شود.</li>
     <li><strong>نوار قطع ارتباط:</strong> با تأخیر ظاهر می‌شد؛ اکنون بلافاصله.</li>
@@ -1445,8 +1476,17 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.3.0</span></h2>
-  <p class="lede">۲۵ مهر ۱۴۰۵ — آماده‌سازی برای بهره‌برداری.</p>
+  <h2>تغییرات نسخه <span class="tag">1.4.0</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — یکپارچگی کیوسک و پنل مدیریت.</p>
+  <ul>
+    <li><strong>ورود مدیر از کیوسک:</strong> چرخ‌دنده صفحه اصلی ← ورود با صفحه‌کلید لمسی ← همان پنل مدیریت (مدیر: داشبورد، اپراتور: سفارش‌ها). خروج، بی‌فعالیتی یا پایان نشست ۳۰ دقیقه‌ای کیوسک را به صفحه اصلی برمی‌گرداند. رمز و توکن روی کیوسک ذخیره نمی‌شوند.</li>
+    <li><strong>پورت ۳۰۰۱:</strong> پورت پیش‌فرض سرور به‌خاطر تداخل ۳۰۰۰ با EonVPN در ویندوز؛ همه آدرس‌های پیش‌فرض به‌روز شدند.</li>
+    <li><strong>همگام‌سازی:</strong> heartbeat تغییر اشتراک‌ها (<code>subscriptionRev</code>) را هم اعلام می‌کند و کیوسک فوراً دریافت می‌کند.</li>
+    <li><strong>CORS توسعه:</strong> با <code>CORS_ORIGINS</code> خالی، مبدأهای توسعه مجازند؛ در production فقط فهرست صریح.</li>
+    <li><strong>رفع اشکال:</strong> پیام کوتاه کیوسک دیگر از وسط جابه‌جا و بریده نمی‌شود.</li>
+  </ul>
+  <h3>نسخه 1.3.0</h3>
+  <p>۲۵ مهر ۱۴۰۵ — آماده‌سازی برای بهره‌برداری.</p>
   <ul>
     <li><strong>لیارا:</strong> <code>Dockerfile</code> و <code>liara.json</code> برای سرور و پنل؛ migration و داده اولیه در هر اجرا؛ دیسک <code>media</code>. CI image را با تنظیمات production اجرا و بررسی می‌کند و با گزینه deploy روی لیارا مستقر می‌کند.</li>
     <li><strong>ایمنی production:</strong> سرور با <code>JWT_SECRET</code> نمونه، <code>DATABASE_URL</code> نمونه یا <code>PUBLIC_BASE_URL</code> بدون https اجرا نمی‌شود؛ رمز اولیه نمونه پذیرفته نمی‌شود و پس از اولین ورود لازم نیست.</li>

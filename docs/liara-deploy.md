@@ -7,7 +7,7 @@
 | فایل | کار |
 | --- | --- |
 | `Dockerfile` | ساخت سرور و پنل در یک image |
-| `liara.json` | پلتفرم Docker، پورت ۳۰۰۰، ساخت در موقعیت آلمان، اتصال دیسک `media` |
+| `liara.json` | پلتفرم Docker، پورت ۳۰۰۱، ساخت در موقعیت آلمان، اتصال دیسک `media` |
 | `.dockerignore` | فایل‌هایی که آپلود نمی‌شوند (از جمله `.env` و `node_modules`) |
 | `apps/server/scripts/docker-start.sh` | هنگام هر اجرا: اعمال migrationهای جدید، داده اولیه، اجرای سرور |
 
@@ -37,12 +37,13 @@
 متغیرهای اختیاری:
 - `SEED_ADMIN_USERNAME` و `SEED_OPERATOR_USERNAME`: نام کاربری‌های اولیه.
 - `ADMIN_SESSION_HOURS`: مدت نشست پنل.
+- `KIOSK_ADMIN_SESSION_MINUTES`: مدت نشست مدیری که از چرخ‌دنده کیوسک وارد می‌شود (پیش‌فرض ۳۰ دقیقه).
 - `KIOSK_INSTALLER_URL`: اگر نصب‌کننده کیوسک را جای دیگری گذاشته‌اید.
 - `SEED_ON_START=0`: اگر نمی‌خواهید داده اولیه در هر اجرا بررسی شود.
 
 مقادیر زیر در image تنظیم شده‌اند و لازم نیست تعریف شوند:
 - `NODE_ENV=production`
-- `PORT=3000`
+- `PORT=3001`
 - `TRUST_PROXY=1` (لیارا پشت reverse proxy است)
 - مسیر پنل
 - `MEDIA_DIR=/app/storage/media`
@@ -56,7 +57,7 @@
 
 یکی از دو روش:
 
-**الف) از کامپیوتر خودتان:** Node.js 22 را نصب کنید، سپس در پوشه مخزن (بهتر است روی برچسب نسخه، مثلاً `git checkout v1.3.0`):
+**الف) از کامپیوتر خودتان:** Node.js 22 را نصب کنید، سپس در پوشه مخزن (بهتر است روی برچسب نسخه، مثلاً `git checkout v1.4.0`):
 
 ```bash
 npm i -g @liara/cli

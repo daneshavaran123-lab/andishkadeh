@@ -4,16 +4,19 @@ import { z } from 'zod';
 
 const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
-  PORT: z.coerce.number().int().default(3000),
+  // 3001: port 3000 is often taken on Windows (EonVPN and other local services).
+  PORT: z.coerce.number().int().default(3001),
   CORS_ORIGINS: z.string().default(''),
   TRUST_PROXY: z.coerce.number().int().default(0),
   JWT_SECRET: z.string().min(24, 'JWT_SECRET must be at least 24 characters'),
   ADMIN_SESSION_HOURS: z.coerce.number().positive().default(8),
+  /** Admin sessions opened from a kiosk (gear on the welcome screen) are short: a public device. */
+  KIOSK_ADMIN_SESSION_MINUTES: z.coerce.number().positive().default(30),
   LOGIN_MAX_ATTEMPTS: z.coerce.number().int().positive().default(5),
   LOGIN_LOCK_MINUTES: z.coerce.number().int().positive().default(15),
   MEDIA_DIR: z.string().default('./storage/media'),
   MEDIA_MAX_MB: z.coerce.number().positive().default(8),
-  PUBLIC_BASE_URL: z.string().default('http://localhost:3000'),
+  PUBLIC_BASE_URL: z.string().default('http://localhost:3001'),
   /** Optional: built admin panel (apps/admin/dist) served at /admin from the same origin. */
   ADMIN_DIST_DIR: z.string().default(''),
   /** Optional: built kiosk web app (apps/kiosk/dist-web) served at /kiosk/ for browser kiosks. */
@@ -22,6 +25,9 @@ const EnvSchema = z.object({
   KIOSK_INSTALLER_URL: z.string().default(''),
   NODE_ENV: z.string().default('development'),
 });
+
+/** Browser origins of the development UIs (admin :5173, kiosk :5174, kiosk web app :5176). */
+const DEV_ORIGINS = [5173, 5174, 5176].flatMap((port) => [`http://localhost:${port}`, `http://127.0.0.1:${port}`]);
 
 export type AppConfig = z.infer<typeof EnvSchema> & {
   mediaDirAbs: string;
@@ -57,9 +63,20 @@ export function config(): AppConfig {
     mediaDirAbs: resolve(process.cwd(), parsed.data.MEDIA_DIR),
     adminDistAbs: parsed.data.ADMIN_DIST_DIR ? resolve(process.cwd(), parsed.data.ADMIN_DIST_DIR) : null,
     kioskWebDistAbs: parsed.data.KIOSK_WEB_DIST_DIR ? resolve(process.cwd(), parsed.data.KIOSK_WEB_DIST_DIR) : null,
-    corsOrigins: parsed.data.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
+    corsOrigins: corsOrigins(parsed.data),
   };
   return cached;
+}
+
+/**
+ * Browser origins allowed to call the API. Same-origin pages (/admin, /kiosk/) and the Windows
+ * kiosk (requests from its main process) need none. Without CORS_ORIGINS, development allows the
+ * local dev UIs and production allows nothing.
+ */
+function corsOrigins(env: z.infer<typeof EnvSchema>): string[] {
+  const list = env.CORS_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean);
+  if (list.length || env.NODE_ENV === 'production') return list;
+  return DEV_ORIGINS;
 }
 
 /** Test helper: forget cached config after mutating process.env. */

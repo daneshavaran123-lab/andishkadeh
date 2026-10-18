@@ -1396,7 +1396,8 @@ button:focus-visible,
   font-size: 26px;
   font-weight: 700;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: rise 220ms var(--ease) both;
+  /* Own keyframes: "rise" ends at transform: none, which would drop the centring translateX. */
+  animation: toast-rise 220ms var(--ease) both;
   white-space: nowrap;
 }
 
@@ -1474,6 +1475,17 @@ button:focus-visible,
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes toast-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 24px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
@@ -1663,4 +1675,146 @@ button:focus-visible,
   border-top: 1px solid var(--line);
   color: var(--faint);
   font-size: 16px;
+}
+
+/* Staff access (gear on the welcome screen) */
+.admin-gear {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  z-index: 5;
+  width: 72px;
+  height: 72px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: rgba(5, 11, 24, 0.35);
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.admin-gear svg {
+  width: 34px;
+  height: 34px;
+}
+
+.admin-gear:active {
+  opacity: 1;
+  background: var(--surface-2);
+}
+
+.admin-login {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+.admin-login-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.admin-login-head h2 {
+  margin: 0;
+}
+
+.admin-login-head p {
+  margin: 4px 0 0;
+  font-size: var(--fs-help);
+}
+
+.admin-login label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  font-size: var(--fs-help);
+  color: var(--muted);
+}
+
+.admin-login input {
+  height: 88px;
+  padding: 0 var(--s3);
+  border-radius: 22px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface-1);
+  color: var(--text);
+  font-size: 34px;
+  font-family: inherit;
+  text-align: left;
+}
+
+.admin-login label.active input,
+.admin-login input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.admin-login-error {
+  padding: var(--s2) var(--s3);
+  border-radius: 18px;
+  background: rgba(255, 40, 76, 0.12);
+  border: 1.5px solid rgba(255, 40, 76, 0.4);
+  color: #ffb3bf;
+  font-size: var(--fs-help);
+  line-height: 1.7;
+}
+
+.admin-login-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: var(--s3);
+}
+
+.textkbd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.textkbd .row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.textkbd button {
+  flex: 0 0 70px;
+  height: 76px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--surface-1);
+  color: var(--text);
+  font-size: 32px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.textkbd button:active {
+  background: var(--surface-3);
+  border-color: var(--blue);
+}
+
+.textkbd .fn {
+  flex-basis: 108px;
+  color: var(--muted);
+  font-size: 28px;
+}
+
+.textkbd .fn.on {
+  color: var(--text);
+  border-color: var(--blue);
+}
+
+.textkbd .fn.wide {
+  flex-basis: 220px;
+}
+
+.textkbd svg {
+  width: 36px;
+  height: 36px;
 }

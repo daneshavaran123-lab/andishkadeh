@@ -13,6 +13,7 @@ import type {
   TerminalOutcome,
   ValidateAccessResponse,
 } from '@andishkadeh/shared';
+import type { AdminLoginRequest, AdminLoginResult } from './admin-access';
 
 export interface KioskStatus {
   deviceId: string;
@@ -113,6 +114,8 @@ export interface IpcChannels {
   'access:validate': { req: { token: string }; res: ValidateResult };
   'session:end': { req: void; res: { ok: boolean } };
   'dev:control': { req: DevControl; res: { ok: boolean; message?: string } };
+  /** Staff sign-in from the gear on the welcome screen (see core/admin-access.ts). */
+  'admin:login': { req: AdminLoginRequest; res: AdminLoginResult };
 }
 
 export type IpcChannel = keyof IpcChannels;
@@ -127,13 +130,19 @@ export const IPC_CHANNELS: IpcChannel[] = [
   'access:validate',
   'session:end',
   'dev:control',
+  'admin:login',
 ];
 
 export interface IpcEvents {
   status: KioskStatus;
   catalog: AppState;
   'scanner:scan': { payload: string };
+  /**
+   * Windows app: the admin panel window opened from the kiosk was closed (logout, idle, expiry).
+   * `message` is set when the panel could not be shown at all.
+   */
+  admin: { open: boolean; message?: string };
 }
 
 export type IpcEvent = keyof IpcEvents;
-export const IPC_EVENTS: IpcEvent[] = ['status', 'catalog', 'scanner:scan'];
+export const IPC_EVENTS: IpcEvent[] = ['status', 'catalog', 'scanner:scan', 'admin'];

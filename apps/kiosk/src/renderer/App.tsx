@@ -211,12 +211,20 @@ export function App() {
     load();
     const offStatus = onEvent('status', setStatus);
     const offCatalog = onEvent('catalog', setState);
+    // Windows app: the admin panel window opened from the gear was closed; the core syncs at once.
+    const offAdmin = onEvent('admin', ({ open, message }) => {
+      if (open) return;
+      const s = useSession.getState();
+      s.reset();
+      s.showToast(message ?? 'خروج از پنل مدیریت؛ تغییرات روی کیوسک اعمال می‌شود');
+    });
     const onHelp = () => setHelp(true);
     window.addEventListener('kiosk:help', onHelp);
     return () => {
       alive = false;
       offStatus();
       offCatalog();
+      offAdmin();
       window.removeEventListener('kiosk:help', onHelp);
     };
   }, [setState, setStatus]);

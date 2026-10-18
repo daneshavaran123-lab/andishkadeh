@@ -44,6 +44,10 @@ export const KioskConfigSchema = z.object({
   kioskMode: z.boolean().default(true),
   /** Exposes dev controls (scenario switching) — must stay false in production builds. */
   devControls: z.boolean().default(false),
+  /** Existing admin panel opened from the gear on the welcome screen; default `${serverUrl}/admin`. */
+  adminPanelUrl: z.string().url().optional(),
+  /** The panel opened on the kiosk logs out after this many idle minutes. */
+  adminIdleMinutes: z.number().positive().max(60).default(5),
 });
 
 export type KioskConfig = z.infer<typeof KioskConfigSchema>;

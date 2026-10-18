@@ -6,7 +6,7 @@
   "workspaces": {
     "apps/kiosk": {
       // Bundled by scripts/build-electron.mjs, which knip does not read; the fake terminal helper is started by its test.
-      "entry": ["electron/main.ts", "electron/preload.ts", "test/fixtures/*.mjs"],
+      "entry": ["electron/main.ts", "electron/preload.ts", "electron/admin-preload.ts", "test/fixtures/*.mjs"],
       // Read as text by vite.config.ts (the service worker is generated from it).
       "ignore": ["src/renderer/sw-template.js"],
       // electron-builder loads the Squirrel plugin by name; tools/uml/render.sh uses the Vazirmatn TTF files.

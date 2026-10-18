@@ -21,3 +21,4 @@ const common = {
 
 await build({ ...common, entryPoints: [resolve(root, 'electron/main.ts')], outfile: resolve(root, 'dist-electron/main.js') });
 await build({ ...common, entryPoints: [resolve(root, 'electron/preload.ts')], outfile: resolve(root, 'dist-electron/preload.js') });
+await build({ ...common, entryPoints: [resolve(root, 'electron/admin-preload.ts')], outfile: resolve(root, 'dist-electron/admin-preload.js') });

@@ -136,7 +136,11 @@ export class SyncWorker {
     };
     try {
       const res = await this.api.post<HeartbeatResponse>('/devices/heartbeat', body);
-      if (res.catalogRevision > (this.catalog.current?.catalogRevision ?? 0)) void this.pull();
+      // Changes made in the panel (prices, services, plans, settings, subscriptions) are pulled at once,
+      // without waiting for the regular pull interval.
+      const catalogBehind = res.catalogRevision > (this.catalog.current?.catalogRevision ?? 0);
+      const subscriptionsBehind = (res.subscriptionRev ?? 0) > body.subRev;
+      if (catalogBehind || subscriptionsBehind) await this.pull();
       for (const cmd of res.commands) await this.execute(cmd);
     } catch {
       // offline: status already reflects it

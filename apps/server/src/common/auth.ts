@@ -37,12 +37,12 @@ interface TokenClaims {
   role: AdminRole;
 }
 
-export function signAdminToken(user: { id: string; tokenVersion: number; role: AdminRole }) {
-  const hours = config().ADMIN_SESSION_HOURS;
-  const expiresAt = new Date(Date.now() + hours * 3600_000);
+/** Signs a panel session; `seconds` defaults to ADMIN_SESSION_HOURS (kiosk logins are shorter). */
+export function signAdminToken(user: { id: string; tokenVersion: number; role: AdminRole }, seconds = config().ADMIN_SESSION_HOURS * 3600) {
+  const expiresAt = new Date(Date.now() + Math.round(seconds) * 1000);
   const token = jwt.sign({ sub: user.id, ver: user.tokenVersion, role: user.role } satisfies TokenClaims, config().JWT_SECRET, {
     algorithm: 'HS256',
-    expiresIn: Math.round(hours * 3600),
+    expiresIn: Math.round(seconds),
     issuer: 'andishkadeh',
     audience: 'admin',
   });
