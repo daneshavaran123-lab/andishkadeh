@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { ADMIN_KIOSK_STORAGE_KEY, ADMIN_TOKEN_STORAGE_KEY, type AdminKioskSession } from '@andishkadeh/shared';
 import type { AdminLoginResult } from '../../core/admin-access';
 import { invoke, platform } from '../bridge';
+import { useApp } from '../store';
 import { Icon } from './Icon';
 import { Modal } from './ui';
 import { TextKeyboard } from './TextKeyboard';
@@ -27,8 +28,10 @@ function openPanelInThisTab(r: Extract<AdminLoginResult, { ok: true }>): boolean
 
 export function AdminGear() {
   const [open, setOpen] = useState(false);
-  // The Android app cannot show the server's panel inside its own WebView.
-  if (platform === 'android') return null;
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
+  // The Android app cannot show the server's panel inside its own WebView; the public web app is
+  // not a staff device (staff use /admin and /kiosk directly).
+  if (platform === 'android' || browseOnly) return null;
   return (
     <>
       <button type="button" className="admin-gear" onClick={() => setOpen(true)} aria-label="ورود مدیر" data-testid="admin-gear">

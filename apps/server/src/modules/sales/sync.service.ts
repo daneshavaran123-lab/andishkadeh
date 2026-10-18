@@ -175,4 +175,17 @@ export class SyncService {
       nextSubRev: entries.length ? entries[entries.length - 1].rev : subSince,
     };
   }
+
+  /** The public web app: catalogue changes only, never the member subscription cache. */
+  async pullCatalog(since: number, subSince: number): Promise<SyncPullResponse> {
+    const revision = await this.catalog.currentRevision();
+    const catalog = since < revision ? await this.catalog.bootstrap() : null;
+    return {
+      serverTime: new Date().toISOString(),
+      catalogRevision: catalog?.catalogRevision ?? revision,
+      catalog,
+      subscriptions: [],
+      nextSubRev: subSince,
+    };
+  }
 }

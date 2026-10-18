@@ -8,7 +8,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { ItemType, OrderKind, OrderStatus, TerminalOutcome, type Bootstrap } from '@andishkadeh/shared';
+import { ItemType, OrderKind, OrderStatus, TerminalOutcome, WEB_APP_DEVICE_ID, type Bootstrap } from '@andishkadeh/shared';
 import initSqlJs, { type SqlJsStatic } from 'sql.js';
 import type { KioskCore } from '../src/core/kiosk-core';
 import { MockPaymentAdapter } from '../src/core/hardware/payment';
@@ -248,5 +248,37 @@ describe.each(DRIVERS)('kiosk core on %s', (driver) => {
       expect(after.categories[0].title).toBe('عنوان جدید'); // texts/prices apply immediately
       expect(after.categories[0].mediaId).toBe(cat.mediaId); // image falls back to the cached one
     });
+  });
+});
+
+describe('public web app (browse only, WEB-APP without a key)', () => {
+  it('pulls the catalogue, never the member cache, and offers no sale or member check', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'kiosk-test-'));
+    // Even a configured simulator must not make a sale possible.
+    const cfg = loadConfig(dir, {
+      serverUrl: `http://localhost:${TEST_PORT}`,
+      deviceId: WEB_APP_DEVICE_ID,
+      deviceKey: 'public-web-app',
+      browseOnly: true,
+      kioskMode: false,
+      adapters: { payment: 'mock', printer: 'mock', scanner: 'keyboard', paymentHelperArgs: [] },
+    });
+    const db = await openSqlJsDatabase((SQL ??= await initSqlJs()), memoryPersistence());
+    const web = createNodeCore(cfg, { mediaBase: 'test://media', db });
+    try {
+      await web.sync.pull();
+      await web.sync.heartbeat();
+      expect(web.catalog.current?.categories.length).toBeGreaterThan(0);
+      const status = web.statusSync();
+      expect(status).toMatchObject({ online: true, browseOnly: true, salesAvailable: false, subscriptionSalesAvailable: false, mockHardware: true });
+      expect(web.payment.name).toBe('not-configured');
+      expect(web.access.cacheSize()).toBe(0);
+      await expect(web.handle('order:create', { kind: OrderKind.SERVICES, mobile: mobile(), items: [] })).rejects.toThrow(/public web app/);
+      await expect(web.handle('access:validate', { token: 'x' })).rejects.toThrow(/public web app/);
+      await expect(web.handle('admin:login', { username: 'admin', password: 'Admin@12345' })).rejects.toThrow(/public web app/);
+      expect((await web.handle('app:getState', undefined)).status.browseOnly).toBe(true);
+    } finally {
+      web.stop();
+    }
   });
 });

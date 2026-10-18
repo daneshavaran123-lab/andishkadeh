@@ -3,7 +3,7 @@
  * address, kiosk id and device key (issued once in the admin panel, A15) plus the hardware
  * adapters. Not shown to customers.
  */
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent } from 'react';
 import { verifySetup, type SetupCheck, type SetupValues } from '../../core/setup-check';
 
 const WEB_PRINTERS = [
@@ -26,11 +26,9 @@ interface Props {
   printerNames?: string[];
   /** Where the check runs; Windows checks from the main process (default: from this page). */
   verify?(s: Pick<SetupValues, 'serverUrl' | 'deviceId' | 'deviceKey'>): Promise<SetupCheck>;
-  /** Shown above the form (web app: activation from the kiosk management page). */
-  notice?: ReactNode;
 }
 
-export function Setup({ initial, running, onSave, onCancel, onReset, identityLocked, printerOptions = WEB_PRINTERS, printerNames, verify = verifySetup, notice }: Props) {
+export function Setup({ initial, running, onSave, onCancel, onReset, identityLocked, printerOptions = WEB_PRINTERS, printerNames, verify = verifySetup }: Props) {
   const [f, setF] = useState<SetupValues>({
     serverUrl: initial.serverUrl ?? '',
     deviceId: initial.deviceId ?? 'KIOSK-01',
@@ -93,7 +91,6 @@ export function Setup({ initial, running, onSave, onCancel, onReset, identityLoc
     <div className="setup" data-testid="setup">
       <form className="setup-card" onSubmit={(e) => void submit(e)}>
         <h1>{running ? 'تنظیمات دستگاه' : 'راه‌اندازی کیوسک'}</h1>
-        {notice}
         <p className="setup-hint">
           شناسه و کلید دستگاه را از پنل مدیریت (کیوسک‌ها ← ثبت کیوسک یا کلید جدید) بگیرید. کلید فقط روی همین دستگاه نگهداری می‌شود.
         </p>

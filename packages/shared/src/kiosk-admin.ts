@@ -29,3 +29,11 @@ export function adminStartPath(role: AdminRole): string {
  * activate the browser it is opened in.
  */
 export const WEB_KIOSK_SETUP_STORAGE_KEY = 'andishkadeh.kiosk.setup.v1';
+
+/**
+ * The public web app at `/`, opened by anyone without activation. The server knows this device
+ * without a key and lets it read the catalogue only (start screen, services, prices, plans): no
+ * orders, payments, member QR checks or subscription data. A browser activated from /kiosk runs
+ * as that kiosk instead.
+ */
+export const WEB_APP_DEVICE_ID = 'WEB-APP';

@@ -5,7 +5,7 @@
  * panel is on the kiosk when it comes back.
  */
 import { expect, test, type Page } from '@playwright/test';
-import { adminApi, adminToken } from './helpers';
+import { activateWebKiosk, adminApi, adminToken } from './helpers';
 
 // sessionStorage keys of the panel session (packages/shared/src/kiosk-admin.ts).
 const ADMIN_TOKEN_STORAGE_KEY = 'andishkadeh.admin.token';
@@ -17,16 +17,7 @@ const fa = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '٬').re
 
 /** A freshly registered web kiosk in this browser, at its welcome screen. */
 async function setUpKiosk(page: Page) {
-  const token = await adminToken();
-  const deviceId = `ADM-${Date.now().toString(36).toUpperCase()}`;
-  const created = await adminApi<{ apiKey: string }>(token, 'POST', '/admin/devices', { id: deviceId, name: 'کیوسک آزمون ورود مدیر' });
-  expect(created.status).toBe(201);
-  await page.goto('/');
-  await page.getByTestId('setup-device').fill(deviceId);
-  await page.getByTestId('setup-key').fill(created.body.apiKey);
-  await page.getByTestId('setup-printer').selectOption('mock');
-  await page.getByTestId('setup-save').click();
-  await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+  await activateWebKiosk(page, 'کیوسک آزمون ورود مدیر', 'ADM');
 }
 
 /** Types on the kiosk's own keyboard (shift for capitals, the symbol page for @). */

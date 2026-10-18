@@ -16,6 +16,7 @@ import {
   localDateKey,
   localDayRange,
   startOfLocalDay,
+  WEB_APP_DEVICE_ID,
 } from '@andishkadeh/shared';
 import { z } from 'zod';
 import { AdminAuth } from '../../common/auth';
@@ -69,7 +70,8 @@ export class ReportsController {
         this.prisma.paymentAttempt.count({ where: { status: 'INITIATED', initiatedAt: { lt: new Date(now.getTime() - 10 * 60_000) } } }),
         this.prisma.order.count({ where: { conflictFlag: true } }),
         this.prisma.syncEvent.count({ where: { status: 'REJECTED' } }),
-        this.prisma.device.findMany({ where: { active: true }, orderBy: { id: 'asc' } }),
+        // Kiosks only: the public web app has no equipment and is "offline" whenever nobody has it open.
+        this.prisma.device.findMany({ where: { active: true, id: { not: WEB_APP_DEVICE_ID } }, orderBy: { id: 'asc' } }),
         this.prisma.order.count({ where: { status: 'PAID', printStatus: 'FAILED', paidAt: { gte: addLocalDays(todayStart, -7, tz) } } }),
       ]);
 

@@ -218,7 +218,7 @@ function KioskPrintDialog({ orderId, onClose }: { orderId: string; onClose: () =
   const [deviceId, setDeviceId] = useState('');
   const toast = useToast();
   const action = useAction();
-  const list = devices.data?.filter((d) => d.active) ?? [];
+  const list = devices.data?.filter((d) => d.active && !d.publicWebApp) ?? [];
   return (
     <Modal
       title="چاپ مجدد روی کیوسک"

@@ -139,6 +139,15 @@ export function Notice({ tone, icon = 'alert', children }: { tone: 'amber' | 'bl
   );
 }
 
+/** Public web app (browsing only): where buying happens. */
+export function BuyAtKioskNotice() {
+  return (
+    <Notice tone="blue" icon="cart">
+      <span data-testid="buy-at-kiosk">خرید، پرداخت و دریافت کد عضویت در کیوسک‌های مرکز انجام می‌شود. این‌جا خدمات، تعرفه‌ها و پلن‌های اشتراک را ببینید.</span>
+    </Notice>
+  );
+}
+
 export function Modal({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose?.()}>

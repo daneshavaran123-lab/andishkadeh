@@ -28,6 +28,7 @@ import {
   maskMobile,
   normalizeDigits,
   normalizeMobile,
+  WEB_APP_DEVICE_ID,
 } from '@andishkadeh/shared';
 import { generateQrToken, hashQrToken, randomApiKey } from '@andishkadeh/shared/node';
 import { z } from 'zod';
@@ -69,6 +70,9 @@ function searchTerm(q?: string) {
   const t = normalizeDigits(q).trim();
   return { raw: t, mobile: normalizeMobile(t) ?? t.replace(/\D/g, '') };
 }
+
+/** The public web app is every visitor's browser at once: commands would reach a random one. */
+const NO_PUBLIC_COMMANDS = () => ApiError.conflict(ErrorCode.CONFLICT, 'به وب‌اپ عمومی فرمانی فرستاده نمی‌شود');
 
 @Controller('admin')
 @AdminAuth()
@@ -190,6 +194,7 @@ export class AdminOpsController {
     if (!order) throw ApiError.notFound('سفارش');
     if (order.status !== 'PAID') throw ApiError.conflict(ErrorCode.CONFLICT, 'فقط برای سفارش پرداخت‌شده رسید صادر می‌شود');
     if (!(await this.prisma.device.findUnique({ where: { id: body.deviceId } }))) throw ApiError.notFound('دستگاه');
+    if (body.deviceId === WEB_APP_DEVICE_ID) throw NO_PUBLIC_COMMANDS();
     const receipt = await this.orders.receipt(id, true);
     const cmd = await this.devices.enqueue(body.deviceId, DeviceCommandType.PRINT_RECEIPT, { orderId: id, receipt }, admin.id);
     await this.audit.log(this.prisma, admin, { action: 'order.reprint_requested', entityType: 'Order', entityId: id, after: { deviceId: body.deviceId, commandId: cmd.id } });
@@ -468,6 +473,7 @@ export class AdminOpsController {
   @Roles(AdminRole.ADMIN)
   async rotateKey(@CurrentAdmin() admin: AdminPrincipal, @Param('id') id: string) {
     if (!(await this.prisma.device.findUnique({ where: { id } }))) throw ApiError.notFound('دستگاه');
+    if (id === WEB_APP_DEVICE_ID) throw ApiError.conflict(ErrorCode.CONFLICT, 'وب‌اپ عمومی کلید ندارد؛ برای قطع آن، غیرفعالش کنید');
     const apiKey = randomApiKey();
     await this.prisma.device.update({ where: { id }, data: { apiKeyHash: hashDeviceKey(apiKey) } });
     await this.audit.log(this.prisma, admin, { action: 'device.key_rotated', entityType: 'Device', entityId: id });
@@ -497,6 +503,7 @@ export class AdminOpsController {
   @Roles(AdminRole.ADMIN)
   async syncNow(@CurrentAdmin() admin: AdminPrincipal, @Param('id') id: string) {
     if (!(await this.prisma.device.findUnique({ where: { id } }))) throw ApiError.notFound('دستگاه');
+    if (id === WEB_APP_DEVICE_ID) throw NO_PUBLIC_COMMANDS();
     const cmd = await this.devices.enqueue(id, DeviceCommandType.SYNC_NOW, { retryFailed: true }, admin.id);
     await this.audit.log(this.prisma, admin, { action: 'sync.retry_requested', entityType: 'Device', entityId: id, after: { commandId: cmd.id } });
     return { commandId: cmd.id };
@@ -507,7 +514,7 @@ export class AdminOpsController {
   @Get('sync')
   async syncOverview(@Query(new ZodPipe(SyncQuery)) q: z.infer<typeof SyncQuery>): Promise<SyncOverview> {
     const [devices, grouped, events] = await Promise.all([
-      this.prisma.device.findMany({ orderBy: { id: 'asc' } }),
+      this.prisma.device.findMany({ where: { id: { not: WEB_APP_DEVICE_ID } }, orderBy: { id: 'asc' } }),
       this.prisma.syncEvent.groupBy({ by: ['status'], _count: { _all: true } }),
       this.prisma.syncEvent.findMany({
         where: { status: q.status, deviceId: q.deviceId },

@@ -1,7 +1,7 @@
 import { OrderKind } from '@andishkadeh/shared';
 import { AdminGear } from '../components/AdminAccess';
 import { Icon } from '../components/Icon';
-import { Notice, Screen } from '../components/ui';
+import { BuyAtKioskNotice, Notice, Screen } from '../components/ui';
 import matFloor from '../assets/img/mat-floor.jpg';
 import { mediaUrl, useApp, useSession } from '../store';
 
@@ -65,8 +65,12 @@ export function Home() {
   const status = useApp((s) => s.status);
   const { go, set, reset } = useSession();
   const c = bootstrap?.content.home;
+  const browseOnly = !!status?.browseOnly;
   const salesOk = !!status?.salesAvailable;
   const subOk = !!status?.subscriptionSalesAvailable;
+  // Public web app: services and plans can be looked at; buying happens at the center's kiosks.
+  const servicesOpen = salesOk || (browseOnly && !!bootstrap);
+  const plansOpen = subOk || (browseOnly && !!bootstrap?.plans.length);
 
   const cards = [
     {
@@ -76,7 +80,7 @@ export function Home() {
       icon: 'cart' as const,
       title: c?.servicesTitle ?? 'خرید خدمات',
       subtitle: c?.servicesSubtitle,
-      enabled: salesOk,
+      enabled: servicesOpen,
       onClick: () => {
         set({ flow: OrderKind.SERVICES });
         go('categories');
@@ -89,7 +93,7 @@ export function Home() {
       icon: 'crown' as const,
       title: c?.subscriptionTitle ?? 'خرید اشتراک کامل',
       subtitle: c?.subscriptionSubtitle,
-      enabled: subOk,
+      enabled: plansOpen,
       onClick: () => {
         set({ flow: OrderKind.SUBSCRIPTION });
         go('subscriptionIntro');
@@ -105,7 +109,7 @@ export function Home() {
       enabled: true,
       onClick: () => go('scan'),
     },
-  ];
+  ].filter((card) => !browseOnly || card.key !== 'member');
 
   return (
     <Screen title={c?.title ?? 'چه کاری می‌خواهید انجام دهید؟'} subtitle={bootstrap?.settings.centerName} onBack={reset}>
@@ -140,14 +144,15 @@ export function Home() {
             )}
           </button>
         ))}
-        {!salesOk && (
+        {browseOnly && bootstrap && <BuyAtKioskNotice />}
+        {!salesOk && (!browseOnly || !bootstrap) && (
           <Notice tone="amber" icon="wifiOff">
             {!bootstrap
               ? 'اطلاعات خدمات هنوز دریافت نشده است. لطفاً چند لحظه بعد دوباره تلاش کنید.'
               : 'فروش در حال حاضر امکان‌پذیر نیست (عدم اتصال به مرکز یا در دسترس نبودن کارتخوان). بررسی اعتبار اعضا همچنان فعال است.'}
           </Notice>
         )}
-        {salesOk && !subOk && (
+        {salesOk && !subOk && !browseOnly && (
           <Notice tone="amber" icon="wifiOff">
             خرید اشتراک در زمان قطع ارتباط با مرکز امکان‌پذیر نیست؛ خرید خدمات و بررسی اعتبار اعضا فعال است.
           </Notice>

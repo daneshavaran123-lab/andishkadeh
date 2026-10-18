@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Andishkadeh Koshti Iran — Kiosk & Admin API",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "description": "API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد."
   },
   "servers": [
@@ -16,7 +16,7 @@
         "type": "apiKey",
         "in": "header",
         "name": "Authorization",
-        "description": "Device <deviceId>:<apiKey>  (یا هدرهای X-Device-Id و X-Device-Key)"
+        "description": "Device <deviceId>:<apiKey>  (یا هدرهای X-Device-Id و X-Device-Key). وب‌اپ عمومی با شناسه WEB-APP و بدون کلید فقط kiosk/bootstrap، sync/pull (بدون اشتراک‌ها) و devices/heartbeat (بدون فرمان) را دارد؛ بقیه 403."
       },
       "admin": {
         "type": "http",

@@ -7,6 +7,7 @@ import {
   DeviceRow,
   HeartbeatRequest,
   HeartbeatResponse,
+  WEB_APP_DEVICE_ID,
 } from '@andishkadeh/shared';
 import { CounterService } from '../../common/core.services';
 import { PrismaService, Tx } from '../../common/prisma.service';
@@ -29,6 +30,7 @@ export function toDeviceRow(d: Device): DeviceRow {
     outbox: (d.outbox as DeviceRow['outbox']) ?? null,
     unresolvedPayments: d.unresolvedPayments,
     lastSyncAt: d.lastSyncAt?.toISOString() ?? null,
+    publicWebApp: d.id === WEB_APP_DEVICE_ID,
   };
 }
 
@@ -80,6 +82,28 @@ export class DevicesService {
           createdAt: c.createdAt.toISOString(),
         }),
       ),
+    };
+  }
+
+  private publicSeenAt = 0;
+
+  /**
+   * The public web app: every open browser sends heartbeats for the same device. Only "last seen"
+   * is kept (at most every 30 seconds, so visitors do not queue up on one row); it has no hardware,
+   * queue or commands of its own.
+   */
+  async publicHeartbeat(deviceId: string, hb: HeartbeatRequest): Promise<HeartbeatResponse> {
+    const now = new Date();
+    if (now.getTime() - this.publicSeenAt >= 30_000) {
+      this.publicSeenAt = now.getTime();
+      await this.prisma.device.update({ where: { id: deviceId }, data: { lastSeenAt: now, appVersion: hb.appVersion, catalogRevision: hb.catalogRevision } });
+    }
+    return {
+      serverTime: now.toISOString(),
+      catalogRevision: await this.counters.current(this.prisma, 'catalogRevision'),
+      // No subscription cache: never "behind", so subscription sales do not make it pull.
+      subscriptionRev: hb.subRev,
+      commands: [],
     };
   }
 

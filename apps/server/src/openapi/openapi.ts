@@ -20,7 +20,8 @@ export function buildOpenApiDocument(): OpenAPIObject {
     type: 'apiKey',
     in: 'header',
     name: 'Authorization',
-    description: 'Device <deviceId>:<apiKey>  (یا هدرهای X-Device-Id و X-Device-Key)',
+    description:
+      'Device <deviceId>:<apiKey>  (یا هدرهای X-Device-Id و X-Device-Key). وب‌اپ عمومی با شناسه WEB-APP و بدون کلید فقط kiosk/bootstrap، sync/pull (بدون اشتراک‌ها) و devices/heartbeat (بدون فرمان) را دارد؛ بقیه 403.',
   });
   r.registerComponent('securitySchemes', 'admin', { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' });
 

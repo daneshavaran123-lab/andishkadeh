@@ -22,6 +22,9 @@ import { SalesService } from './sales';
 import { SyncWorker } from './sync';
 import type { AppState, DevControl, IpcChannel, IpcChannels, IpcEvent, IpcEvents, KioskStatus } from './types';
 
+/** The only channels of the public web app (KioskConfig.browseOnly): no sales, member checks or staff sign-in. */
+const BROWSE_CHANNELS: IpcChannel[] = ['app:getState', 'session:end'];
+
 export interface CoreOptions {
   /** Base URL the UI uses to load cached media (`kiosk-media://media` in Electron). */
   mediaBase: string;
@@ -63,7 +66,8 @@ export class KioskCore {
     });
     this.catalog = new CatalogStore(this.db, this.api, opts.media);
     this.outbox = new Outbox(this.db);
-    this.payment = opts.payment ?? (cfg.adapters.payment === 'mock' ? new MockPaymentAdapter() : new UnconfiguredPaymentAdapter());
+    this.payment =
+      opts.payment ?? (cfg.adapters.payment === 'mock' && !cfg.browseOnly ? new MockPaymentAdapter() : new UnconfiguredPaymentAdapter());
     this.printer = opts.printer;
     this.scanner = cfg.adapters.scanner === 'mock' ? new MockScanner() : new KeyboardWedgeScanner();
     this.sales = new SalesService(this.db, this.api, this.catalog, this.outbox, this.payment, this.printer, cfg, () => this.emitStatus());
@@ -127,6 +131,7 @@ export class KioskCore {
       catalogUpdatedAt: this.catalog.updatedAt,
       salesAvailable,
       subscriptionSalesAvailable: salesAvailable && (this.online || !!s?.offlineSubscriptionSales) && (b?.plans.length ?? 0) > 0,
+      browseOnly: this.cfg.browseOnly,
       hardware: this.hardwareCache ?? { pos: unknown, printer: unknown, scanner: unknown },
       mockHardware: this.payment.isMock || this.printer.isMock || this.scanner.isMock,
       outbox: { pending: stats.pending, failed: stats.failed },
@@ -142,6 +147,8 @@ export class KioskCore {
   /** Single entry point for every allowed IPC channel. Unknown channels are rejected. */
   async handle<C extends IpcChannel>(channel: C, req: IpcChannels[C]['req']): Promise<IpcChannels[C]['res']> {
     type R = IpcChannels[C]['res'];
+    // The server refuses these for the public web app too; the UI does not offer them.
+    if (this.cfg.browseOnly && !BROWSE_CHANNELS.includes(channel)) throw new Error(`not available in the public web app: ${channel}`);
     switch (channel) {
       case 'app:getState':
         await this.refreshHardware();

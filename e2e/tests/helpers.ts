@@ -55,6 +55,29 @@ export async function createOperator(adminTok: string): Promise<{ username: stri
   return { username, password, token: await adminToken(username, password) };
 }
 
+/**
+ * Makes the web app at / run as a freshly registered kiosk in this browser, as "activate this
+ * browser" on /kiosk does (localStorage of the server's origin). Ends on the kiosk's start screen.
+ */
+export async function activateWebKiosk(page: Page, name: string, prefix = 'WEB'): Promise<string> {
+  const token = await adminToken();
+  const deviceId = `${prefix}-${Date.now().toString(36).toUpperCase()}`;
+  const created = await adminApi<{ apiKey: string }>(token, 'POST', '/admin/devices', { id: deviceId, name });
+  expect(created.status).toBe(201);
+  await page.goto('/api/v1/health'); // same origin, no app running
+  await page.evaluate(
+    ([id, key]) =>
+      localStorage.setItem(
+        'andishkadeh.kiosk.setup.v1', // WEB_KIOSK_SETUP_STORAGE_KEY
+        JSON.stringify({ serverUrl: location.origin, deviceId: id, deviceKey: key, payment: 'mock', printer: 'mock', scanner: 'keyboard', devControls: false }),
+      ),
+    [deviceId, created.body.apiKey],
+  );
+  await page.goto('/');
+  await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+  return deviceId;
+}
+
 export const randomMobile = () => `0912${String(Math.floor(Math.random() * 1e7)).padStart(7, '0')}`;
 
 export async function startSession(page: Page) {

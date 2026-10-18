@@ -104,6 +104,8 @@ export interface DeviceRow {
   outbox: { pending: number; failed: number; oldestPendingAt: string | null } | null;
   unresolvedPayments: number;
   lastSyncAt: string | null;
+  /** The public web app at `/` (WEB_APP_DEVICE_ID): no key, no commands; "online" while someone has it open. */
+  publicWebApp: boolean;
 }
 
 /** Release of this server; the Windows kiosk installer of the same version (A15). */

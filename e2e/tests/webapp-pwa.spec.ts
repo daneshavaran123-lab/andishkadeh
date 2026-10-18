@@ -1,34 +1,17 @@
 /**
- * Customer web app (PWA, the same build as the Android app) served by the server at the root /:
- * technician setup with a freshly registered device, a full purchase with the in-page core
- * (sql.js + IndexedDB), restart from local storage, offline restart from the service worker,
- * and the one-tab-only guard.
+ * Web app (PWA, the same build as the Android app) served by the server at the root /, activated
+ * as a kiosk in this browser: a full purchase with the in-page core (sql.js + IndexedDB), restart
+ * from local storage, offline restart from the service worker, and the one-tab-only guard.
  */
 import { expect, test } from '@playwright/test';
-import { addService, adminApi, adminToken, checkoutWithMobile, ordersByMobile, randomMobile } from './helpers';
+import { activateWebKiosk, addService, adminToken, checkoutWithMobile, ordersByMobile, randomMobile } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
-test('web app: setup → purchase → restart → offline restart', async ({ page, context }) => {
+test('web app as a kiosk: activation → purchase → restart → offline restart', async ({ page, context }) => {
   const token = await adminToken();
-  const deviceId = `WEB-${Date.now().toString(36).toUpperCase()}`;
-  const created = await adminApi<{ apiKey: string }>(token, 'POST', '/admin/devices', { id: deviceId, name: 'کیوسک وب آزمون' });
-  expect(created.status).toBe(201);
-
-  // First run: setup screen, server address prefilled with the page's own origin.
-  await page.goto('/');
-  await expect(page.getByTestId('setup')).toBeVisible();
-  await expect(page.getByTestId('setup-server')).toHaveValue('http://localhost:3200');
-  await page.getByTestId('setup-device').fill(deviceId);
-  await page.getByTestId('setup-key').fill('wrong-key-123456');
-  await page.getByTestId('setup-printer').selectOption('mock');
-  await page.getByTestId('setup-save').click();
-  await expect(page.getByTestId('setup-error')).toContainText('پذیرفته نشد');
-  await page.getByTestId('setup-key').fill(created.body.apiKey);
-  await page.getByTestId('setup-save').click();
-
-  // The in-page core pulls the catalogue and the regular kiosk UI starts.
-  await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+  // Activated from /kiosk: the in-page core pulls the catalogue and the regular kiosk UI starts.
+  await activateWebKiosk(page, 'کیوسک وب آزمون');
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
 
   // Full purchase with the simulated card reader.
@@ -51,7 +34,7 @@ test('web app: setup → purchase → restart → offline restart', async ({ pag
   expect(orders[0]).toMatchObject({ orderNumber, status: 'PAID', itemsCount: 1 });
   await expect.poll(async () => (await ordersByMobile(token, mobile))[0].printStatus, { timeout: 20_000 }).toBe('PRINTED');
 
-  // Restart: no setup again, catalogue straight from the local database.
+  // Restart: still that kiosk, catalogue straight from the local database.
   await page.reload();
   await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
   expect(await page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true);

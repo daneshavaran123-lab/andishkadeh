@@ -147,6 +147,7 @@ function useInactivity() {
   const routeId = useSession((s) => s.stack[s.stack.length - 1].id);
   const settings = useApp((s) => s.bootstrap?.settings);
   const allowed = useSession((s) => s.idleTimeoutAllowed);
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const [warning, setWarning] = useState<number | null>(null);
   const last = useRef(Date.now());
 
@@ -171,6 +172,8 @@ function useInactivity() {
   }, [routeId, allowed]);
 
   useEffect(() => {
+    // The public web app runs on the customer's own phone or computer: nothing to clear for the next person.
+    if (browseOnly) return;
     if (NO_TIMEOUT.includes(routeId) && !allowed) return;
     const timeout = (settings?.sessionTimeoutSec ?? 90) * 1000;
     const warnFor = (settings?.timeoutWarningSec ?? 15) * 1000;
@@ -186,7 +189,7 @@ function useInactivity() {
       }
     }, 500);
     return () => clearInterval(t);
-  }, [routeId, allowed, settings?.sessionTimeoutSec, settings?.timeoutWarningSec]);
+  }, [routeId, allowed, browseOnly, settings?.sessionTimeoutSec, settings?.timeoutWarningSec]);
 
   return { warning, stay: () => ((last.current = Date.now()), setWarning(null)) };
 }
@@ -235,7 +238,8 @@ export function App() {
         {status && !status.online && routeId !== 'welcome' && (
           <div className="banner offline" data-testid="offline-banner">
             <Icon name="wifiOff" />
-            ارتباط با مرکز برقرار نیست — {status.salesAvailable ? 'فروش در حالت آفلاین ادامه دارد' : 'فروش موقتاً متوقف است'}
+            ارتباط با مرکز برقرار نیست —{' '}
+            {status.browseOnly ? 'آخرین اطلاعات دریافت‌شده نمایش داده می‌شود' : status.salesAvailable ? 'فروش در حالت آفلاین ادامه دارد' : 'فروش موقتاً متوقف است'}
           </div>
         )}
         <div style={{ flex: 1, minHeight: 0 }}>{ready ? <Router /> : <Booting />}</div>

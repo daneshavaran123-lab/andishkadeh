@@ -11,7 +11,7 @@ import { Reflector } from '@nestjs/core';
 import { createHash, timingSafeEqual } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import type { Request } from 'express';
-import { AdminRole, SessionUser } from '@andishkadeh/shared';
+import { AdminRole, SessionUser, WEB_APP_DEVICE_ID } from '@andishkadeh/shared';
 import { config } from '../config';
 import { ApiError } from './errors';
 import { PrismaService } from './prisma.service';
@@ -23,6 +23,8 @@ export interface AdminPrincipal extends SessionUser {
 export interface DevicePrincipal {
   id: string;
   name: string;
+  /** The public web app at / (no key): only endpoints marked PublicWebApp() let it in. */
+  publicWebApp: boolean;
 }
 
 export type AuthedRequest = Request & {
@@ -110,9 +112,17 @@ export function hashDeviceKey(key: string): string {
   return createHash('sha256').update(key, 'utf8').digest('hex');
 }
 
+const PUBLIC_WEB_APP_KEY = 'publicWebApp';
+
+/** Kiosk endpoint the public web app may call too: reading the catalogue, never sales or member data. */
+export const PublicWebApp = () => SetMetadata(PUBLIC_WEB_APP_KEY, true);
+
 @Injectable()
 export class DeviceGuard implements CanActivate {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<AuthedRequest>();
@@ -127,6 +137,16 @@ export class DeviceGuard implements CanActivate {
         key = raw.slice(idx + 1);
       }
     }
+    if (id === WEB_APP_DEVICE_ID) {
+      // Anyone may open the web app, so it has no key: what it may do is limited instead.
+      const device = await this.prisma.device.findUnique({ where: { id } });
+      if (!device?.active) throw ApiError.unauthenticated('وب‌اپ عمومی غیرفعال است');
+      if (!this.reflector.getAllAndOverride<boolean>(PUBLIC_WEB_APP_KEY, [ctx.getHandler(), ctx.getClass()])) {
+        throw ApiError.forbidden('این کار از وب‌اپ عمومی ممکن نیست؛ خرید و ورود اعضا در کیوسک مرکز انجام می‌شود');
+      }
+      req.device = { id: device.id, name: device.name, publicWebApp: true };
+      return true;
+    }
     if (!id || !key) throw ApiError.unauthenticated('احراز هویت دستگاه لازم است');
 
     const device = await this.prisma.device.findUnique({ where: { id } });
@@ -135,7 +155,7 @@ export class DeviceGuard implements CanActivate {
     const ok = expected.length === actual.length && timingSafeEqual(expected, actual);
     if (!device || !ok || !device.active) throw ApiError.unauthenticated('دستگاه معتبر نیست');
 
-    req.device = { id: device.id, name: device.name };
+    req.device = { id: device.id, name: device.name, publicWebApp: false };
     return true;
   }
 }

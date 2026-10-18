@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.5.0</span> · ۲۶ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.6.0</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -196,7 +196,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
   <div class="table-wrap"><table>
     <thead><tr><th>نشانی</th><th>بخش</th></tr></thead>
     <tbody>
-      <tr><td><code>/</code></td><td>وب‌اپ مشتری (همان رابط کیوسک). هر مرورگر یک بار از <code>/kiosk</code> فعال می‌شود</td></tr>
+      <tr><td><code>/</code></td><td>وب‌اپ عمومی مشتری، بدون فعال‌سازی: صفحه شروع، خدمات، تعرفه‌ها و پلن‌ها. خرید و ورود اعضا در کیوسک‌هاست. مرورگری که از <code>/kiosk</code> فعال شود، همین‌جا کیوسک کامل است</td></tr>
       <tr><td><code>/admin</code></td><td>پنل مدیریت</td></tr>
       <tr><td><code>/kiosk</code></td><td>مدیریت کیوسک‌ها (با ورود کارکنان): دانلود برنامه ویندوز، آدرس سرور، ثبت و نام‌گذاری دستگاه، کلید، فعال‌سازی و وضعیت</td></tr>
       <tr><td><code>/api/v1</code></td><td>API مشترک وب‌اپ، کیوسک ویندوز و پنل؛ یک پایگاه داده PostgreSQL</td></tr>
@@ -741,7 +741,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.5.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.6.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -756,7 +756,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.5.0
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.6.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -905,7 +905,7 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
   <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm --filter @andishkadeh/kiosk build:web   # apps/kiosk/dist-web
 # apps/server/.env
 WEB_APP_DIST_DIR="../kiosk/dist-web"</code></pre></div>
-  <p>وب‌اپ روی نشانی اصلی <code>/</code> همان سرور باز می‌شود (پنل روی <code>/admin</code> و مدیریت کیوسک روی <code>/kiosk</code>) و CORS لازم نیست. مرورگری که هنوز فعال نشده، صفحه راه‌اندازی را با راهنمای <code>/kiosk</code> نشان می‌دهد: در همان مرورگر به <code>/kiosk</code> بروید، کیوسک را ثبت کنید و «فعال‌سازی همین مرورگر» را بزنید. روی HTTP شبکه محلی، فروش و حالت آفلاین کار می‌کند، ولی راه‌اندازی دوباره بدون سرور (Service Worker)، جلوگیری از زبانه دوم و روشن ماندن صفحه به <strong>HTTPS</strong> نیاز دارند.</p>
+  <p>وب‌اپ روی نشانی اصلی <code>/</code> همان سرور باز می‌شود (پنل روی <code>/admin</code> و مدیریت کیوسک روی <code>/kiosk</code>) و CORS لازم نیست. بدون فعال‌سازی، وب‌اپ عمومی باز می‌شود: صفحه شروع، خدمات، تعرفه‌ها و پلن‌ها، بدون خرید (دستگاه <code>WEB-APP</code> بدون کلید که سرور فقط اجازه خواندن کاتالوگ به آن می‌دهد). برای کیوسک مرورگری با فروش، در همان مرورگر به <code>/kiosk</code> بروید، کیوسک را ثبت کنید و «فعال‌سازی همین مرورگر» را بزنید. روی HTTP شبکه محلی، فروش و حالت آفلاین کار می‌کند، ولی راه‌اندازی دوباره بدون سرور (Service Worker)، جلوگیری از زبانه دوم و روشن ماندن صفحه به <strong>HTTPS</strong> نیاز دارند.</p>
   <div class="code"><span class="lang">text</span><button type="button" data-copy>کپی</button><pre><code>chrome.exe --kiosk --kiosk-printing --start-fullscreen --noerrdialogs ^
   --user-data-dir=C:\KioskChrome https://kiosk.example.local/</code></pre></div>
 
@@ -1486,8 +1486,15 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.5.0</span></h2>
-  <p class="lede">۲۶ مهر ۱۴۰۵ — نشانی‌های تازه سایت.</p>
+  <h2>تغییرات نسخه <span class="tag">1.6.0</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — وب‌اپ عمومی روی نشانی اصلی.</p>
+  <ul>
+    <li><strong><code>/</code></strong> بدون فعال‌سازی صفحه شروع را برای همه باز می‌کند: حوزه‌ها، خدمات با تعرفه و پلن‌های اشتراک. خرید، پرداخت و کد عضویت در کیوسک‌های مرکز است. چرخ‌دنده کارکنان و QR اعضا در آن نیست.</li>
+    <li><strong>سرور:</strong> دستگاه <code>WEB-APP</code> بدون کلید و فقط برای خواندن کاتالوگ. سفارش، پرداخت، QR، داده اشتراک اعضا و فرمان برای آن بسته است.</li>
+    <li><strong><code>/kiosk</code>:</strong> کارت «وب‌اپ عمومی» با وضعیت استفاده. «فعال‌سازی همین مرورگر» همچنان کیوسک مرورگری کامل می‌سازد.</li>
+  </ul>
+  <h3>نسخه 1.5.0</h3>
+  <p>۲۶ مهر ۱۴۰۵ — نشانی‌های تازه سایت.</p>
   <ul>
     <li><strong><code>/</code></strong> وب‌اپ مشتری (پیش‌تر <code>/kiosk/</code>)؛ image لیارا آن را هم می‌سازد.</li>
     <li><strong><code>/kiosk</code></strong> مدیریت کیوسک‌ها با ورود کارکنان: آدرس سرور، دانلود برنامه ویندوز (فقط پس از انتشار)، ثبت و نام‌گذاری دستگاه، کلید، «فعال‌سازی همین مرورگر» برای وب‌اپ، و وضعیت کیوسک‌ها.</li>

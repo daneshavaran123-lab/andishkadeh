@@ -12,7 +12,7 @@ import {
   ValidateAccessRequest,
 } from '@andishkadeh/shared';
 import { z } from 'zod';
-import { CurrentDevice, DeviceAuth, DevicePrincipal } from '../../common/auth';
+import { CurrentDevice, DeviceAuth, DevicePrincipal, PublicWebApp } from '../../common/auth';
 import { ZodPipe } from '../../common/zod.pipe';
 import { CatalogService } from '../catalog/catalog.service';
 import { DevicesService } from './devices.service';
@@ -26,7 +26,10 @@ const LoosePush = z.object({ events: z.array(z.unknown()).min(1).max(200) });
 const CommandResult = z.object({ success: z.boolean(), result: z.unknown().optional() });
 const ActivateRequest = z.object({ orderId: z.string() });
 
-/** Endpoints used by kiosks (PRD §14). All require device authentication. */
+/**
+ * Endpoints used by kiosks (PRD §14). All require device authentication; the public web app at /
+ * (no key) reaches only those marked PublicWebApp().
+ */
 @Controller()
 @DeviceAuth()
 export class KioskController {
@@ -40,6 +43,7 @@ export class KioskController {
   ) {}
 
   @Get('kiosk/bootstrap')
+  @PublicWebApp()
   bootstrap() {
     return this.catalog.bootstrap();
   }
@@ -123,14 +127,16 @@ export class KioskController {
   }
 
   @Get('sync/pull')
+  @PublicWebApp()
   pull(@CurrentDevice() device: DevicePrincipal, @Query(new ZodPipe(SyncPullQuery)) q: { since: number; subSince: number }) {
-    return this.sync.pull(device.id, q.since, q.subSince);
+    return device.publicWebApp ? this.sync.pullCatalog(q.since, q.subSince) : this.sync.pull(device.id, q.since, q.subSince);
   }
 
   @Post('devices/heartbeat')
   @HttpCode(200)
+  @PublicWebApp()
   heartbeat(@CurrentDevice() device: DevicePrincipal, @Body(new ZodPipe(HeartbeatRequest)) body: HeartbeatRequest) {
-    return this.devices.heartbeat(device.id, body);
+    return device.publicWebApp ? this.devices.publicHeartbeat(device.id, body) : this.devices.heartbeat(device.id, body);
   }
 
   @Post('devices/commands/:id/result')

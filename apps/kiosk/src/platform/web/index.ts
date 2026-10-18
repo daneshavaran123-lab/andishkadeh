@@ -10,7 +10,7 @@ import type { PrinterAdapter } from '../../core/hardware/types';
 import { KioskCore } from '../../core/kiosk-core';
 import type { IpcChannel, IpcEvent } from '../../core/types';
 import { openSqlJsDatabase } from '../sqljs';
-import { WEB_DATA_NAME } from './config';
+import { PUBLIC_DATA_NAME, WEB_DATA_NAME } from './config';
 import { Idb } from './idb';
 import { IdbMediaStore } from './media';
 import { AndroidPrintAdapter, BrowserPrintAdapter } from './printer';
@@ -24,6 +24,12 @@ export interface WebHostOptions {
   /** Receipt font (bundled woff2). */
   fontUrl?: string;
   platform: 'web' | 'android';
+  /**
+   * Public web app (browsing only, anyone's browser): its own local database, no one-tab lock (it
+   * keeps no sales or queue that two tabs could race on), no screen wake lock and no
+   * persistent-storage request.
+   */
+  publicWebApp?: boolean;
 }
 
 export interface WebHost {
@@ -67,6 +73,7 @@ function keepScreenOn() {
 }
 
 export async function startWebHost(cfg: KioskConfig, opts: WebHostOptions): Promise<WebHost> {
+  if (opts.publicWebApp) return openHost(cfg, opts);
   const release = await singleInstanceLock();
   if (!release) throw new KioskAlreadyOpenError();
   try {
@@ -80,9 +87,9 @@ export async function startWebHost(cfg: KioskConfig, opts: WebHostOptions): Prom
 
 async function openHost(cfg: KioskConfig, opts: WebHostOptions): Promise<WebHost> {
   // Ask the browser not to evict the local database under storage pressure.
-  await navigator.storage?.persist?.().catch(() => false);
+  if (!opts.publicWebApp) await navigator.storage?.persist?.().catch(() => false);
 
-  const idb = await Idb.open(WEB_DATA_NAME);
+  const idb = await Idb.open(opts.publicWebApp ? PUBLIC_DATA_NAME : WEB_DATA_NAME);
   const SQL = await initSqlJs({ locateFile: () => opts.wasmUrl });
   const db = await openSqlJsDatabase(SQL, {
     load: async () => (await idb.get<Uint8Array>('sqlite', 'main')) ?? null,
@@ -108,7 +115,7 @@ async function openHost(cfg: KioskConfig, opts: WebHostOptions): Promise<WebHost
   const flush = () => void core.flush().catch(() => undefined);
   document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
   window.addEventListener('pagehide', flush);
-  keepScreenOn();
+  if (!opts.publicWebApp) keepScreenOn();
 
   return {
     platform: opts.platform,

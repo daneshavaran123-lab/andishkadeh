@@ -121,12 +121,15 @@ function KeyOnce({ apiKey, deviceId, onClose }: { apiKey: string; deviceId: stri
       <p className="muted" style={{ margin: 0, lineHeight: 1.9 }}>
         در صفحه «راه‌اندازی کیوسک» برنامه ویندوز (اجرای اول) همین آدرس سرور، شناسه و کلید را وارد کنید و چاپگر رسید را انتخاب کنید.
       </p>
-      <h3 style={{ fontSize: 15, margin: '18px 0 6px' }}>وب‌اپ روی همین مرورگر</h3>
+      <h3 style={{ fontSize: 15, margin: '18px 0 6px' }}>کیوسک روی همین مرورگر</h3>
+      <p className="muted" style={{ margin: '0 0 8px', lineHeight: 1.9 }}>
+        نشانی اصلی سایت برای همه وب‌اپ عمومی است (فقط مشاهده). پس از فعال‌سازی، همان نشانی در این مرورگر کیوسک کامل با فروش را باز می‌کند.
+      </p>
       {activated ? (
         <Alert tone="success">
           این مرورگر به‌عنوان کیوسک {deviceId} فعال شد.{' '}
           <a href="/" data-testid="open-web-app">
-            باز کردن وب‌اپ
+            باز کردن کیوسک
           </a>
         </Alert>
       ) : (
@@ -210,6 +213,8 @@ export function Devices({ embedded = false }: { embedded?: boolean }) {
 
   if (q.isLoading) return <Loading />;
   if (q.error || !q.data) return <ErrorBox error={q.error} />;
+  const web = q.data.find((d) => d.publicWebApp);
+  const kiosks = q.data.filter((d) => !d.publicWebApp);
   return (
     <>
       <PageHead
@@ -227,9 +232,45 @@ export function Devices({ embedded = false }: { embedded?: boolean }) {
           </>
         }
       />
-      {q.data.length === 0 && <Empty icon="monitor">کیوسکی ثبت نشده است</Empty>}
+      {kiosks.length === 0 && <Empty icon="monitor">کیوسکی ثبت نشده است</Empty>}
       <div className="grid grid-2">
-        {q.data.map((d) => (
+        {web && (
+          <Card
+            title={
+              <>
+                {web.name} <Code>{web.id}</Code>
+              </>
+            }
+            sub={`آخرین بازدید: ${relativeAge(web.lastSeenAt)} · نسخه ${web.appVersion ?? '—'}`}
+            actions={
+              !web.active ? <Badge>غیرفعال</Badge> : web.online ? <Badge tone="success">در حال استفاده</Badge> : <Badge>بدون بازدیدکننده</Badge>
+            }
+          >
+            <div data-testid="public-web-app" style={{ lineHeight: 1.9 }}>
+              نشانی اصلی سایت، بدون فعال‌سازی و برای همه. مشتری صفحه شروع، خدمات، تعرفه‌ها و پلن‌های اشتراک را می‌بیند؛ خرید، پرداخت و ورود اعضا فقط در
+              کیوسک‌هاست. کلید و فرمان ندارد. «در حال استفاده» یعنی در دو دقیقه گذشته کسی آن را باز کرده است.
+            </div>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              <a className="btn btn-sm" href="/" target="_blank" rel="noreferrer">
+                <Icon name="monitor" />
+                باز کردن وب‌اپ
+              </a>
+              <AdminOnly>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={action(async () => {
+                    const name = window.prompt(`نام تازه برای ${web.id}`, web.name)?.trim();
+                    if (name && name !== web.name) await act(() => api.patch(`/admin/devices/${web.id}`, { name }), 'نام تغییر کرد');
+                  })}
+                >
+                  <Icon name="edit" />
+                  تغییر نام
+                </button>
+              </AdminOnly>
+            </div>
+          </Card>
+        )}
+        {kiosks.map((d) => (
           <Card
             key={d.id}
             title={

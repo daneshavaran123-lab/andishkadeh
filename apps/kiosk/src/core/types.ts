@@ -26,6 +26,8 @@ export interface KioskStatus {
   salesAvailable: boolean;
   subscriptionSalesAvailable: boolean;
   hardware: { pos: HardwareStatus; printer: HardwareStatus; scanner: HardwareStatus };
+  /** Public web app: browsing only (KioskConfig.browseOnly). */
+  browseOnly: boolean;
   /** true when any adapter is simulated — the UI must show a test-mode banner. */
   mockHardware: boolean;
   outbox: { pending: number; failed: number };

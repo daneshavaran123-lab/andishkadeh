@@ -1,6 +1,6 @@
 import { OrderKind, RenewalPolicy, formatJalaliLong, formatNumberFa, formatToman, toPersianDigits } from '@andishkadeh/shared';
 import { Icon } from '../components/Icon';
-import { Notice, Price, QrCode, Screen } from '../components/ui';
+import { BuyAtKioskNotice, Notice, Price, QrCode, Screen } from '../components/ui';
 import { planPrice, useApp, useSession } from '../store';
 import { Missing } from './Catalog';
 
@@ -17,8 +17,13 @@ export function SubscriptionIntro() {
       subtitle={intro?.subtitle}
       theme="red"
       footer={
-        <button className="btn btn-accent btn-block" disabled={!status?.subscriptionSalesAvailable} onClick={() => go('plans')} data-testid="choose-plan">
-          انتخاب پلن اشتراک
+        <button
+          className="btn btn-accent btn-block"
+          disabled={!status?.subscriptionSalesAvailable && !(status?.browseOnly && bootstrap?.plans.length)}
+          onClick={() => go('plans')}
+          data-testid="choose-plan"
+        >
+          {status?.browseOnly ? 'مشاهده پلن‌های اشتراک' : 'انتخاب پلن اشتراک'}
           <Icon name="chevron" />
         </button>
       }
@@ -44,7 +49,11 @@ export function SubscriptionIntro() {
           </span>
         ))}
       </div>
-      {!status?.subscriptionSalesAvailable && (
+      {status?.browseOnly ? (
+        <div style={{ marginTop: 32 }}>
+          <BuyAtKioskNotice />
+        </div>
+      ) : !status?.subscriptionSalesAvailable && (
         <div style={{ marginTop: 32 }}>
           <Notice tone="amber" icon="wifiOff">
             خرید اشتراک در حال حاضر امکان‌پذیر نیست؛ لطفاً کمی بعد دوباره تلاش کنید یا به پذیرش مراجعه کنید.
@@ -104,6 +113,7 @@ export function Plans() {
 /** K12D — plan detail and final price. */
 export function PlanDetail({ planId }: { planId?: string }) {
   const bootstrap = useApp((s) => s.bootstrap);
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const go = useSession((s) => s.go);
   const plan = bootstrap?.plans.find((p) => p.id === planId);
   if (!bootstrap || !plan) return <Missing />;
@@ -115,10 +125,14 @@ export function PlanDetail({ planId }: { planId?: string }) {
       subtitle="جزئیات پلن"
       theme="red"
       footer={
-        <button className="btn btn-accent btn-block" onClick={() => go('mobile')} data-testid="plan-continue">
-          ادامه — {formatToman(p.finalPrice)}
-          <Icon name="chevron" />
-        </button>
+        browseOnly ? (
+          <BuyAtKioskNotice />
+        ) : (
+          <button className="btn btn-accent btn-block" onClick={() => go('mobile')} data-testid="plan-continue">
+            ادامه — {formatToman(p.finalPrice)}
+            <Icon name="chevron" />
+          </button>
+        )
       }
     >
       <div className="panel">

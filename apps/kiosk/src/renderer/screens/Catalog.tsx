@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { formatNumberFa, toPersianDigits, type CategoryDto } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
-import { CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
+import { BuyAtKioskNotice, CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
 import { indexServices, mediaUrl, mediaWidth, servicePrice, useApp, useSession, type ServiceRef } from '../store';
 
 function categoryById(id?: string): CategoryDto | undefined {
@@ -134,7 +134,7 @@ export function Monitoring({ categoryId }: { categoryId?: string }) {
       footer={
         <button
           className="btn btn-theme btn-block"
-          disabled={!status?.subscriptionSalesAvailable}
+          disabled={!status?.subscriptionSalesAvailable && !status?.browseOnly}
           onClick={() => {
             set({ flow: 'SUBSCRIPTION' as never });
             go('subscriptionIntro');
@@ -166,6 +166,7 @@ export function Monitoring({ categoryId }: { categoryId?: string }) {
 
 function ServiceRow({ refx, index }: { refx: ServiceRef; index: number }) {
   const bootstrap = useApp((s) => s.bootstrap)!;
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const { cart, addToCart, go, showToast } = useSession();
   const inCart = cart.some((c) => c.serviceId === refx.service.id);
   const p = servicePrice(bootstrap, refx);
@@ -187,18 +188,20 @@ function ServiceRow({ refx, index }: { refx: ServiceRef; index: number }) {
         </span>
         <Price final={p.finalPrice} was={p.unitPrice} unit={refx.service.unit} />
       </button>
-      <button
-        className={`add-btn${inCart ? ' added' : ''}`}
-        aria-label={inCart ? 'در سبد است — مشاهده سبد' : 'افزودن به سبد'}
-        data-testid={`add-${refx.service.code}`}
-        onClick={() => {
-          if (inCart) return go('cart');
-          addToCart(refx.service.id);
-          showToast('به سبد خرید اضافه شد');
-        }}
-      >
-        <Icon name={inCart ? 'check' : 'plus'} />
-      </button>
+      {!browseOnly && (
+        <button
+          className={`add-btn${inCart ? ' added' : ''}`}
+          aria-label={inCart ? 'در سبد است — مشاهده سبد' : 'افزودن به سبد'}
+          data-testid={`add-${refx.service.code}`}
+          onClick={() => {
+            if (inCart) return go('cart');
+            addToCart(refx.service.id);
+            showToast('به سبد خرید اضافه شد');
+          }}
+        >
+          <Icon name={inCart ? 'check' : 'plus'} />
+        </button>
+      )}
     </div>
   );
 }
@@ -265,6 +268,7 @@ export function Services({ categoryId, subId }: { categoryId?: string; subId?: s
 /** K06 — service detail. Re-adding an item already in the cart is prevented. */
 export function ServiceDetail({ serviceId }: { serviceId?: string }) {
   const bootstrap = useApp((s) => s.bootstrap);
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const { cart, addToCart, setQty, go, showToast } = useSession();
   const ref = serviceId ? indexServices(bootstrap).get(serviceId) : undefined;
   if (!ref || !bootstrap) return <Missing />;
@@ -283,7 +287,9 @@ export function ServiceDetail({ serviceId }: { serviceId?: string }) {
       subtitle={`${ref.category.title} / ${ref.sub.title}`}
       theme={ref.category.theme}
       footer={
-        line ? (
+        browseOnly ? (
+          <BuyAtKioskNotice />
+        ) : line ? (
           <div className="footer-row">
             <Stepper value={line.quantity} max={max} onChange={(v) => setQty(ref.service.id, v)} />
             <button className="btn btn-primary" onClick={() => go('cart')} data-testid="go-cart">

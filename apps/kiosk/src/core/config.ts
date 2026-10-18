@@ -42,6 +42,11 @@ export const KioskConfigSchema = z.object({
   requestTimeoutMs: z.number().int().min(1000).default(8000),
   /** Electron only: fullscreen kiosk window without frame, menu or devtools. */
   kioskMode: z.boolean().default(true),
+  /**
+   * Public web app at `/` (WEB_APP_DEVICE_ID, no key): the customer sees the start screen, services,
+   * prices and plans; buying and member QR checks happen at the center's kiosks.
+   */
+  browseOnly: z.boolean().default(false),
   /** Exposes dev controls (scenario switching) — must stay false in production builds. */
   devControls: z.boolean().default(false),
   /** Existing admin panel opened from the gear on the welcome screen; default `${serverUrl}/admin`. */
