@@ -66,11 +66,14 @@ liara login
 liara deploy --app andishkadeh
 ```
 
+اگر برنامه متعلق به یک تیم است، `--team-id <شناسه تیم>` را هم اضافه کنید.
+
 **ب) از GitHub (بدون نصب چیزی):**
 1. در کنسول لیارا ← «API» یک توکن بسازید.
 2. در مخزن GitHub ← Settings ← Secrets and variables ← Actions:
    - secret `LIARA_API_TOKEN` = همان توکن
-   - variable `LIARA_APP` = شناسه برنامه
+   - variable `LIARA_APP` = شناسه برنامه (حروف کوچک، همان‌که در آدرس کنسول آمده؛ مثلاً `andishkadeh`)
+   - variable `LIARA_TEAM_ID` = شناسه تیم، فقط اگر برنامه متعلق به یک تیم لیاراست
 3. Actions ← «Apps» ← «Run workflow» و تیک «Deploy the server and admin panel to Liara». استقرار فقط پس از سبز شدن تست‌ها و آزمون image انجام می‌شود.
 
 ساخت روی سرورهای لیارا در موقعیت آلمان انجام می‌شود (`liara.json`)، چون دانلود بسته‌ها در موقعیت ایران محدود است.

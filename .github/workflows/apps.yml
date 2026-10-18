@@ -21,7 +21,7 @@ on:
         type: boolean
         default: false
       deploy:
-        description: 'Deploy the server and admin panel to Liara (secret LIARA_API_TOKEN, variable LIARA_APP)'
+        description: 'Deploy the server and admin panel to Liara (secret LIARA_API_TOKEN, variables LIARA_APP and, for a team, LIARA_TEAM_ID)'
         type: boolean
         default: false
 
@@ -237,6 +237,7 @@ jobs:
     env:
       LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
       LIARA_APP: ${{ vars.LIARA_APP }}
+      LIARA_TEAM_ID: ${{ vars.LIARA_TEAM_ID }}
     steps:
       - name: Settings present
         run: |
@@ -249,8 +250,9 @@ jobs:
         with:
           node-version: 22
       - run: npm i -g @liara/cli@9
-      # liara.json supplies platform, port, build location and the media disk.
-      - run: liara deploy --app "$LIARA_APP" --api-token "$LIARA_API_TOKEN" --no-app-logs
+      # liara.json supplies platform, port, build location and the media disk. An app owned by a Liara
+      # team is only found with the team id (variable LIARA_TEAM_ID).
+      - run: liara deploy --app "$LIARA_APP" --api-token "$LIARA_API_TOKEN" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
 
   release:
     name: Draft release
