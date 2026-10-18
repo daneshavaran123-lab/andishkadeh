@@ -216,6 +216,12 @@ export function mediaWidth(mediaId: string | null | undefined): number | null {
   return bootstrap?.media.find((x) => x.id === mediaId)?.width ?? null;
 }
 
+/** Width / height of a cached image (null when unknown), so a row can take the photo's proportions. */
+export function mediaRatio(mediaId: string | null | undefined): number | null {
+  const m = useApp.getState().bootstrap?.media.find((x) => x.id === mediaId);
+  return m?.width && m.height ? m.width / m.height : null;
+}
+
 /** Web/Android target: cached images are object URLs held by the in-page core. */
 let mediaResolver: ((checksum: string) => string | null) | null = null;
 export function setMediaResolver(fn: (checksum: string) => string | null) {

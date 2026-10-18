@@ -118,12 +118,17 @@ async function main() {
           sortOrder: ++subOrder,
           active: true,
         },
+        include: { media: true },
       });
-      // Image only where none is set, so images chosen in the admin panel are kept.
+      // Image where none is set or where it is still an earlier default (a newer default replaces it);
+      // an image chosen in the admin panel is kept.
       const subImage = SUBCATEGORY_IMAGES[sc.code];
-      if (subImage && !sub.mediaId) {
-        await prisma.subcategory.update({ where: { id: sub.id }, data: { mediaId: await seedMedia(subImage) } });
-        catalogChanged = true;
+      if (subImage && (!sub.media || sub.media.originalName === subImage)) {
+        const mediaId = await seedMedia(subImage);
+        if (mediaId !== sub.mediaId) {
+          await prisma.subcategory.update({ where: { id: sub.id }, data: { mediaId } });
+          catalogChanged = true;
+        }
       }
       let svcOrder = 0;
       for (const sv of sc.services) {

@@ -632,11 +632,33 @@ button:focus-visible,
   flex: none;
 }
 
-/* Subcategory rows with an image: the image on the left fading into the card, the chevron on it. */
+/* Subcategory rows with an image: the photo on the left, bright up to a slanted line in the domain's
+   colour where it fades into the card, the chevron on it. The row sets --art-w and its height from the
+   photo's proportions (Catalog.tsx). The slant (30°) is the same for the fade and the line: the line's
+   foot is pinned to the photo box's bottom right corner, so they meet whatever the row's height. */
 .list-row.has-art {
   min-height: 196px;
-  padding-inline-end: 330px;
+  padding-inline-end: calc(var(--art-w, 380px) - 40px);
   border-color: color-mix(in srgb, var(--theme) 60%, transparent);
+}
+
+.list-row.has-art::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: calc(var(--art-w, 380px) - 6px);
+  width: 2px;
+  transform: skewX(30deg);
+  transform-origin: bottom left;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--theme) 85%, transparent) 15%,
+    color-mix(in srgb, var(--theme) 85%, transparent) 85%,
+    transparent
+  );
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--theme) 55%, transparent);
+  pointer-events: none;
 }
 
 .list-row.has-art .num,
@@ -649,11 +671,13 @@ button:focus-visible,
   position: absolute;
   inset-block: 0;
   left: 0;
-  width: 380px;
+  width: var(--art-w, 380px);
   background-size: cover;
-  background-position: center;
-  -webkit-mask-image: linear-gradient(to right, #000 52%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 52%, transparent 100%);
+  background-position: left center;
+  /* measured from the bottom left corner along 60°: the fade ends on the line (0.866 = sin 60°) */
+  --fade-end: calc(var(--art-w, 380px) * 0.866 - 5px);
+  -webkit-mask-image: linear-gradient(60deg, #000 calc(var(--fade-end) - 70px), transparent var(--fade-end));
+  mask-image: linear-gradient(60deg, #000 calc(var(--fade-end) - 70px), transparent var(--fade-end));
 }
 
 .row-art .chevron-circle {

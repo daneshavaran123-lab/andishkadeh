@@ -1,47 +1,21 @@
 /**
- * Touch feedback on every tap: a short click sound (synthesised with Web Audio, no file to load, so
- * it also works offline) and a ring spreading from the finger in the colour of the card or button.
- * A tap on something unavailable (disabled) gives a lower, softer sound and no ring. The sound
- * follows the panel setting `tapSound`; the ring is left out when the system asks for reduced motion.
+ * Touch feedback on every tap: a short click sound like the iPhone keyboard click (tap-sound.ts) and a
+ * ring spreading from the finger in the colour of the card or button. A tap on something unavailable
+ * (disabled) gives a lower, softer sound and no ring. The sound follows the panel setting `tapSound`;
+ * the ring is left out when the system asks for reduced motion.
  */
 import { useEffect, type RefObject } from 'react';
 import { useApp } from './store';
+import { TapSound } from './tap-sound';
 
 const TAPPABLE = 'button, a[href], [role="button"], label, select';
 
-let audio: AudioContext | null = null;
+const sound = new TapSound(() => {
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  return Ctx ? new Ctx() : null;
+});
 
-function play(kind: 'tap' | 'denied') {
-  try {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    audio ??= new Ctx();
-    if (audio.state === 'suspended') void audio.resume().catch(() => undefined);
-    const t = audio.currentTime;
-    const osc = audio.createOscillator();
-    const gain = audio.createGain();
-    if (kind === 'tap') {
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1500, t);
-      osc.frequency.exponentialRampToValueAtTime(720, t + 0.05);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.14, t + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
-    } else {
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(240, t);
-      osc.frequency.exponentialRampToValueAtTime(170, t + 0.09);
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(0.1, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
-    }
-    osc.connect(gain).connect(audio.destination);
-    osc.start(t);
-    osc.stop(t + 0.13);
-  } catch {
-    // no audio output: taps stay silent
-  }
-}
+const soundOn = () => useApp.getState().bootstrap?.settings.tapSound ?? true;
 
 function ring(stage: HTMLElement, scale: number, target: Element, e: PointerEvent) {
   const box = stage.getBoundingClientRect();
@@ -64,10 +38,19 @@ export function useTapFeedback(stage: RefObject<HTMLElement | null>, scale: numb
       const target = (e.target as Element | null)?.closest(TAPPABLE);
       if (!target || !stage.current.contains(target)) return;
       const denied = target.matches(':disabled') || target.getAttribute('aria-disabled') === 'true';
-      if (useApp.getState().bootstrap?.settings.tapSound ?? true) play(denied ? 'denied' : 'tap');
+      if (soundOn()) sound.tap(denied ? 'denied' : 'tap', e.pointerType === 'mouse');
       if (!denied && !reduced?.matches) ring(stage.current, scale, target, e);
     };
+    // the gestures that let a page start sound (the finger lifting, a key, a click)
+    const onGesture = () => {
+      if (soundOn()) sound.unlock();
+    };
+    const gestures = ['pointerup', 'touchend', 'keydown', 'click'] as const;
     window.addEventListener('pointerdown', onDown, true);
-    return () => window.removeEventListener('pointerdown', onDown, true);
+    for (const g of gestures) window.addEventListener(g, onGesture, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', onDown, true);
+      for (const g of gestures) window.removeEventListener(g, onGesture, { capture: true });
+    };
   }, [stage, scale]);
 }

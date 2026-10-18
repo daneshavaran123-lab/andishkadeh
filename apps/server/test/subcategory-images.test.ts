@@ -1,10 +1,16 @@
 /**
- * Subcategory images (seeded per subgroup, replaceable in the panel) and the tap sound setting.
+ * Subcategory images (seeded per subgroup, upgraded with newer defaults, replaceable in the panel) and
+ * the tap sound setting.
  */
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { INestApplication } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { AdminCategory, Bootstrap } from '@andishkadeh/shared';
-import { admin, bootApp, kiosk, login, useTestEnv } from './helpers';
+import { runSeed } from './global-setup';
+import { admin, bootApp, kiosk, login, suffix, useTestEnv } from './helpers';
 
 let app: INestApplication;
 let token: string;
@@ -44,6 +50,34 @@ describe('subcategory images', () => {
       await a.patch(`/admin/subcategories/${sub.id}`, { ...body, mediaId: sub.mediaId });
     }
   });
+
+  it('a newer default replaces the earlier default on the next deploy, an image chosen in the panel stays', async () => {
+    const prisma = new PrismaClient();
+    const fake = (originalName: string) =>
+      prisma.media.create({ data: { storageKey: `old-${suffix()}.jpg`, originalName, mime: 'image/jpeg', size: 1, checksum: `old-${suffix()}${suffix()}` } });
+    const [oldDefault, chosen] = [await fake('subcategories/N-4.jpg'), await fake('my-photo.jpg')];
+    const revision = async () => (await prisma.counter.findUniqueOrThrow({ where: { key: 'catalogRevision' } })).value;
+    const before = await prisma.subcategory.findMany({ where: { code: { in: ['N-4', 'N-5'] } } });
+    try {
+      await prisma.subcategory.update({ where: { code: 'N-4' }, data: { mediaId: oldDefault.id } });
+      await prisma.subcategory.update({ where: { code: 'N-5' }, data: { mediaId: chosen.id } });
+      const rev = await revision();
+      runSeed();
+      const after = await prisma.subcategory.findMany({ where: { code: { in: ['N-4', 'N-5'] } }, include: { media: true } });
+      const current = createHash('sha256').update(readFileSync(resolve(__dirname, '../../../assets/seed-media/subcategories/N-4.jpg'))).digest('hex');
+      expect(after.find((s) => s.code === 'N-4')!.media!.checksum).toBe(current);
+      expect(after.find((s) => s.code === 'N-5')!.mediaId).toBe(chosen.id);
+      expect(await revision()).toBeGreaterThan(rev);
+      // nothing left to upgrade: a second run changes nothing
+      const settled = await revision();
+      runSeed();
+      expect(await revision()).toBe(settled);
+    } finally {
+      for (const s of before) await prisma.subcategory.update({ where: { id: s.id }, data: { mediaId: s.mediaId } });
+      await prisma.media.deleteMany({ where: { id: { in: [oldDefault.id, chosen.id] } } });
+      await prisma.$disconnect();
+    }
+  }, 60_000);
 });
 
 describe('tap sound setting', () => {

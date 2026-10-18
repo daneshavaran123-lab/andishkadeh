@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { formatNumberFa, toPersianDigits, type CategoryDto } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
 import { BuyAtKioskNotice, CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
-import { indexServices, mediaUrl, mediaWidth, servicePrice, useApp, useSession, type ServiceRef } from '../store';
+import { indexServices, mediaRatio, mediaUrl, mediaWidth, servicePrice, useApp, useSession, type ServiceRef } from '../store';
 
 function categoryById(id?: string): CategoryDto | undefined {
   return useApp.getState().bootstrap?.categories.find((c) => c.id === id);
@@ -74,6 +74,18 @@ export function Categories() {
   );
 }
 
+/**
+ * Photo box of a subgroup row from the photo's proportions (width / height), like the visual design:
+ * a wide photo makes a compact row, a taller one a taller row with a narrower box, so the photo is
+ * shown whole whatever its shape. Unknown proportions get those of the drawn default images.
+ */
+function rowArt(ratio: number | null) {
+  const r = ratio ?? 1.8;
+  const height = Math.round(Math.min(200, Math.max(136, 580 / r)));
+  const width = Math.round(Math.min(580, Math.max(380, height * r)));
+  return { minHeight: height, ['--art-w' as string]: `${width}px` };
+}
+
 /** K04 / K07 / K08 — subgroups of a domain. */
 export function Subcategories({ categoryId }: { categoryId?: string }) {
   const c = categoryById(categoryId);
@@ -96,7 +108,7 @@ export function Subcategories({ categoryId }: { categoryId?: string }) {
             <button
               key={s.id}
               className={`card list-row enter${art ? ' has-art' : ''}`}
-              style={{ ['--i' as string]: i }}
+              style={{ ['--i' as string]: i, ...(art && rowArt(mediaRatio(s.mediaId))) }}
               onClick={() => go('services', { categoryId: c.id, subId: s.id })}
               data-testid={`sub-${s.code}`}
             >

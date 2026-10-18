@@ -131,7 +131,7 @@ server {
 
 | آدرس | انتظار |
 | --- | --- |
-| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.7.0",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
+| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.7.1",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
 | `/api/docs` | مستند تعاملی API (OpenAPI) |
 | `/` | وب‌اپ عمومی مشتری با صفحه شروع، بدون فعال‌سازی (اگر `WEB_APP_DIST_DIR` تنظیم شده باشد) |
 | `/admin/` | صفحه ورود پنل مدیریت (اگر `ADMIN_DIST_DIR` تنظیم شده باشد) |
@@ -152,7 +152,7 @@ server {
 نسخه‌ها با برچسب `v<نسخه>` منتشر می‌شوند (ر.ک. [انتشار نسخه](release.md)). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:
 
 ```bash
-git fetch --tags && git checkout v1.7.0
+git fetch --tags && git checkout v1.7.1
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
