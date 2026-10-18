@@ -187,20 +187,55 @@ export function Monitoring({ categoryId }: { categoryId?: string }) {
   );
 }
 
-function ServiceRow({ refx, index }: { refx: ServiceRef; index: number }) {
+/** The image shown for a service: its own, else its subgroup's, else its domain's. */
+function serviceImage(r: ServiceRef): string | null {
+  return [r.service.mediaId, r.sub.mediaId, r.category.mediaId].find((id) => mediaUrl(id)) ?? null;
+}
+
+/** Width of the photo at the start of a service row (stage px). */
+const PHOTO_W = 340;
+
+/**
+ * Like the visual design, a list of services shows a large photo with a slanted edge at the start of
+ * each row when every row has a large enough image (its own or its subgroup's); a list with small
+ * thumbnails keeps square ones. Returns the rows' height, from the photos' proportions so they show
+ * whole, or null for square thumbnails.
+ */
+function photoRowHeight(list: ServiceRef[]): number | null {
+  const ids = list.map(serviceImage);
+  if (!ids.length || ids.some((id) => (mediaWidth(id) ?? 0) < 400)) return null;
+  const ratios = ids.map((id) => mediaRatio(id) ?? 1.8).sort((a, b) => a - b);
+  return Math.round(Math.min(270, Math.max(180, PHOTO_W / ratios[Math.floor(ratios.length / 2)])));
+}
+
+function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: number; photoHeight: number | null }) {
   const bootstrap = useApp((s) => s.bootstrap)!;
   const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const { cart, addToCart, go, showToast } = useSession();
   const inCart = cart.some((c) => c.serviceId === refx.service.id);
   const p = servicePrice(bootstrap, refx);
-  const thumb = mediaUrl(refx.service.mediaId) ?? mediaUrl(refx.sub.mediaId) ?? mediaUrl(refx.category.mediaId);
+  const imageId = serviceImage(refx);
+  const thumb = mediaUrl(imageId);
   return (
-    <div className={`card svc-card enter${inCart ? ' in-cart' : ''}`} data-theme={refx.category.theme} style={{ ['--i' as string]: Math.min(index, 8) }} data-testid={`svc-${refx.service.code}`}>
+    <div
+      className={`card svc-card enter${photoHeight ? ' has-photo' : ''}${inCart ? ' in-cart' : ''}`}
+      data-theme={refx.category.theme}
+      style={{ ['--i' as string]: Math.min(index, 8), ...(photoHeight && { minHeight: photoHeight, ['--photo-w' as string]: `${PHOTO_W}px` }) }}
+      data-testid={`svc-${refx.service.code}`}
+    >
+      {/* outside the button, which shrinks while pressed; taps go through it to the button below */}
+      {photoHeight && (
+        <span
+          className="svc-photo"
+          style={{ backgroundImage: `url("${thumb}")`, backgroundPosition: imageId === refx.service.mediaId ? 'right center' : 'center' }}
+        />
+      )}
       <button
+        className="svc-main"
         style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1, minWidth: 0, textAlign: 'start' }}
         onClick={() => go('serviceDetail', { serviceId: refx.service.id })}
       >
-        <span className="thumb" style={{ backgroundImage: thumb ? `url("${thumb}")` : undefined }} />
+        {!photoHeight && <span className="thumb" style={{ backgroundImage: thumb ? `url("${thumb}")` : undefined }} />}
         <span className="info">
           <span className="meta">
             <span className="code-chip">{refx.service.code}</span>
@@ -243,6 +278,7 @@ export function Services({ categoryId, subId }: { categoryId?: string; subId?: s
   const list = q
     ? all.filter((r) => r.service.title.toLowerCase().includes(q) || r.service.code.toLowerCase().includes(q))
     : all.filter((r) => r.sub.id === sub.id);
+  const photoHeight = photoRowHeight(list);
 
   return (
     <Screen title={sub.title} subtitle={c.title} theme={c.theme} footer={<CartBar />}>
@@ -265,7 +301,7 @@ export function Services({ categoryId, subId }: { categoryId?: string; subId?: s
       {q && <h2 className="section-title">نتایج جست‌وجو در همه خدمات ({toPersianDigits(list.length)})</h2>}
       <div className="stack">
         {list.map((r, i) => (
-          <ServiceRow key={r.service.id} refx={r} index={i} />
+          <ServiceRow key={r.service.id} refx={r} index={i} photoHeight={photoHeight} />
         ))}
       </div>
       {list.length === 0 && (

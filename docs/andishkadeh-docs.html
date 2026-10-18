@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.7.1</span> · ۲۶ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.8.0</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -741,7 +741,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.7.1",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.8.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -756,7 +756,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.7.1
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.8.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -1486,8 +1486,14 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.7.1</span></h2>
-  <p class="lede">۲۶ مهر ۱۴۰۵ — عکس‌های طرح برای زیرگروه‌ها و صدای کلیک شبیه آیفون.</p>
+  <h2>تغییرات نسخه <span class="tag">1.8.0</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — فهرست خدمات تغذیه مثل طرح تصویری.</p>
+  <ul>
+    <li><strong>عکس خدمات تغذیه:</strong> ۲۰ خدمت تغذیه عکس خودشان را از طرح دارند. هر ردیف عکس بزرگی در سمت راست با لبه مورب قرمز دارد و لمس عکس صفحه خدمت را باز می‌کند. فهرست‌هایی که تصویر کوچک دارند همان تصویر مربعی را نگه می‌دارند.</li>
+    <li><strong>seed:</strong> تصویر پیش‌فرض قبلی خدمت با تصویر تازه جایگزین می‌شود و تصویر انتخابی پنل می‌ماند.</li>
+  </ul>
+  <h3>نسخه 1.7.1</h3>
+  <p>۲۶ مهر ۱۴۰۵ — عکس‌های طرح برای زیرگروه‌ها و صدای کلیک شبیه آیفون.</p>
   <ul>
     <li><strong>عکس زیرگروه‌ها:</strong> ۲۲ زیرگروه سنجش، تغذیه و روانشناختی عکس طرح تصویری را دارند. عکس تا یک خط مورب به رنگ حوزه روشن می‌ماند و ارتفاع ردیف از نسبت عکس می‌آید. تصویر پیش‌فرض قبلی هنگام انتشار جایگزین می‌شود و تصویر انتخابی پنل می‌ماند.</li>
     <li><strong>صدای کلیک:</strong> تیکی کوتاه شبیه کیبورد آیفون. روی گوشی صدا با اولین برداشتن انگشت فعال می‌شود (مرورگرها پیش از آن اجازه نمی‌دهند)؛ پیش‌تر ممکن بود روی آیفون پخش نشود. در حالت بی‌صدای گوشی شنیده نمی‌شود.</li>

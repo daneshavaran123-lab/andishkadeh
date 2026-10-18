@@ -148,12 +148,16 @@ async function main() {
             active: sv.price !== null && c.salesEnabled,
             sortOrder: ++svcOrder,
           },
+          include: { media: true },
         });
-        // Thumbnail only where none is set, so images chosen in the admin panel are kept.
+        // As for subgroups: image where none is set or where it is still an earlier default.
         const image = SERVICE_IMAGES[sv.code];
-        if (image && !service.mediaId) {
-          await prisma.service.update({ where: { id: service.id }, data: { mediaId: await seedMedia(image) } });
-          catalogChanged = true;
+        if (image && (!service.media || service.media.originalName === image)) {
+          const mediaId = await seedMedia(image);
+          if (mediaId !== service.mediaId) {
+            await prisma.service.update({ where: { id: service.id }, data: { mediaId } });
+            catalogChanged = true;
+          }
         }
       }
     }

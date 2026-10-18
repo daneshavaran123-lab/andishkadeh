@@ -1,6 +1,6 @@
 /**
- * Subcategory images (seeded per subgroup, upgraded with newer defaults, replaceable in the panel) and
- * the tap sound setting.
+ * Subcategory and service images (seeded, upgraded with newer defaults, replaceable in the panel) and the
+ * tap sound setting.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -51,22 +51,40 @@ describe('subcategory images', () => {
     }
   });
 
+  it('the nutrition services have photos of their own from the design, all different and large', async () => {
+    const b = (await kiosk(app).get('/kiosk/bootstrap')).body as Bootstrap;
+    const nutrition = b.categories.find((c) => c.code === 'N')!;
+    const services = nutrition.subcategories.flatMap((s) => s.services).filter((s) => /^N-[12456]0\d$/.test(s.code));
+    expect(services).toHaveLength(20);
+    const ids = services.map((s) => s.mediaId);
+    expect(new Set(ids).size).toBe(20);
+    // wide enough for the photo rows and the service page (which uses an image of 600 px and up)
+    for (const id of ids) expect(b.media.find((m) => m.id === id)!.width).toBeGreaterThanOrEqual(600);
+  });
+
   it('a newer default replaces the earlier default on the next deploy, an image chosen in the panel stays', async () => {
     const prisma = new PrismaClient();
     const fake = (originalName: string) =>
       prisma.media.create({ data: { storageKey: `old-${suffix()}.jpg`, originalName, mime: 'image/jpeg', size: 1, checksum: `old-${suffix()}${suffix()}` } });
     const [oldDefault, chosen] = [await fake('subcategories/N-4.jpg'), await fake('my-photo.jpg')];
+    const [oldServiceDefault, chosenForService] = [await fake('services/N-101.jpg'), await fake('my-other-photo.jpg')];
     const revision = async () => (await prisma.counter.findUniqueOrThrow({ where: { key: 'catalogRevision' } })).value;
+    const checksum = (file: string) => createHash('sha256').update(readFileSync(resolve(__dirname, '../../../assets/seed-media', file))).digest('hex');
     const before = await prisma.subcategory.findMany({ where: { code: { in: ['N-4', 'N-5'] } } });
+    const servicesBefore = await prisma.service.findMany({ where: { code: { in: ['N-101', 'N-102'] } } });
     try {
       await prisma.subcategory.update({ where: { code: 'N-4' }, data: { mediaId: oldDefault.id } });
       await prisma.subcategory.update({ where: { code: 'N-5' }, data: { mediaId: chosen.id } });
+      await prisma.service.update({ where: { code: 'N-101' }, data: { mediaId: oldServiceDefault.id } });
+      await prisma.service.update({ where: { code: 'N-102' }, data: { mediaId: chosenForService.id } });
       const rev = await revision();
       runSeed();
       const after = await prisma.subcategory.findMany({ where: { code: { in: ['N-4', 'N-5'] } }, include: { media: true } });
-      const current = createHash('sha256').update(readFileSync(resolve(__dirname, '../../../assets/seed-media/subcategories/N-4.jpg'))).digest('hex');
-      expect(after.find((s) => s.code === 'N-4')!.media!.checksum).toBe(current);
+      expect(after.find((s) => s.code === 'N-4')!.media!.checksum).toBe(checksum('subcategories/N-4.jpg'));
       expect(after.find((s) => s.code === 'N-5')!.mediaId).toBe(chosen.id);
+      const services = await prisma.service.findMany({ where: { code: { in: ['N-101', 'N-102'] } }, include: { media: true } });
+      expect(services.find((s) => s.code === 'N-101')!.media!.checksum).toBe(checksum('services/N-101.jpg'));
+      expect(services.find((s) => s.code === 'N-102')!.mediaId).toBe(chosenForService.id);
       expect(await revision()).toBeGreaterThan(rev);
       // nothing left to upgrade: a second run changes nothing
       const settled = await revision();
@@ -74,7 +92,8 @@ describe('subcategory images', () => {
       expect(await revision()).toBe(settled);
     } finally {
       for (const s of before) await prisma.subcategory.update({ where: { id: s.id }, data: { mediaId: s.mediaId } });
-      await prisma.media.deleteMany({ where: { id: { in: [oldDefault.id, chosen.id] } } });
+      for (const s of servicesBefore) await prisma.service.update({ where: { id: s.id }, data: { mediaId: s.mediaId } });
+      await prisma.media.deleteMany({ where: { id: { in: [oldDefault.id, chosen.id, oldServiceDefault.id, chosenForService.id] } } });
       await prisma.$disconnect();
     }
   }, 60_000);

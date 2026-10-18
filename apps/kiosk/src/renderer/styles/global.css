@@ -746,6 +746,53 @@ button:focus-visible,
   background-color: var(--surface-2);
 }
 
+/* Service rows with a large photo (Catalog.tsx decides per list): the photo at the start of the row,
+   bright up to a slanted line in the domain's colour where it fades into the card, as on the subgroup
+   rows but mirrored and a little steeper (36°). The main button reaches under the photo, which lets
+   taps through, so the whole row opens the service. */
+.svc-card.has-photo {
+  padding: 0;
+  padding-inline-end: var(--s4);
+}
+
+.svc-card.has-photo .svc-main {
+  align-self: stretch;
+  padding-block: var(--s3);
+  padding-inline-start: calc(var(--photo-w) - 16px);
+}
+
+.svc-photo {
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  width: var(--photo-w);
+  background-size: cover;
+  pointer-events: none;
+  /* measured from the bottom right corner along -54°: the fade ends on the line (0.809 = cos 36°) */
+  --fade-end: calc(var(--photo-w) * 0.809 - 5px);
+  -webkit-mask-image: linear-gradient(-54deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
+  mask-image: linear-gradient(-54deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
+}
+
+.svc-card.has-photo::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  right: calc(var(--photo-w) - 7px);
+  width: 2px;
+  transform: skewX(-36deg);
+  transform-origin: bottom left;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--theme) 85%, transparent) 15%,
+    color-mix(in srgb, var(--theme) 85%, transparent) 85%,
+    transparent
+  );
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--theme) 55%, transparent);
+  pointer-events: none;
+}
+
 .svc-card .info {
   flex: 1;
   min-width: 0;

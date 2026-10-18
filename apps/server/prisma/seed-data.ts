@@ -418,8 +418,9 @@ export const HOME_CARD_IMAGES = {
 } as const;
 
 /**
- * Per-service thumbnails (assets/seed-media/services/<file>), cropped from the approved mockups.
- * Services without one show their domain image; every image can be replaced in the admin panel.
+ * Per-service images (assets/seed-media/services/<file>), cropped from the approved mockups: small
+ * thumbnails, and the large nutrition photos. Services without one show their subgroup's image; every
+ * image can be replaced in the admin panel.
  */
 export const SERVICE_IMAGES: Record<string, string> = {
   'P-101': 'services/P-101.jpg',
@@ -435,6 +436,12 @@ export const SERVICE_IMAGES: Record<string, string> = {
   'PS-201': 'services/PS-201.jpg',
   'PS-301': 'services/PS-301.jpg',
   'PS-401': 'services/PS-401.jpg',
+  // Nutrition: photos from the visual design (shown large, at the start of each service row)
+  ...Object.fromEntries(
+    ['N-101', 'N-102', 'N-103', 'N-104', 'N-105', 'N-201', 'N-202', 'N-203', 'N-204', 'N-205', 'N-401', 'N-402', 'N-403', 'N-501', 'N-502', 'N-503', 'N-504', 'N-601', 'N-602', 'N-603'].map(
+      (code) => [code, `services/${code}.jpg`],
+    ),
+  ),
 };
 
 /**

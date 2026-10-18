@@ -42,10 +42,25 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await expect(page.locator('.tap-ring')).toHaveCount(1);
   await page.mouse.up(); // the tap opens the subgroup
   await expect(page.getByTestId('svc-P-102')).toContainText('تومان');
+  await expect(page.getByTestId('svc-P-102')).not.toHaveClass(/has-photo/); // small thumbnails stay square
   await expect(page.getByTestId('add-P-102')).toHaveCount(0);
   await page.getByTestId('svc-P-102').locator('button').first().click();
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
   await expect(page.getByTestId('detail-add')).toHaveCount(0);
+
+  // Nutrition: a large photo of its own at the start of every service row; a tap on it opens the service.
+  await page.reload();
+  await page.getByTestId('start').click();
+  await page.getByTestId('home-services').click();
+  await page.getByTestId('category-N').click();
+  await page.getByTestId('sub-N-1').click();
+  await expect(page.getByTestId('svc-N-101')).toHaveClass(/has-photo/);
+  const photo = (code: string) => page.getByTestId(`svc-${code}`).locator('.svc-photo');
+  await expect(photo('N-101')).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
+  expect(await photo('N-101').getAttribute('style')).not.toBe(await photo('N-102').getAttribute('style'));
+  const box = (await photo('N-102').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.7, box.y + box.height / 2);
+  await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
 
   // Plans: looked at, not bought.
   await page.reload();
