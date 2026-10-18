@@ -2,6 +2,9 @@
 **/node_modules
 **/dist
 **/dist-*
+# Built before docker build / liara deploy (see the Dockerfile): the customer web app and the panel.
+!apps/kiosk/dist-web
+!apps/admin/dist
 **/.env
 **/.env.*
 !**/.env.example

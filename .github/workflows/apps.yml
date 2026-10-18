@@ -193,6 +193,17 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Build the web app and the panel (copied into the image, as in the Liara deploy)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:shared
+          pnpm --filter @andishkadeh/kiosk run build:web
+          pnpm --filter @andishkadeh/admin run build
       - name: Use CRLF line endings in the start script, as in a Windows working copy uploaded by `liara deploy`
         run: sed -i 's/$/\r/' apps/server/scripts/docker-start.sh && file apps/server/scripts/docker-start.sh
       - run: docker build -t andishkadeh-server .
@@ -270,9 +281,19 @@ jobs:
           echo "LIARA_TEAM_ID=$team" >> "$GITHUB_ENV"
           echo "app: $app; team id: ${team:+set}"
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
+      # Built here and uploaded with the source (.dockerignore lets them through): Liara's build then
+      # only installs and compiles the server, which keeps it inside the plan's build-time limit.
+      - name: Build the web app and the panel
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:shared
+          pnpm --filter @andishkadeh/kiosk run build:web
+          pnpm --filter @andishkadeh/admin run build
       - run: npm i -g @liara/cli@9
       # liara.json supplies platform, port, build location and the media disk. An app owned by a Liara
       # team is only found with the team id (variable LIARA_TEAM_ID).
