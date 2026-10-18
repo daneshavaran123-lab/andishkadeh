@@ -76,7 +76,7 @@ export class AdminCatalogController {
         media: true,
         subcategories: {
           orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
-          include: { _count: { select: { services: { where: { deletedAt: null } } } } },
+          include: { media: true, _count: { select: { services: { where: { deletedAt: null } } } } },
         },
       },
     });
@@ -100,6 +100,7 @@ export class AdminCatalogController {
         title: s.title,
         description: s.description,
         mediaId: s.mediaId,
+        mediaUrl: s.media ? mediaUrl(s.media) : null,
         sortOrder: s.sortOrder,
         active: s.active,
         serviceCount: s._count.services,

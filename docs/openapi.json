@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Andishkadeh Koshti Iran — Kiosk & Admin API",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "description": "API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد."
   },
   "servers": [
@@ -137,6 +137,10 @@
                         },
                         "timezone": {
                           "type": "string"
+                        },
+                        "tapSound": {
+                          "type": "boolean",
+                          "default": true
                         }
                       },
                       "required": [
@@ -4215,6 +4219,10 @@
                             },
                             "timezone": {
                               "type": "string"
+                            },
+                            "tapSound": {
+                              "type": "boolean",
+                              "default": true
                             }
                           },
                           "required": [
@@ -11739,6 +11747,10 @@
                     },
                     "timezone": {
                       "type": "string"
+                    },
+                    "tapSound": {
+                      "type": "boolean",
+                      "default": true
                     }
                   },
                   "required": [
@@ -12011,6 +12023,10 @@
                   },
                   "timezone": {
                     "type": "string"
+                  },
+                  "tapSound": {
+                    "type": "boolean",
+                    "default": true
                   }
                 }
               }
@@ -12105,6 +12121,10 @@
                     },
                     "timezone": {
                       "type": "string"
+                    },
+                    "tapSound": {
+                      "type": "boolean",
+                      "default": true
                     }
                   },
                   "required": [

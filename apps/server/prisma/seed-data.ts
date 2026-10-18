@@ -370,6 +370,7 @@ export const DEFAULT_SETTINGS = {
   offlineSubscriptionSales: false,
   offlineCatalogMaxAgeHours: 72,
   timezone: 'Asia/Tehran',
+  tapSound: true,
 };
 
 export const DEFAULT_CONTENT = {
@@ -435,3 +436,11 @@ export const SERVICE_IMAGES: Record<string, string> = {
   'PS-301': 'services/PS-301.jpg',
   'PS-401': 'services/PS-401.jpg',
 };
+
+/**
+ * Subcategory images (assets/seed-media/subcategories/<code>.jpg): one illustration per subgroup,
+ * matching its title, drawn by tools/seed-media/subcategory-art.mjs. Replaceable in the admin panel.
+ */
+export const SUBCATEGORY_IMAGES: Record<string, string> = Object.fromEntries(
+  CATEGORIES.flatMap((c) => c.subcategories.map((s) => [s.code, `subcategories/${s.code}.jpg`])),
+);

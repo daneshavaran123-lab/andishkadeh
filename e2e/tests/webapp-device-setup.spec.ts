@@ -29,10 +29,18 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
   await expect(page.getByTestId('home-member')).toHaveCount(0);
 
-  // Services with their prices; nothing goes into a cart.
+  // Services with their prices; nothing goes into a cart. Every subgroup has its own image; a tap
+  // answers with a ring at the finger.
   await page.getByTestId('home-services').click();
   await page.getByTestId('category-P').click();
-  await page.getByTestId('sub-P-1').click();
+  await expect(page.getByTestId('sub-P-1').locator('.row-art')).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
+  const art = (code: string) => page.getByTestId(`sub-${code}`).locator('.row-art').getAttribute('style');
+  expect(await art('P-1')).not.toBe(await art('P-2'));
+  const sub = (await page.getByTestId('sub-P-1').boundingBox())!;
+  await page.mouse.move(sub.x + sub.width / 2, sub.y + sub.height / 2);
+  await page.mouse.down();
+  await expect(page.locator('.tap-ring')).toHaveCount(1);
+  await page.mouse.up(); // the tap opens the subgroup
   await expect(page.getByTestId('svc-P-102')).toContainText('تومان');
   await expect(page.getByTestId('add-P-102')).toHaveCount(0);
   await page.getByTestId('svc-P-102').locator('button').first().click();

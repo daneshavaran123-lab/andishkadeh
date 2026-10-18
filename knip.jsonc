@@ -4,6 +4,12 @@
   // An export also used inside its own file is not dead code.
   "ignoreExportsUsedInFile": true,
   "workspaces": {
+    ".": {
+      // Run by hand to redraw the subcategory images (assets/seed-media/subcategories); it loads
+      // Playwright from the e2e package.
+      "entry": ["tools/seed-media/*.mjs"],
+      "ignoreDependencies": ["@playwright/test"]
+    },
     "apps/kiosk": {
       // Bundled by scripts/build-electron.mjs, which knip does not read; the fake terminal helper is started by its test.
       "entry": ["electron/main.ts", "electron/preload.ts", "electron/admin-preload.ts", "test/fixtures/*.mjs"],

@@ -51,3 +51,16 @@ test('services are grouped by domain; open groups are remembered; search opens m
   await expect(page.getByTestId('service-row-N-101')).toBeVisible();
   await expect(page.getByRole('button', { name: /مرکز سنجش/ })).toHaveCount(0);
 });
+
+test('domains and subgroups: every subgroup shows its image, which the edit dialog can change', async ({ page }) => {
+  await login(page);
+  await page.goto('/admin/catalog/categories');
+  const row = page.locator('tr', { hasText: 'مکمل‌یاری' });
+  await expect(row.locator('img.thumb')).toHaveAttribute('src', /\/api\/v1\/media\//);
+  await row.getByRole('button', { name: 'ویرایش' }).click();
+  const dialog = page.locator('.modal', { hasText: 'ویرایش مکمل‌یاری' });
+  await expect(dialog.getByText('تصویر زیرگروه')).toBeVisible();
+  await expect(dialog.locator('img.thumb')).toBeVisible();
+  await expect(dialog.locator('button', { hasText: 'تغییر تصویر' })).toBeVisible();
+  await dialog.getByRole('button', { name: 'انصراف' }).click();
+});

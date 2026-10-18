@@ -584,6 +584,9 @@ function SubcategoryDialog({ categoryId, initial, onClose }: { categoryId: strin
         <Field label="توضیح کوتاه" className="full">
           <input className="input" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         </Field>
+        <Field label="تصویر زیرگروه (در فهرست زیرگروه‌های کیوسک)" className="full">
+          <MediaPicker value={f.mediaId} onChange={(mediaId) => setF({ ...f, mediaId })} />
+        </Field>
         <div className="full">
           <Switch checked={f.active} onChange={(active) => setF({ ...f, active })} label="نمایش در کیوسک" />
         </div>
@@ -675,6 +678,7 @@ export function Categories() {
               <tbody>
                 {c.subcategories.map((s, si) => (
                   <tr key={s.id}>
+                    <td style={{ width: 56 }}>{s.mediaUrl ? <img className="thumb" src={s.mediaUrl} alt="" /> : <div className="thumb" />}</td>
                     <td style={{ width: 90 }}>
                       <Code>{s.code}</Code>
                     </td>

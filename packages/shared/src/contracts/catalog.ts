@@ -55,6 +55,8 @@ export const KioskSettings = z.object({
   /** How long a cached catalogue stays usable offline before sales stop (hours). */
   offlineCatalogMaxAgeHours: z.number().int().min(1).max(720),
   timezone: z.string().refine(isTimeZone, 'منطقه زمانی نامعتبر است (مثال: Asia/Tehran)'),
+  /** A short click sound on every tap (kiosk, web app, Android app). Older settings default to on. */
+  tapSound: z.boolean().default(true),
 });
 export type KioskSettings = z.infer<typeof KioskSettings>;
 

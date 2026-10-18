@@ -9,7 +9,7 @@ import { join, resolve } from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { sniffImage } from '../src/media/image-meta';
-import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, HOME_CARD_IMAGES, PLANS, SERVICE_IMAGES } from './seed-data';
+import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, HOME_CARD_IMAGES, PLANS, SERVICE_IMAGES, SUBCATEGORY_IMAGES } from './seed-data';
 
 const prisma = new PrismaClient();
 const SEED_MEDIA_DIR = resolve(__dirname, '../../../assets/seed-media');
@@ -119,6 +119,12 @@ async function main() {
           active: true,
         },
       });
+      // Image only where none is set, so images chosen in the admin panel are kept.
+      const subImage = SUBCATEGORY_IMAGES[sc.code];
+      if (subImage && !sub.mediaId) {
+        await prisma.subcategory.update({ where: { id: sub.id }, data: { mediaId: await seedMedia(subImage) } });
+        catalogChanged = true;
+      }
       let svcOrder = 0;
       for (const sv of sc.services) {
         const service = await prisma.service.upsert({

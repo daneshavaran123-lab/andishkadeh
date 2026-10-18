@@ -90,24 +90,35 @@ export function Subcategories({ categoryId }: { categoryId?: string }) {
         </div>
       )}
       <div className="stack">
-        {subs.map((s, i) => (
-          <button
-            key={s.id}
-            className="card list-row enter"
-            style={{ ['--i' as string]: i }}
-            onClick={() => go('services', { categoryId: c.id, subId: s.id })}
-            data-testid={`sub-${s.code}`}
-          >
-            <span className="num">{toPersianDigits(i + 1)}</span>
-            <span className="grow">
-              <h3>{s.title}</h3>
-              <p>{toPersianDigits(s.services.length)} خدمت{s.description ? ` — ${s.description}` : ''}</p>
-            </span>
-            <span className="chevron-circle">
-              <Icon name="chevron" />
-            </span>
-          </button>
-        ))}
+        {subs.map((s, i) => {
+          const art = mediaUrl(s.mediaId);
+          return (
+            <button
+              key={s.id}
+              className={`card list-row enter${art ? ' has-art' : ''}`}
+              style={{ ['--i' as string]: i }}
+              onClick={() => go('services', { categoryId: c.id, subId: s.id })}
+              data-testid={`sub-${s.code}`}
+            >
+              <span className="num">{toPersianDigits(i + 1)}</span>
+              <span className="grow">
+                <h3>{s.title}</h3>
+                <p>{toPersianDigits(s.services.length)} خدمت{s.description ? ` — ${s.description}` : ''}</p>
+              </span>
+              {art ? (
+                <span className="row-art" style={{ backgroundImage: `url("${art}")` }}>
+                  <span className="chevron-circle">
+                    <Icon name="chevron" />
+                  </span>
+                </span>
+              ) : (
+                <span className="chevron-circle">
+                  <Icon name="chevron" />
+                </span>
+              )}
+            </button>
+          );
+        })}
         {subs.length === 0 && (
           <div className="empty">
             <Icon name="alert" />
@@ -170,7 +181,7 @@ function ServiceRow({ refx, index }: { refx: ServiceRef; index: number }) {
   const { cart, addToCart, go, showToast } = useSession();
   const inCart = cart.some((c) => c.serviceId === refx.service.id);
   const p = servicePrice(bootstrap, refx);
-  const thumb = mediaUrl(refx.service.mediaId) ?? mediaUrl(refx.category.mediaId);
+  const thumb = mediaUrl(refx.service.mediaId) ?? mediaUrl(refx.sub.mediaId) ?? mediaUrl(refx.category.mediaId);
   return (
     <div className={`card svc-card enter${inCart ? ' in-cart' : ''}`} data-theme={refx.category.theme} style={{ ['--i' as string]: Math.min(index, 8) }} data-testid={`svc-${refx.service.code}`}>
       <button

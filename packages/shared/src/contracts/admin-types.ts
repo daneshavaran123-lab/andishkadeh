@@ -252,6 +252,7 @@ export interface AdminSubcategory {
   title: string;
   description: string;
   mediaId: string | null;
+  mediaUrl: string | null;
   sortOrder: number;
   active: boolean;
   serviceCount: number;

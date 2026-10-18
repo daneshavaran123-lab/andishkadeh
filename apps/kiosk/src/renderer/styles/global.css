@@ -632,6 +632,42 @@ button:focus-visible,
   flex: none;
 }
 
+/* Subcategory rows with an image: the image on the left fading into the card, the chevron on it. */
+.list-row.has-art {
+  min-height: 196px;
+  padding-inline-end: 330px;
+  border-color: color-mix(in srgb, var(--theme) 60%, transparent);
+}
+
+.list-row.has-art .num,
+.list-row.has-art .grow {
+  position: relative;
+  z-index: 1;
+}
+
+.row-art {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 380px;
+  background-size: cover;
+  background-position: center;
+  -webkit-mask-image: linear-gradient(to right, #000 52%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 52%, transparent 100%);
+}
+
+.row-art .chevron-circle {
+  position: absolute;
+  left: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 76px;
+  height: 76px;
+  border-color: var(--theme);
+  background: rgba(5, 11, 24, 0.72);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--theme) 50%, transparent);
+}
+
 /* Services (K05) */
 .search {
   display: flex;
@@ -1459,7 +1495,8 @@ button:focus-visible,
 
 /* Motion */
 .enter {
-  animation: rise var(--dur-card) var(--ease) both;
+  /* backwards, not both: a held end state would keep the press-in below from showing */
+  animation: rise var(--dur-card) var(--ease) backwards;
   animation-delay: calc(var(--i, 0) * 50ms);
 }
 
@@ -1515,7 +1552,61 @@ button:focus-visible,
   animation: none;
 }
 
+/* ------------------------------------------------------------------ touch feedback (tap-feedback.ts) */
+button,
+[role='button'] {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 140ms var(--ease),
+    filter 140ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+/* Everything tappable presses in for a moment; cards less, so the motion stays calm. */
+button:not(:disabled):not([aria-disabled='true']):active {
+  transform: scale(0.96);
+}
+
+button.card:not(:disabled):not([aria-disabled='true']):active {
+  transform: scale(0.985);
+  filter: brightness(1.14);
+}
+
+/* A ring spreading from the finger, in the colour of what was tapped. */
+.tap-ring {
+  position: absolute;
+  z-index: 80;
+  width: 160px;
+  height: 160px;
+  margin: -80px 0 0 -80px;
+  border-radius: 50%;
+  border: 4px solid var(--ring, var(--blue));
+  box-shadow:
+    0 0 26px var(--ring, var(--blue)),
+    inset 0 0 22px color-mix(in srgb, var(--ring, var(--blue)) 45%, transparent);
+  pointer-events: none;
+  animation: tap-ring 480ms var(--ease) forwards;
+}
+
+@keyframes tap-ring {
+  from {
+    transform: scale(0.15);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tap-ring {
+    display: none;
+  }
+  button:not(:disabled):not([aria-disabled='true']):active,
+  button.card:not(:disabled):not([aria-disabled='true']):active {
+    transform: none;
+  }
   *,
   *::before,
   *::after {

@@ -1,6 +1,6 @@
 {
   "name": "andishkadeh",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "description": "اندیشکده کشتی ایران — کیوسک سلف‌سرویس، پنل مدیریت و سرور",
   "packageManager": "pnpm@10.28.0",

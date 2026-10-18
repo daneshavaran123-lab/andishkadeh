@@ -10,6 +10,7 @@ import { End, Mobile, PaymentResult, Paying, Printing, Review } from './screens/
 import { Home, Welcome } from './screens/Start';
 import { Activation, PlanDetail, Plans, SubscriptionIntro } from './screens/Subscription';
 import { useApp, useSession, type ScreenId } from './store';
+import { useTapFeedback } from './tap-feedback';
 
 /** Screens where the inactivity timeout must never interrupt the customer. */
 const NO_TIMEOUT: ScreenId[] = ['welcome', 'paying', 'printing', 'end'];
@@ -196,6 +197,8 @@ function useInactivity() {
 
 export function App() {
   const scale = useStageScale();
+  const stage = useRef<HTMLDivElement>(null);
+  useTapFeedback(stage, scale);
   const { setState, setStatus } = useApp();
   const ready = useApp((s) => s.ready);
   const status = useApp((s) => s.status);
@@ -233,7 +236,7 @@ export function App() {
   }, [setState, setStatus]);
 
   return (
-    <div className={`stage${CALM.includes(routeId) ? ' calm' : ''}`} style={{ transform: `scale(${scale})`, left: (window.innerWidth - 1080 * scale) / 2 }}>
+    <div ref={stage} className={`stage${CALM.includes(routeId) ? ' calm' : ''}`} style={{ transform: `scale(${scale})`, left: (window.innerWidth - 1080 * scale) / 2 }}>
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         {status && !status.online && routeId !== 'welcome' && (
           <div className="banner offline" data-testid="offline-banner">
