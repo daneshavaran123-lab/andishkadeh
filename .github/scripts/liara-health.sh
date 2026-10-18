@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Polls https://<app>.liara.run/api/v1/health for up to ten minutes (CI, after a deploy or on its own),
-# then checks that /, /admin and /kiosk serve their parts of the site. Fails at once with the server's
-# own reason when the start-up failure page answers (503 with step and reason,
-# apps/server/scripts/startup-failed.mjs).
+# then checks that /, /admin and /kiosk serve their parts of the site and that the public web app
+# gets the catalogue. Fails at once with the server's own reason when the start-up failure page
+# answers (503 with step and reason, apps/server/scripts/startup-failed.mjs).
 # Usage: liara-health.sh <app> [version]. After a deploy, pass the deployed version: Liara keeps the
 # previous container answering until the new one is up, so a healthy answer only counts once it
 # reports that version.
@@ -52,4 +52,11 @@ route() {
 route / './manifest.webmanifest' 'customer web app'
 route /admin/login '/admin/manifest.webmanifest' 'admin panel'
 route /kiosk '/admin/manifest.webmanifest' 'kiosk management page'
+# The public web app at / reads the catalogue as device WEB-APP, without a key.
+if curl -s -m 15 -H 'X-Device-Id: WEB-APP' "https://$app.liara.run/api/v1/kiosk/bootstrap" | grep -q '"categories"'; then
+  echo "ok  /api/v1/kiosk/bootstrap  public web app catalogue"
+else
+  echo "::error::The public web app gets no catalogue (device WEB-APP missing or disabled?)"
+  failed=1
+fi
 exit $failed
