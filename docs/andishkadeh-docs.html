@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.8.1</span> · ۲۶ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.9.0</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -240,7 +240,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
       <tr><td><code>e2e</code></td><td>تست‌های پذیرش Playwright (ماتریس T01 تا T15 سند)</td></tr>
       <tr><td><code>assets/seed-media</code></td><td>تصاویر اولیه حوزه‌ها و صفحه شروع</td></tr>
       <tr><td><code>docs</code></td><td>مستندات فنی، راهنمای نصب، OpenAPI</td></tr>
-      <tr><td><code>tools/icons</code></td><td>تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از یک طرح</td></tr>
+      <tr><td><code>tools/icons</code></td><td>تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از تصویر <code>assets/brand/app-icon.png</code></td></tr>
       <tr><td><code>.github/workflows</code></td><td>ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز</td></tr>
     </tbody>
   </table></div>
@@ -741,7 +741,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.8.1",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.9.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -756,7 +756,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.8.1
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.9.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -1486,8 +1486,13 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.8.1</span></h2>
-  <p class="lede">۲۶ مهر ۱۴۰۵ — عکس خدمات تیم و اردو و گزارش تغذیه.</p>
+  <h2>تغییرات نسخه <span class="tag">1.9.0</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — آیکون تازه برنامه.</p>
+  <ul>
+    <li><strong>آیکون:</strong> دو کشتی‌گیر رو در روی قرمز و آبی نئونی در همه جا: زبانه مرورگر و نصب وب‌اپ و پنل، آیفون، برنامه ویندوز (فایل اجرایی، نصب‌کننده و نوار وظیفه)، آیکون و صفحه آغاز برنامه اندروید، و سربرگ پنل مدیریت، صفحه ورود و صفحه مدیریت کیوسک.</li>
+  </ul>
+  <h3>نسخه 1.8.1</h3>
+  <p>۲۶ مهر ۱۴۰۵ — عکس خدمات تیم و اردو و گزارش تغذیه.</p>
   <ul>
     <li>شش خدمت دیگر تغذیه (تیم و اردو و گزارش تغذیه) عکس طرح را دارند؛ ۲۶ خدمت تغذیه عکس جداگانه دارند. برنامه غذایی هنوز عکس زیرگروه را نشان می‌دهد.</li>
   </ul>

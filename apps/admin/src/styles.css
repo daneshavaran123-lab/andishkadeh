@@ -120,15 +120,23 @@ textarea {
 }
 
 .brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1689ff, #ff284c);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 18px;
+  width: 44px;
+  height: 44px;
+  flex: none;
+}
+
+/* the app icon in the kiosk management page's top bar */
+.brand-icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.login-logo {
+  width: 104px;
+  height: 104px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 10px 30px rgba(22, 137, 255, 0.35));
 }
 
 .brand b {

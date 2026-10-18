@@ -31,7 +31,7 @@ const pwa = (): Plugin => ({
   transformIndexHtml: (html) =>
     html.replace(
       '</head>',
-      '    <link rel="manifest" href="./manifest.webmanifest" />\n    <meta name="theme-color" content="#050b18" />\n    <link rel="icon" href="./icons/icon-192.png" />\n    <link rel="apple-touch-icon" href="./icons/icon-192.png" />\n  </head>',
+      '    <link rel="manifest" href="./manifest.webmanifest" />\n    <meta name="theme-color" content="#050b18" />\n    <link rel="icon" href="./icons/favicon-32.png" sizes="32x32" />\n    <link rel="icon" href="./icons/icon-192.png" sizes="192x192" />\n    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />\n  </head>',
     ),
   generateBundle(_opts, bundle) {
     // Every emitted file plus everything in public-web (manifest, all icons).

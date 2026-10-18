@@ -1,6 +1,6 @@
 {
   "name": "@andishkadeh/shared",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "private": true,
   "description": "قراردادها، موتور قیمت‌گذاری و ابزارهای مشترک کیوسک، پنل و سرور",
   "main": "dist/index.js",

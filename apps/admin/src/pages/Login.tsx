@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { Alert, Field, useAction } from '../components/ui';
+import { BRAND_ICON } from '../brand';
 
 /**
  * A01 — sign in. The server locks an account temporarily after repeated failures. The kiosk
@@ -35,6 +36,7 @@ export function Login({ title = 'ورود به پنل مدیریت', home = '/da
   return (
     <div className="login-wrap">
       <div className="login-side">
+        <img className="login-logo" src={BRAND_ICON} alt="" />
         <h2>اندیشکده کشتی ایران</h2>
         <p style={{ color: '#b9c8de', lineHeight: 1.9, maxWidth: 440 }}>
           مدیریت کاتالوگ خدمات، تعرفه‌ها، تخفیف‌ها، اشتراک‌ها، فروش و وضعیت کیوسک سلف‌سرویس.

@@ -617,7 +617,7 @@ flowchart LR
 | `apps/admin` | پنل مدیریت React (SPA) |
 | `e2e` | تست‌های پذیرش Playwright |
 | `assets/seed-media` | تصاویر اولیه حوزه‌ها، خدمات و صفحه شروع |
-| `tools/icons` | تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از یک طرح |
+| `tools/icons` | تولید آیکون‌ها و صفحه آغاز همه نسخه‌ها از تصویر `assets/brand/app-icon.png` |
 | `tools/uml`، `docs/uml` | اسکریپت ساخت و منبع نمودارهای فعالیت UML (PlantUML) |
 | `.github/workflows` | ساخت خودکار: تست‌ها، وب‌اپ، APK اندروید، نصب‌کننده ویندوز، پیش‌نویس انتشار |
 | `tools/release` | نسخه واحد محصول و یادداشت انتشار از CHANGELOG |

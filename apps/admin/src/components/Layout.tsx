@@ -7,6 +7,7 @@ import { useAuth } from '../auth';
 import { kioskSession, useKioskSessionTimers } from '../kiosk';
 import { ChangePasswordDialog } from '../pages/Users';
 import { Icon, type IconName } from './Icon';
+import { BRAND_ICON } from '../brand';
 
 interface NavItem {
   to: string;
@@ -75,7 +76,7 @@ export function Layout() {
     <div className="app">
       <aside className={`sidebar${open ? ' open' : ''}`} onClick={() => setOpen(false)}>
         <div className="brand">
-          <span className="brand-mark">ا</span>
+          <img className="brand-mark" src={BRAND_ICON} alt="" />
           <span>
             <b>پنل مدیریت</b>
             <small>{settings.data?.centerName ?? 'اندیشکده کشتی ایران'}</small>

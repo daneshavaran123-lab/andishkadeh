@@ -1,6 +1,6 @@
 {
   "name": "@andishkadeh/server",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "private": true,
   "description": "Backend ماژولار کیوسک اندیشکده کشتی ایران (NestJS + PostgreSQL)",
   "main": "dist/main.js",

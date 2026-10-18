@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Andishkadeh Koshti Iran — Kiosk & Admin API",
-    "version": "1.8.1",
+    "version": "1.9.0",
     "description": "API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد."
   },
   "servers": [

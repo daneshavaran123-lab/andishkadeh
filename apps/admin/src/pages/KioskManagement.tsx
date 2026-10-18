@@ -8,6 +8,7 @@ import { useAuth } from '../auth';
 import { Icon } from '../components/Icon';
 import { Alert, Card } from '../components/ui';
 import { CopyButton, Devices, InstallerButton, useInstallerInfo, useServerUrl } from './Devices';
+import { BRAND_ICON } from '../brand';
 
 export function KioskManagement() {
   const { user, isAdmin, logout } = useAuth();
@@ -17,7 +18,7 @@ export function KioskManagement() {
   return (
     <div className="main">
       <header className="topbar">
-        <Icon name="monitor" style={{ width: 22, height: 22 }} />
+        <img className="brand-icon" src={BRAND_ICON} alt="" />
         <span className="center">مدیریت کیوسک‌های اندیشکده کشتی ایران</span>
         <span className="spacer" />
         {user && (
