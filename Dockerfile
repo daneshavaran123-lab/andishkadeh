@@ -18,6 +18,9 @@ COPY e2e/package.json e2e/
 RUN pnpm install --frozen-lockfile --filter "@andishkadeh/server..." --filter "@andishkadeh/admin..."
 
 COPY . .
+# A Windows working copy (git's default there is CRLF, and `liara deploy` uploads it as it is) has a
+# CRLF start script, which sh stops at on its first line: strip the CRs so the image starts anyway.
+RUN sed -i 's/\r$//' apps/server/scripts/docker-start.sh
 # The panel calls the API on its own origin (VITE_API_URL empty).
 RUN pnpm --filter @andishkadeh/shared build \
  && pnpm --filter @andishkadeh/server build \

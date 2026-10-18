@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.4.0</span> · ۲۶ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.4.1</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -630,6 +630,7 @@ sequenceDiagram
     <li><strong>کارتخوان:</strong> پس از تحویل SDK آسان پرداخت، برنامه کمکی و <code>"payment": "helper"</code>، سپس آزمون با پایانه واقعی (<a href="payment-helper.md">کارتخوان</a>).</li>
   </ol>
   <div class="note warn"><p>در <code>NODE_ENV=production</code> (پیش‌فرض image) سرور با مقدار نمونه یا ناامن اجرا نمی‌شود و علت را در لاگ می‌نویسد: <code>JWT_SECRET</code> کوتاه، <code>PUBLIC_BASE_URL</code> بدون https، یا رمز اولیه <code>CHANGE_ME</code>.</p></div>
+  <div class="note"><p><strong>به‌جای خطای ۵۰۲:</strong> اگر بررسی متغیرها، migration یا داده اولیه خطا بدهد، روی همان آدرس صفحه «سرور اندیشکده اجرا نشد» با مرحله و علت باز می‌شود (HTTP 503). فایل‌هایی که از ویندوز با پایان خط CRLF آپلود شوند هم از نسخه 1.4.1 مشکلی ایجاد نمی‌کنند؛ پیش‌تر اسکریپت شروع در خط اول متوقف می‌شد و لیارا ۵۰۲ نشان می‌داد.</p></div>
 </section>
 
 <!-- ============================================================ server -->
@@ -731,7 +732,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.4.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.4.1",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -746,7 +747,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.4.0
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.4.1
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -1476,8 +1477,14 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.4.0</span></h2>
-  <p class="lede">۲۶ مهر ۱۴۰۵ — یکپارچگی کیوسک و پنل مدیریت.</p>
+  <h2>تغییرات نسخه <span class="tag">1.4.1</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — رفع خطای ۵۰۲ روی لیارا.</p>
+  <ul>
+    <li><strong>شروع image با فایل‌های ویندوز:</strong> اسکریپت شروع با پایان خط CRLF در خط اول متوقف می‌شد و لیارا ۵۰۲ نشان می‌داد. اکنون <code>Dockerfile</code> آن را اصلاح می‌کند و <code>.gitattributes</code> همه فایل‌ها را با LF نگه می‌دارد.</li>
+    <li><strong>صفحه علت خطا:</strong> اگر بررسی متغیرها، migration یا داده اولیه خطا بدهد، به‌جای ۵۰۲ صفحه‌ای با مرحله و علت (HTTP 503) نمایش داده می‌شود. اتصال به دیتابیسی که هنوز بالا نیامده تا یک دقیقه دوباره امتحان می‌شود.</li>
+  </ul>
+  <h3>نسخه 1.4.0</h3>
+  <p>۲۶ مهر ۱۴۰۵ — یکپارچگی کیوسک و پنل مدیریت.</p>
   <ul>
     <li><strong>ورود مدیر از کیوسک:</strong> چرخ‌دنده صفحه اصلی ← ورود با صفحه‌کلید لمسی ← همان پنل مدیریت (مدیر: داشبورد، اپراتور: سفارش‌ها). خروج، بی‌فعالیتی یا پایان نشست ۳۰ دقیقه‌ای کیوسک را به صفحه اصلی برمی‌گرداند. رمز و توکن روی کیوسک ذخیره نمی‌شوند.</li>
     <li><strong>پورت ۳۰۰۱:</strong> پورت پیش‌فرض سرور به‌خاطر تداخل ۳۰۰۰ با EonVPN در ویندوز؛ همه آدرس‌های پیش‌فرض به‌روز شدند.</li>

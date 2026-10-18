@@ -12,6 +12,10 @@
       // electron-builder loads the Squirrel plugin by name; tools/uml/render.sh uses the Vazirmatn TTF files.
       "ignoreDependencies": ["electron-builder-squirrel-windows", "vazirmatn"]
     },
+    "apps/server": {
+      // Started by scripts/docker-start.sh (container start) when the API cannot start.
+      "entry": ["scripts/startup-failed.mjs"]
+    },
     "e2e": {
       // The Playwright plugin would execute playwright.config.ts, which needs a database URL; list the entries instead.
       // scripts/*.mjs are started by its webServer commands.

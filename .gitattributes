@@ -1,0 +1,9 @@
+# LF line endings in every checkout, Windows included (git's default there is CRLF). `liara deploy`
+# uploads the working copy as it is, and a CRLF shell script stops the server container at once.
+* text=auto eol=lf
+*.bat -text
+*.png binary
+*.jpg binary
+*.ico binary
+*.jar binary
+*.woff2 binary

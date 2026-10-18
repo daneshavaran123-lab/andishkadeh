@@ -189,6 +189,8 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@v4
+      - name: Use CRLF line endings in the start script, as in a Windows working copy uploaded by `liara deploy`
+        run: sed -i 's/$/\r/' apps/server/scripts/docker-start.sh && file apps/server/scripts/docker-start.sh
       - run: docker build -t andishkadeh-server .
       - name: Start it as on Liara (production settings, empty database) and check it
         run: |
@@ -213,6 +215,16 @@ jobs:
             andishkadeh-server
           for i in $(seq 1 60); do curl -sf localhost:3001/api/v1/health >/dev/null && break; sleep 2; done
           curl -sf localhost:3001/api/v1/health | grep -q '"db":"ok"'
+          # A wrong setting is shown on the app's address (HTTP 503 with the reason), not a bare 502.
+          docker rm -f app >/dev/null
+          docker run -d --name app --network host \
+            -e DATABASE_URL='postgresql://andishkadeh:wrong-password@localhost:5432/andishkadeh?schema=public' \
+            -e JWT_SECRET=ci-only-secret-0123456789abcdefghijklmnop \
+            -e PUBLIC_BASE_URL=https://andishkadeh.example.ir \
+            andishkadeh-server
+          for i in $(seq 1 30); do curl -s localhost:3001/api/v1/health >/dev/null && break; sleep 2; done
+          curl -s -w ' %{http_code}' localhost:3001/api/v1/health | tee /dev/stderr | grep -q '"step":"migrate".* 503$'
+          curl -s localhost:3001/ | grep -q 'DATABASE_URL'
       - name: Container log
         if: always()
         run: docker logs app 2>&1 | tail -60 || true
