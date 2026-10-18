@@ -74,6 +74,8 @@ liara deploy --app andishkadeh
    - secret `LIARA_API_TOKEN` = همان توکن
    - variable `LIARA_APP` = شناسه برنامه (حروف کوچک، همان‌که در آدرس کنسول آمده؛ مثلاً `andishkadeh`)
    - variable `LIARA_TEAM_ID` = شناسه تیم، فقط اگر برنامه متعلق به یک تیم لیاراست
+
+   `LIARA_APP` و `LIARA_TEAM_ID` در تب Secrets هم پذیرفته می‌شوند. حروف بزرگ، فاصله و نقطه اضافه خودکار حذف می‌شوند.
 3. Actions ← «Apps» ← «Run workflow» و تیک «Deploy the server and admin panel to Liara». استقرار فقط پس از سبز شدن تست‌ها و آزمون image انجام می‌شود.
 
 ساخت روی سرورهای لیارا در موقعیت آلمان انجام می‌شود (`liara.json`)، چون دانلود بسته‌ها در موقعیت ایران محدود است.

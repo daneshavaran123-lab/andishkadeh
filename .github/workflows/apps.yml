@@ -236,15 +236,32 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIARA_API_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
-      LIARA_APP: ${{ vars.LIARA_APP }}
-      LIARA_TEAM_ID: ${{ vars.LIARA_TEAM_ID }}
+      # The app and team ids are not secret, but are accepted from either tab (Variables or Secrets).
+      LIARA_APP: ${{ vars.LIARA_APP || secrets.LIARA_APP }}
+      LIARA_TEAM_ID: ${{ vars.LIARA_TEAM_ID || secrets.LIARA_TEAM_ID }}
     steps:
       - name: Settings present
+        # Pasted values are tidied: app ids are lower case on Liara, a team id is 24 hex characters.
         run: |
-          if [ -z "$LIARA_API_TOKEN" ] || [ -z "$LIARA_APP" ]; then
-            echo "::error::Add the repository secret LIARA_API_TOKEN and the variable LIARA_APP (docs/liara-deploy.md)"
+          missing=""
+          [ -n "$LIARA_API_TOKEN" ] || missing="$missing LIARA_API_TOKEN"
+          [ -n "$LIARA_APP" ] || missing="$missing LIARA_APP"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing in Settings > Secrets and variables > Actions (repository level):$missing (docs/liara-deploy.md)"
             exit 1
           fi
+          app=$(printf '%s' "$LIARA_APP" | tr 'A-Z' 'a-z' | tr -d '[:space:]')
+          case "$app" in
+            *[!a-z0-9-]*) echo "::error::LIARA_APP must be the app id as in the Liara console address (e.g. andishkadeh)"; exit 1 ;;
+          esac
+          team=""
+          if [ -n "$LIARA_TEAM_ID" ]; then
+            team=$(printf '%s' "$LIARA_TEAM_ID" | grep -oE '[0-9a-f]{24}' | head -n1 || true)
+            [ -n "$team" ] || { echo "::error::LIARA_TEAM_ID must be the 24-character team id from the Liara console"; exit 1; }
+          fi
+          echo "LIARA_APP=$app" >> "$GITHUB_ENV"
+          echo "LIARA_TEAM_ID=$team" >> "$GITHUB_ENV"
+          echo "app: $app; team id: ${team:+set}"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -252,7 +269,11 @@ jobs:
       - run: npm i -g @liara/cli@9
       # liara.json supplies platform, port, build location and the media disk. An app owned by a Liara
       # team is only found with the team id (variable LIARA_TEAM_ID).
-      - run: liara deploy --app "$LIARA_APP" --api-token "$LIARA_API_TOKEN" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
+      - name: liara deploy
+        run: |
+          token=$(printf '%s' "$LIARA_API_TOKEN" | tr -d '[:space:]')
+          echo "::add-mask::$token"
+          liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
 
   release:
     name: Draft release
