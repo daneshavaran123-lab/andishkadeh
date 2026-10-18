@@ -274,6 +274,25 @@ jobs:
           token=$(printf '%s' "$LIARA_API_TOKEN" | tr -d '[:space:]')
           echo "::add-mask::$token"
           liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} --no-app-logs
+      - name: Check the deployed server
+        # First start runs the migrations and the seed. A failed start answers 503 with the step and
+        # the reason (apps/server/scripts/startup-failed.mjs), which is shown here as the error.
+        run: |
+          url="https://$LIARA_APP.liara.run/api/v1/health"
+          code=""
+          for i in $(seq 1 60); do
+            out=$(curl -s -m 10 -w '\n%{http_code}' "$url" || true)
+            code=$(printf '%s' "$out" | tail -n1)
+            body=$(printf '%s' "$out" | sed '$d')
+            if [ "$code" = "200" ]; then echo "$body"; exit 0; fi
+            if [ "$code" = "503" ] && printf '%s' "$body" | grep -q '"step"'; then
+              echo "::error::The server did not start: $body"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "::error::No healthy answer from $url within 5 minutes (last HTTP status: ${code:-none}). See the app's logs in the Liara console."
+          exit 1
 
   release:
     name: Draft release

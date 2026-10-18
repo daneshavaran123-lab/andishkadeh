@@ -76,7 +76,7 @@ liara deploy --app andishkadeh
    - variable `LIARA_TEAM_ID` = شناسه تیم، فقط اگر برنامه متعلق به یک تیم لیاراست
 
    `LIARA_APP` و `LIARA_TEAM_ID` در تب Secrets هم پذیرفته می‌شوند. حروف بزرگ، فاصله و نقطه اضافه خودکار حذف می‌شوند.
-3. Actions ← «Apps» ← «Run workflow» و تیک «Deploy the server and admin panel to Liara». استقرار فقط پس از سبز شدن تست‌ها و آزمون image انجام می‌شود.
+3. Actions ← «Apps» ← «Run workflow» و تیک «Deploy the server and admin panel to Liara». استقرار فقط پس از سبز شدن تست‌ها و آزمون image انجام می‌شود. پس از استقرار، همان اجرا تا ۵ دقیقه `https://<برنامه>.liara.run/api/v1/health` را بررسی می‌کند. اگر سرور بالا نیاید، علت (مثلاً متغیر نادرست) را به‌صورت خطا نشان می‌دهد.
 
 ساخت روی سرورهای لیارا در موقعیت آلمان انجام می‌شود (`liara.json`)، چون دانلود بسته‌ها در موقعیت ایران محدود است.
 
@@ -123,6 +123,7 @@ liara deploy --app andishkadeh
 | --- | --- |
 | خطای ۵۰۲ که با صبر برطرف نمی‌شود، و در لاگ `set: Illegal option -` یا `: not found` | فایل‌ها از ویندوز با پایان خط CRLF آپلود شده‌اند. از نسخه 1.4.1 این مشکل در `Dockerfile` خودکار برطرف می‌شود و `.gitattributes` از تکرار آن جلوگیری می‌کند. آخرین نسخه را بگیرید (`git pull`) و دوباره `liara deploy` کنید |
 | صفحه «سرور اندیشکده اجرا نشد» | علت و مرحله روی همان صفحه آمده است. متغیر نام‌برده را اصلاح کنید |
+| استقرار با `Disk \`media\` does not exist` متوقف می‌شود | در صفحه برنامه ← «دیسک‌ها» یک دیسک با نام دقیق `media` بسازید و دوباره مستقر کنید |
 | ساخت (build) با خطای دانلود بسته متوقف می‌شود | `"build": {"location": "germany"}` در `liara.json` بماند |
 | برنامه بالا نمی‌آید و در لاگ `Refusing to start in production` است | متغیر نام‌برده در همان پیام را درست کنید |
 | `SEED_ADMIN_PASSWORD: set a real value` | رمز اولیه نمونه یا کوتاه است؛ مقدار واقعی بگذارید |
