@@ -1575,6 +1575,18 @@ button:focus-visible,
   font-size: 18px;
   line-height: 1.8;
 }
+.setup-notice {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(64, 140, 255, 0.45);
+  background: rgba(64, 140, 255, 0.1);
+  font-size: 18px;
+  line-height: 1.8;
+}
+.setup-notice a {
+  color: #8ab8ff;
+  font-weight: 700;
+}
 .setup-card label {
   display: flex;
   flex-direction: column;

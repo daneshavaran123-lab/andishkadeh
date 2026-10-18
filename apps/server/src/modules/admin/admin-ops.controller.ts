@@ -23,6 +23,7 @@ import {
   SyncEvent,
   SyncOverview,
   SystemInfo,
+  KioskInstallerInfo,
   localDayRange,
   maskMobile,
   normalizeDigits,
@@ -41,7 +42,7 @@ import { toOrderDto, toPaymentRow } from '../sales/mappers';
 import { OrdersService, orderInclude } from '../sales/orders.service';
 import { PaymentsService } from '../sales/payments.service';
 import { SyncService } from '../sales/sync.service';
-import { APP_VERSION, kioskInstallerUrl } from '../../version';
+import { APP_VERSION, kioskInstallerInfo, kioskInstallerUrl } from '../../version';
 
 const UpdateDeviceRequest = z.object({ name: z.string().trim().min(2).max(80).optional(), active: z.boolean().optional() });
 const SyncQuery = z.object({ status: z.enum(['APPLIED', 'REJECTED', 'CONFLICT']).optional(), deviceId: z.string().optional() });
@@ -427,7 +428,13 @@ export class AdminOpsController {
 
   @Get('system')
   system(): SystemInfo {
-    return { version: APP_VERSION, kioskInstallerUrl: kioskInstallerUrl(config().KIOSK_INSTALLER_URL) };
+    return { version: APP_VERSION, kioskInstallerUrl: kioskInstallerUrl(config().KIOSK_INSTALLER_URL), publicBaseUrl: config().PUBLIC_BASE_URL };
+  }
+
+  /** Kiosk management page (/kiosk): offer the installer download only once it is published. */
+  @Get('system/installer')
+  installer(): Promise<KioskInstallerInfo> {
+    return kioskInstallerInfo(config().KIOSK_INSTALLER_URL);
   }
 
   @Get('devices')

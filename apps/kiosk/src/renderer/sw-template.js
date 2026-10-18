@@ -4,6 +4,8 @@ const PRECACHE = __PRECACHE__;
 const CACHE = `kiosk-shell-${VERSION}`;
 const SCOPE = self.registration.scope;
 const NAV_TIMEOUT_MS = 4000;
+/** Other parts of the same site (served at the root, the worker's scope covers them): never handled here. */
+const OTHER_PARTS = /^(api|admin|kiosk)(\/|$)/;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -25,8 +27,10 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  // Only the app's own files: API calls, media downloads and other origins always go to the network.
+  // Only the app's own files: API calls, media downloads, the admin panel, kiosk management and
+  // other origins always go to the network.
   if (req.method !== 'GET' || !req.url.startsWith(SCOPE)) return;
+  if (OTHER_PARTS.test(new URL(req.url).pathname.slice(new URL(SCOPE).pathname.length))) return;
   if (req.mode === 'navigate') {
     // Network first so updates arrive while online, but a slow or failing server (timeout, 502)
     // falls back to the precached shell of this version. Navigations are never written to the

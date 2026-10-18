@@ -14,11 +14,11 @@ const http = () => request(app.getHttpServer());
 
 beforeAll(async () => {
   useTestEnv();
-  const kioskDist = mkdtempSync(join(tmpdir(), 'kiosk-dist-'));
-  mkdirSync(join(kioskDist, 'assets'));
-  writeFileSync(join(kioskDist, 'index.html'), '<!doctype html><title>kiosk</title>');
-  writeFileSync(join(kioskDist, 'assets', 'app-1234.js'), 'console.log(1)');
-  process.env.KIOSK_WEB_DIST_DIR = kioskDist;
+  const webDist = mkdtempSync(join(tmpdir(), 'web-dist-'));
+  mkdirSync(join(webDist, 'assets'));
+  writeFileSync(join(webDist, 'index.html'), '<!doctype html><title>web app</title>');
+  writeFileSync(join(webDist, 'assets', 'app-1234.js'), 'console.log(1)');
+  process.env.WEB_APP_DIST_DIR = webDist;
   app = await bootApp();
 });
 
@@ -38,9 +38,9 @@ describe('errors from static files and the body parser keep their status', () =>
     }
   });
 
-  it('a missing kiosk web app file is 404 (an old service worker may still ask for it)', async () => {
-    expect((await http().get('/kiosk/assets/app-1234.js')).status).toBe(200);
-    const res = await http().get('/kiosk/assets/gone-5678.js');
+  it('a missing web app file is 404 (an old service worker may still ask for it)', async () => {
+    expect((await http().get('/assets/app-1234.js')).status).toBe(200);
+    const res = await http().get('/assets/gone-5678.js');
     expect(res.status).toBe(404);
   });
 

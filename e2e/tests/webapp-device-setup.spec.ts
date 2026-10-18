@@ -1,0 +1,69 @@
+/**
+ * Site routes and kiosk management: the customer web app is at the root /, kiosk management at
+ * /kiosk (staff sign-in, server address, Windows installer, device registration, status). Activating
+ * "this browser" there makes the web app at / open as that kiosk, on the same server and database.
+ */
+import { expect, test, type Page } from '@playwright/test';
+
+test.describe.configure({ mode: 'serial' });
+
+async function signIn(page: Page, username: string, password: string) {
+  await page.goto('/kiosk');
+  await expect(page).toHaveTitle(/مدیریت کیوسک‌ها/);
+  await expect(page.getByRole('heading', { name: 'ورود به مدیریت کیوسک‌ها' })).toBeVisible();
+  await page.locator('input[name=username]').fill(username);
+  await page.locator('input[name=password]').fill(password);
+  await page.getByRole('button', { name: 'ورود', exact: true }).click();
+  await expect(page.getByTestId('kiosk-management')).toBeVisible();
+}
+
+test('/ is the customer web app; before activation it points staff to /kiosk', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('setup')).toBeVisible();
+  await expect(page.getByTestId('activation-notice')).toContainText('/kiosk');
+  await expect(page.getByTestId('activation-notice').getByRole('link')).toHaveAttribute('href', '/kiosk');
+});
+
+test('manager: /kiosk → register a kiosk → activate this browser → / opens as that kiosk, reported online', async ({ page }) => {
+  await signIn(page, 'admin', 'Admin@12345');
+  await expect(page).toHaveURL(/\/kiosk\/?$/);
+  await expect(page.getByTestId('server-url')).toHaveText('http://localhost:3200');
+  // Offered only when the release can be downloaded; otherwise said so (depends on network access to GitHub).
+  await expect(page.getByTestId('kiosk-installer').or(page.getByTestId('kiosk-installer-missing'))).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.card', { hasText: 'KIOSK-01' }).first()).toBeVisible();
+
+  const deviceId = `WEB-${Date.now().toString(36).toUpperCase()}`;
+  await page.getByRole('button', { name: 'ثبت کیوسک جدید' }).click();
+  const form = page.locator('.modal', { hasText: 'ثبت کیوسک جدید' });
+  await form.locator('input').nth(0).fill(deviceId);
+  await form.locator('input').nth(1).fill('کیوسک وب طبقه اول');
+  await form.getByRole('button', { name: 'ثبت و دریافت کلید' }).click();
+
+  const connection = page.getByTestId('device-connection');
+  await expect(connection).toContainText('http://localhost:3200');
+  await expect(connection).toContainText(deviceId);
+  await expect(page.getByTestId('device-key')).not.toBeEmpty();
+  await page.getByTestId('activate-browser').click();
+  const heartbeat = page.waitForResponse((r) => r.url().endsWith('/api/v1/devices/heartbeat') && r.ok(), { timeout: 30_000 });
+  await page.getByTestId('open-web-app').click();
+
+  // The web app at / starts as that kiosk: no setup screen, catalogue from the same server.
+  await expect(page).toHaveURL(/:3200\/$/);
+  await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+  await heartbeat;
+
+  await page.goto('/kiosk');
+  const card = page.locator('.card', { hasText: deviceId });
+  await expect(card).toContainText('کیوسک وب طبقه اول');
+  await expect(card).toContainText('آنلاین', { timeout: 20_000 });
+});
+
+test('operator: /kiosk shows the kiosks and the server address; registration stays with the manager', async ({ page }) => {
+  await signIn(page, 'operator', 'Operator@12345');
+  await expect(page.getByTestId('server-url')).toHaveText('http://localhost:3200');
+  await expect(page.locator('.card', { hasText: 'KIOSK-01' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ثبت کیوسک جدید' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'کلید جدید' })).toHaveCount(0);
+  await page.getByTestId('logout').click();
+  await expect(page.getByRole('heading', { name: 'ورود به مدیریت کیوسک‌ها' })).toBeVisible();
+});

@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 /**
  * PRD acceptance tests (I-04, §20) against an isolated stack:
  *   API :3200 (test DB) · kiosk core bridge :5285 (fresh SQLite, simulated hardware)
- *   kiosk UI :5284 · admin UI :5283 · kiosk web app (PWA) http://localhost:3200/kiosk/ (core in the page)
+ *   kiosk UI :5284 · admin UI :5283 · customer web app (PWA) http://localhost:3200/ (core in the page) and kiosk management http://localhost:3200/kiosk
  */
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_PATH;
 

@@ -115,7 +115,8 @@ export function buildOpenApiDocument(): OpenAPIObject {
   path('post', '/admin/subscriptions/{id}/cancel', 'Admin · Subscriptions', 'ابطال (ADMIN)', { params: ['id'], body: C.ReasonRequest });
   path('post', '/admin/subscriptions/{id}/extend', 'Admin · Subscriptions', 'تمدید دستی (ADMIN)', { params: ['id'], body: C.ExtendSubscriptionRequest });
   path('post', '/admin/subscriptions/{id}/reissue-qr', 'Admin · Subscriptions', 'صدور مجدد QR (ADMIN)', { params: ['id'], body: C.ReasonRequest });
-  path('get', '/admin/system', 'Admin · Devices', 'نسخه سرور و نشانی نصب‌کننده کیوسک ویندوز همان نسخه');
+  path('get', '/admin/system', 'Admin · Devices', 'نسخه سرور، نشانی عمومی سرور و نشانی نصب‌کننده کیوسک ویندوز همان نسخه');
+  path('get', '/admin/system/installer', 'Admin · Devices', 'آیا نصب‌کننده کیوسک ویندوز همین نسخه قابل دانلود است (available: true/false/null)');
   path('get', '/admin/devices', 'Admin · Devices', 'وضعیت کیوسک‌ها و تجهیزات');
   path('post', '/admin/devices', 'Admin · Devices', 'ثبت دستگاه جدید (ADMIN)', { body: C.CreateDeviceRequest });
   path('post', '/admin/devices/{id}/rotate-key', 'Admin · Devices', 'کلید جدید دستگاه (ADMIN)', { params: ['id'] });

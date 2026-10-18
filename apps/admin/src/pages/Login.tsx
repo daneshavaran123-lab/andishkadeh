@@ -4,8 +4,11 @@ import { errorMessage } from '../api';
 import { useAuth } from '../auth';
 import { Alert, Field, useAction } from '../components/ui';
 
-/** A01 — sign in. The server locks an account temporarily after repeated failures. */
-export function Login() {
+/**
+ * A01 — sign in. The server locks an account temporarily after repeated failures. The kiosk
+ * management page (/kiosk) uses the same sign-in with its own heading and start page.
+ */
+export function Login({ title = 'ورود به پنل مدیریت', home = '/dashboard' }: { title?: string; home?: string }) {
   const action = useAction();
   const { user, login, notice } = useAuth();
   const loc = useLocation();
@@ -14,7 +17,7 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (user) return <Navigate to={(loc.state as { from?: string } | null)?.from ?? '/dashboard'} replace />;
+  if (user) return <Navigate to={(loc.state as { from?: string } | null)?.from ?? home} replace />;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -40,7 +43,7 @@ export function Login() {
       <div className="login-form">
         <form className="card" onSubmit={action(submit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22 }}>ورود به پنل مدیریت</h1>
+            <h1 style={{ margin: 0, fontSize: 22 }}>{title}</h1>
             <p className="muted" style={{ margin: '6px 0 0' }}>با نام کاربری و رمز عبور خود وارد شوید.</p>
           </div>
           {notice && <Alert tone="warning">{notice}</Alert>}

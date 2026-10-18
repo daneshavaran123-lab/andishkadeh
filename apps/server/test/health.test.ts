@@ -36,6 +36,8 @@ describe('kiosk installer link (A15)', () => {
     expect(res.body).toEqual({
       version,
       kioskInstallerUrl: `https://github.com/daneshavaran123-lab/andishkadeh/releases/download/v${version}/AndishkadehKiosk-Setup-${version}.exe`,
+      // The address kiosks connect to, shown on the kiosk management page (/kiosk).
+      publicBaseUrl: process.env.PUBLIC_BASE_URL ?? 'http://localhost:3001',
     });
   });
 

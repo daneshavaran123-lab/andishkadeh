@@ -4,10 +4,12 @@ import {
   COMMAND_STATUS_LABEL,
   COMMAND_TYPE_LABEL,
   HARDWARE_STATE_LABEL,
+  WEB_KIOSK_SETUP_STORAGE_KEY,
   toPersianDigits,
   type DeviceCommandRow,
   type DeviceRow,
   type HardwareStatus,
+  type KioskInstallerInfo,
   type SystemInfo,
 } from '@andishkadeh/shared';
 import { api, errorMessage } from '../api';
@@ -19,20 +21,125 @@ import { DeviceHealthBadge } from './Dashboard';
 const HW_TONE: Record<HardwareStatus['state'], Tone> = { OK: 'success', WARNING: 'warning', ERROR: 'danger', UNKNOWN: 'neutral' };
 const HW_NAME = { pos: 'کارتخوان', printer: 'چاپگر', scanner: 'اسکنر QR' } as const;
 
-function KeyOnce({ apiKey, deviceId, onClose }: { apiKey: string; deviceId: string; onClose: () => void }) {
+/** Copies a value (server address, device id, key) with one tap. */
+export function CopyButton({ value, label = 'کپی' }: { value: string; label?: string }) {
+  const toast = useToast();
   return (
-    <Modal title="کلید دستگاه" onClose={onClose} footer={<button className="btn btn-primary" onClick={onClose}>ذخیره کردم</button>}>
-      <Alert tone="warning">این کلید فقط یک بار نمایش داده می‌شود. آن را در فایل تنظیمات کیوسک (kiosk.config.json → deviceKey) وارد کنید.</Alert>
-      <dl className="kv-list" style={{ marginTop: 14 }}>
+    <button
+      type="button"
+      className="btn btn-sm btn-ghost"
+      onClick={() =>
+        void navigator.clipboard.writeText(value).then(
+          () => toast.push('کپی شد'),
+          () => toast.push('کپی نشد؛ متن را انتخاب و کپی کنید', true),
+        )
+      }
+    >
+      <Icon name="copy" />
+      {label}
+    </button>
+  );
+}
+
+/** Address kiosks connect to: the server's public address, or the one this page was opened with. */
+export const useServerUrl = () => {
+  const system = useQuery({ queryKey: ['system'], queryFn: () => api.get<SystemInfo>('/admin/system'), staleTime: Infinity });
+  return system.data?.publicBaseUrl || location.origin;
+};
+
+/** Windows installer of this release, offered only once it can be downloaded. */
+export function InstallerButton({ info }: { info: KioskInstallerInfo | undefined }) {
+  if (!info) return null;
+  if (info.available === false) {
+    return (
+      <span className="badge" title="نصب‌کننده این نسخه هنوز منتشر نشده است" data-testid="kiosk-installer-missing">
+        نصب‌کننده نسخه {toPersianDigits(info.version)} هنوز منتشر نشده
+      </span>
+    );
+  }
+  return (
+    <a className="btn" href={info.url} title="نصب‌کننده برنامه کیوسک برای ویندوز، هم‌نسخه با این سرور" data-testid="kiosk-installer">
+      <Icon name="download" />
+      برنامه کیوسک ویندوز {toPersianDigits(info.version)}
+    </a>
+  );
+}
+
+export const useInstallerInfo = () =>
+  useQuery({ queryKey: ['installer'], queryFn: () => api.get<KioskInstallerInfo>('/admin/system/installer'), staleTime: 60_000 }).data;
+
+/**
+ * The key of a new device (or a new key) is shown once, with everything needed to connect a kiosk:
+ * the Windows app's setup screen takes the three values; the web app at `/` of this server can be
+ * activated in this browser directly (same origin, so the activation is shared with it).
+ */
+function KeyOnce({ apiKey, deviceId, onClose }: { apiKey: string; deviceId: string; onClose: () => void }) {
+  const serverUrl = useServerUrl();
+  const [payment, setPayment] = useState<'mock' | 'none'>('mock');
+  const [activated, setActivated] = useState(false);
+  const activateHere = () => {
+    try {
+      const current = JSON.parse(localStorage.getItem(WEB_KIOSK_SETUP_STORAGE_KEY) ?? 'null') as { deviceId?: string } | null;
+      if (
+        current?.deviceId &&
+        current.deviceId !== deviceId &&
+        !window.confirm(
+          `این مرورگر هم‌اکنون کیوسک ${current.deviceId} است. فروش‌ها و رویدادهای ارسال‌نشده آن دستگاه باید پیش از جایگزینی ارسال شده باشند (صف همگام‌سازی آن در این صفحه صفر باشد). جایگزین شود؟`,
+        )
+      )
+        return;
+      localStorage.setItem(
+        WEB_KIOSK_SETUP_STORAGE_KEY,
+        JSON.stringify({ serverUrl: location.origin, deviceId, deviceKey: apiKey, payment, printer: 'browser', scanner: 'keyboard', devControls: false }),
+      );
+      setActivated(true);
+    } catch {
+      window.alert('ذخیره در این مرورگر ممکن نشد (حالت خصوصی یا تنظیمات مرورگر).');
+    }
+  };
+  return (
+    <Modal title="اتصال کیوسک" onClose={onClose} footer={<button className="btn btn-primary" onClick={onClose}>ذخیره کردم</button>}>
+      <Alert tone="warning">کلید فقط همین یک بار نمایش داده می‌شود و روی سرور ذخیره نمی‌شود. پیش از بستن، کیوسک را متصل کنید یا کلید را جای امنی بنویسید.</Alert>
+      <dl className="kv-list" style={{ marginTop: 14 }} data-testid="device-connection">
+        <dt>آدرس سرور</dt>
+        <dd>
+          <code className="ltr">{serverUrl}</code> <CopyButton value={serverUrl} />
+        </dd>
         <dt>شناسه دستگاه</dt>
-        <dd className="ltr">{deviceId}</dd>
+        <dd>
+          <code className="ltr">{deviceId}</code> <CopyButton value={deviceId} />
+        </dd>
         <dt>کلید</dt>
         <dd>
-          <code className="ltr" style={{ wordBreak: 'break-all', userSelect: 'all' }}>
+          <code className="ltr" style={{ wordBreak: 'break-all', userSelect: 'all' }} data-testid="device-key">
             {apiKey}
-          </code>
+          </code>{' '}
+          <CopyButton value={apiKey} />
         </dd>
       </dl>
+      <h3 style={{ fontSize: 15, margin: '18px 0 6px' }}>کیوسک ویندوز</h3>
+      <p className="muted" style={{ margin: 0, lineHeight: 1.9 }}>
+        در صفحه «راه‌اندازی کیوسک» برنامه ویندوز (اجرای اول) همین آدرس سرور، شناسه و کلید را وارد کنید و چاپگر رسید را انتخاب کنید.
+      </p>
+      <h3 style={{ fontSize: 15, margin: '18px 0 6px' }}>وب‌اپ روی همین مرورگر</h3>
+      {activated ? (
+        <Alert tone="success">
+          این مرورگر به‌عنوان کیوسک {deviceId} فعال شد.{' '}
+          <a href="/" data-testid="open-web-app">
+            باز کردن وب‌اپ
+          </a>
+        </Alert>
+      ) : (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <select className="input" style={{ width: 'auto' }} value={payment} onChange={(e) => setPayment(e.target.value as 'mock' | 'none')} aria-label="کارتخوان">
+            <option value="mock">کارتخوان: شبیه‌ساز (نمایش و آموزش، با نوار «حالت آزمایشی»)</option>
+            <option value="none">کارتخوان: متصل نشده (فروش متوقف)</option>
+          </select>
+          <button className="btn" onClick={activateHere} data-testid="activate-browser">
+            فعال‌سازی همین مرورگر
+          </button>
+        </div>
+      )}
     </Modal>
   );
 }
@@ -75,10 +182,13 @@ function Commands({ device }: { device: DeviceRow }) {
   );
 }
 
-/** A15 — kiosk heartbeat, card reader / printer / scanner state, version, outbox. */
-export function Devices() {
+/**
+ * A15 — kiosk heartbeat, card reader / printer / scanner state, version, outbox. Also the device
+ * list of the kiosk management page (/kiosk), which shows the installer in its own card.
+ */
+export function Devices({ embedded = false }: { embedded?: boolean }) {
   const q = useQuery({ queryKey: ['devices'], queryFn: () => api.get<DeviceRow[]>('/admin/devices'), refetchInterval: 15_000 });
-  const system = useQuery({ queryKey: ['system'], queryFn: () => api.get<SystemInfo>('/admin/system'), staleTime: Infinity });
+  const installer = useInstallerInfo();
   const qc = useQueryClient();
   const toast = useToast();
   const action = useAction();
@@ -103,16 +213,11 @@ export function Devices() {
   return (
     <>
       <PageHead
-        title="کیوسک و تجهیزات"
+        title={embedded ? 'کیوسک‌ها' : 'کیوسک و تجهیزات'}
         subtitle="وضعیت «نامشخص» یعنی SDK واقعی آن تجهیز متصل نیست یا وضعیت را گزارش نمی‌کند"
         actions={
           <>
-            {system.data && (
-              <a className="btn" href={system.data.kioskInstallerUrl} title="نصب‌کننده برنامه کیوسک برای ویندوز، هم‌نسخه با این سرور" data-testid="kiosk-installer">
-                <Icon name="download" />
-                برنامه کیوسک ویندوز {toPersianDigits(system.data.version)}
-              </a>
-            )}
+            {!embedded && <InstallerButton info={installer} />}
             <AdminOnly>
               <button className="btn btn-primary" onClick={() => setCreate(true)}>
                 <Icon name="plus" />
@@ -189,6 +294,16 @@ export function Devices() {
                 >
                   <Icon name="key" />
                   کلید جدید
+                </button>
+                <button
+                  className="btn btn-sm btn-ghost"
+                  onClick={action(async () => {
+                    const name = window.prompt(`نام تازه برای ${d.id} (شناسه دستگاه تغییر نمی‌کند)`, d.name)?.trim();
+                    if (name && name !== d.name) await act(() => api.patch(`/admin/devices/${d.id}`, { name }), 'نام دستگاه تغییر کرد');
+                  })}
+                >
+                  <Icon name="edit" />
+                  تغییر نام
                 </button>
                 <button className="btn btn-sm btn-ghost" onClick={action(() => act(() => api.patch(`/admin/devices/${d.id}`, { active: !d.active }), d.active ? 'دستگاه غیرفعال شد' : 'دستگاه فعال شد'))}>
                   {d.active ? 'غیرفعال‌سازی' : 'فعال‌سازی'}

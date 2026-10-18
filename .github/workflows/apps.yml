@@ -207,7 +207,10 @@ jobs:
           for i in $(seq 1 60); do curl -sf localhost:3001/api/v1/health >/dev/null && break; sleep 2; done
           version=$(node -p "require('./apps/server/package.json').version")
           curl -sf localhost:3001/api/v1/health | tee /dev/stderr | grep -q "\"db\":\"ok\".*\"version\":\"$version\""
-          curl -sf localhost:3001/admin/login | grep -q '<div id="root">'
+          curl -sf localhost:3001/admin/login | grep -q '/admin/manifest.webmanifest'
+          # Customer web app at /, kiosk management (the panel build) at /kiosk.
+          curl -sf localhost:3001/ | grep -q './manifest.webmanifest'
+          curl -sf localhost:3001/kiosk | grep -q '/admin/manifest.webmanifest'
           curl -sf -X POST localhost:3001/api/v1/admin/auth/login -H 'Content-Type: application/json' \
             -d '{"username":"admin","password":"Admin@12345"}' | grep -q '"token"'
           # A restart (new deploy) runs migrations and the seed again without the initial passwords.

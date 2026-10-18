@@ -1,5 +1,5 @@
 /**
- * Staff access from the kiosk (web app served by the server at /kiosk/): the gear on the welcome
+ * Staff access from the kiosk (web app served by the server at /): the gear on the welcome
  * screen signs in with the on-screen keyboard and opens the existing admin panel (/admin) for the
  * staff member's role; logout, idle timeout and expiry return to the kiosk; a price changed in the
  * panel is on the kiosk when it comes back.
@@ -21,7 +21,7 @@ async function setUpKiosk(page: Page) {
   const deviceId = `ADM-${Date.now().toString(36).toUpperCase()}`;
   const created = await adminApi<{ apiKey: string }>(token, 'POST', '/admin/devices', { id: deviceId, name: 'کیوسک آزمون ورود مدیر' });
   expect(created.status).toBe(201);
-  await page.goto('/kiosk/');
+  await page.goto('/');
   await page.getByTestId('setup-device').fill(deviceId);
   await page.getByTestId('setup-key').fill(created.body.apiKey);
   await page.getByTestId('setup-printer').selectOption('mock');
@@ -91,7 +91,7 @@ test('manager: gear → sign-in on the kiosk keyboard → existing panel → pri
 
     // Logout returns to the kiosk's welcome screen; the session is gone from the browser.
     await page.getByTestId('logout').click();
-    await expect(page).toHaveURL(/\/kiosk\/$/);
+    await expect(page).toHaveURL(/:3200\/$/);
     await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
     expect(await storage(page)).toEqual({ token: null, kiosk: null });
 
@@ -121,7 +121,7 @@ test('reception staff land on the orders page; expiry and idle time both return 
     sessionStorage.setItem(key, JSON.stringify({ ...s, expiresAt: new Date(Date.now() + 1500).toISOString() }));
   }, ADMIN_KIOSK_STORAGE_KEY);
   await page.reload();
-  await expect(page).toHaveURL(/\/kiosk\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/:3200\/$/, { timeout: 15_000 });
   await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
   expect(await storage(page)).toEqual({ token: null, kiosk: null });
 
@@ -133,5 +133,5 @@ test('reception staff land on the orders page; expiry and idle time both return 
     sessionStorage.setItem(key, JSON.stringify({ ...s, idleMinutes: 0.02 }));
   }, ADMIN_KIOSK_STORAGE_KEY);
   await page.reload();
-  await expect(page).toHaveURL(/\/kiosk\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/:3200\/$/, { timeout: 15_000 });
 });

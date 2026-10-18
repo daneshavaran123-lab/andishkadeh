@@ -1,5 +1,25 @@
-# Central server + admin panel in one image (Liara, see docs/liara-deploy.md, or any Docker host).
-# Start-up: database migrations, idempotent seed, then the API on $PORT with the panel at /admin.
+# Central server, admin panel and customer web app in one image (Liara, see docs/liara-deploy.md, or
+# any Docker host). Start-up: database migrations, idempotent seed, then on $PORT: the web app at /,
+# the panel at /admin, kiosk management at /kiosk and the API at /api/v1.
+
+# Customer web app (apps/kiosk dist-web), built in its own stage: the kiosk's Windows and Android
+# tooling stays out of the final image. Electron's binary and native modules are not needed here.
+FROM node:22-bookworm-slim AS web
+RUN corepack enable
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/shared/package.json packages/shared/
+COPY apps/server/package.json apps/server/
+COPY apps/admin/package.json apps/admin/
+COPY apps/kiosk/package.json apps/kiosk/
+COPY e2e/package.json e2e/
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1
+RUN pnpm install --frozen-lockfile --filter "@andishkadeh/kiosk..." --ignore-scripts
+COPY tsconfig.base.json ./
+COPY packages/shared packages/shared
+COPY apps/kiosk apps/kiosk
+RUN pnpm --filter @andishkadeh/shared build && pnpm --filter @andishkadeh/kiosk build:web
+
 FROM node:22-bookworm-slim
 
 # Prisma needs OpenSSL; the slim image does not ship it.
@@ -25,11 +45,13 @@ RUN sed -i 's/\r$//' apps/server/scripts/docker-start.sh
 RUN pnpm --filter @andishkadeh/shared build \
  && pnpm --filter @andishkadeh/server build \
  && VITE_API_URL= pnpm --filter @andishkadeh/admin build
+COPY --from=web /app/apps/kiosk/dist-web /app/apps/kiosk/dist-web
 
 ENV NODE_ENV=production \
     PORT=3001 \
     TRUST_PROXY=1 \
     ADMIN_DIST_DIR=/app/apps/admin/dist \
+    WEB_APP_DIST_DIR=/app/apps/kiosk/dist-web \
     MEDIA_DIR=/app/storage/media
 EXPOSE 3001
 CMD ["sh", "apps/server/scripts/docker-start.sh"]

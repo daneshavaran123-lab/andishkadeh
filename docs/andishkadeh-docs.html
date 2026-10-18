@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.4.1</span> · ۲۶ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.5.0</span> · ۲۶ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -193,6 +193,15 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <section id="overview">
   <h2>نمای کلی</h2>
   <p class="lede">سه بخش با قراردادهای مشترک: کیوسک برای مشتری، پنل برای مدیر و اپراتور، سرور به‌عنوان مرجع نهایی قیمت، سفارش و پرداخت.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>نشانی</th><th>بخش</th></tr></thead>
+    <tbody>
+      <tr><td><code>/</code></td><td>وب‌اپ مشتری (همان رابط کیوسک). هر مرورگر یک بار از <code>/kiosk</code> فعال می‌شود</td></tr>
+      <tr><td><code>/admin</code></td><td>پنل مدیریت</td></tr>
+      <tr><td><code>/kiosk</code></td><td>مدیریت کیوسک‌ها (با ورود کارکنان): دانلود برنامه ویندوز، آدرس سرور، ثبت و نام‌گذاری دستگاه، کلید، فعال‌سازی و وضعیت</td></tr>
+      <tr><td><code>/api/v1</code></td><td>API مشترک وب‌اپ، کیوسک ویندوز و پنل؛ یک پایگاه داده PostgreSQL</td></tr>
+    </tbody>
+  </table></div>
 
   <div class="cols">
     <div>
@@ -276,7 +285,7 @@ pnpm --filter @andishkadeh/shared build</code></pre></div>
       <tr><td><code>pnpm e2e</code></td><td>تست‌های پذیرش Playwright روی پشته جداگانه (پورت‌های <span class="num">3200 / 5283 / 5284 / 5285</span>)</td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/server openapi</code></td><td>تولید <code>docs/openapi.json</code></td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/kiosk dist:win</code></td><td>ساخت نصب‌کننده ویندوز کیوسک (NSIS)</td></tr>
-      <tr><td><code>pnpm --filter @andishkadeh/kiosk build:web</code></td><td>ساخت وب‌اپ کیوسک (<code>apps/kiosk/dist-web</code>، برای <code>KIOSK_WEB_DIST_DIR</code> سرور)</td></tr>
+      <tr><td><code>pnpm --filter @andishkadeh/kiosk build:web</code></td><td>ساخت وب‌اپ مشتری (<code>apps/kiosk/dist-web</code>، برای <code>WEB_APP_DIST_DIR</code> سرور)</td></tr>
       <tr><td><code>pnpm --filter @andishkadeh/kiosk android:apk</code></td><td>ساخت APK اندروید (debug)</td></tr>
       <tr><td><code>python3 tools/icons/generate.py</code></td><td>تولید دوباره آیکون‌ها و صفحه آغاز همه نسخه‌ها</td></tr>
     </tbody>
@@ -300,8 +309,8 @@ flowchart LR
     API["NestJS API&lt;br/&gt;/api/v1"]
     DB[("PostgreSQL")]
     MEDIA[("پوشه رسانه&lt;br/&gt;آدرس‌دهی با sha256")]
-    WEB["فایل‌های وب‌اپ&lt;br/&gt;/kiosk/"]
-    ADM["فایل‌های پنل&lt;br/&gt;/admin/"]
+    WEB["فایل‌های وب‌اپ&lt;br/&gt;/"]
+    ADM["فایل‌های پنل&lt;br/&gt;/admin/ و /kiosk"]
   end
   Admin["مدیر و اپراتور&lt;br/&gt;پنل مدیریت"]
   W -- "Device id:key" --&gt; API
@@ -732,7 +741,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.4.1",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.5.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -747,7 +756,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.4.1
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.5.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -878,7 +887,7 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th></th><th>ویندوز (Electron)</th><th>وب‌اپ (PWA)</th><th>اندروید (Capacitor)</th></tr></thead>
     <tbody>
-      <tr><td>نصب</td><td>نصب‌کننده NSIS</td><td><code>http(s)://&lt;سرور&gt;/kiosk/</code> در Chrome یا Edge</td><td>فایل APK</td></tr>
+      <tr><td>نصب</td><td>نصب‌کننده NSIS</td><td>نشانی اصلی <code>http(s)://&lt;سرور&gt;/</code> در Chrome یا Edge</td><td>فایل APK</td></tr>
       <tr><td>پایگاه محلی</td><td>فایل SQLite (WAL، <code>synchronous=FULL</code>)</td><td>SQLite در WebAssembly، ذخیره در IndexedDB</td><td>مانند وب‌اپ</td></tr>
       <tr><td>پیکربندی</td><td>صفحه راه‌اندازی در اجرای اول، سپس <code>kiosk.config.json</code></td><td>صفحه راه‌اندازی تکنسین</td><td>صفحه راه‌اندازی تکنسین</td></tr>
       <tr><td>چاپ رسید</td><td>درایور ویندوز، بی‌صدا</td><td>چاپ مرورگر (با <code>--kiosk-printing</code> بی‌صدا)</td><td>سرویس چاپ اندروید</td></tr>
@@ -895,10 +904,10 @@ pnpm --filter @andishkadeh/kiosk dist:win</code></pre></div>
   <h3>وب‌اپ روی سرور</h3>
   <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>pnpm --filter @andishkadeh/kiosk build:web   # apps/kiosk/dist-web
 # apps/server/.env
-KIOSK_WEB_DIST_DIR="../kiosk/dist-web"</code></pre></div>
-  <p>کیوسک در <code>/kiosk/</code> همان سرور باز می‌شود و CORS لازم نیست. روی HTTP شبکه محلی، فروش و حالت آفلاین کار می‌کند، ولی راه‌اندازی دوباره بدون سرور (Service Worker)، جلوگیری از زبانه دوم و روشن ماندن صفحه به <strong>HTTPS</strong> نیاز دارند.</p>
+WEB_APP_DIST_DIR="../kiosk/dist-web"</code></pre></div>
+  <p>وب‌اپ روی نشانی اصلی <code>/</code> همان سرور باز می‌شود (پنل روی <code>/admin</code> و مدیریت کیوسک روی <code>/kiosk</code>) و CORS لازم نیست. مرورگری که هنوز فعال نشده، صفحه راه‌اندازی را با راهنمای <code>/kiosk</code> نشان می‌دهد: در همان مرورگر به <code>/kiosk</code> بروید، کیوسک را ثبت کنید و «فعال‌سازی همین مرورگر» را بزنید. روی HTTP شبکه محلی، فروش و حالت آفلاین کار می‌کند، ولی راه‌اندازی دوباره بدون سرور (Service Worker)، جلوگیری از زبانه دوم و روشن ماندن صفحه به <strong>HTTPS</strong> نیاز دارند.</p>
   <div class="code"><span class="lang">text</span><button type="button" data-copy>کپی</button><pre><code>chrome.exe --kiosk --kiosk-printing --start-fullscreen --noerrdialogs ^
-  --user-data-dir=C:\KioskChrome https://kiosk.example.local/kiosk/</code></pre></div>
+  --user-data-dir=C:\KioskChrome https://kiosk.example.local/</code></pre></div>
 
   <h3>راه‌اندازی اولیه</h3>
   <ol class="steps">
@@ -1160,7 +1169,7 @@ flowchart TD
     <thead><tr><th>نسخه</th><th>رفتار</th></tr></thead>
     <tbody>
       <tr><td>ویندوز</td><td>پنل در پنجره‌ای جدا روی کیوسک (در <code>kioskMode</code> تمام‌صفحه)، با نشستی فقط در حافظه که با بستن پنجره پاک می‌شود. فقط صفحه‌های پنل باز می‌شوند. دانلود خروجی و پنجره چاپ پنل در این پنجره مسدود است. اگر پنل باز نشود، پنجره خودش بسته می‌شود و علت روی کیوسک نمایش داده می‌شود</td></tr>
-      <tr><td>وب‌اپ (<code>/kiosk/</code> همان سرور)</td><td>پنل در همان زبانه باز می‌شود و پس از خروج به کیوسک برمی‌گردد</td></tr>
+      <tr><td>وب‌اپ (<code>/</code> همان سرور)</td><td>پنل در همان زبانه باز می‌شود و پس از خروج به کیوسک برمی‌گردد</td></tr>
       <tr><td>اندروید</td><td>چرخ‌دنده نمایش داده نمی‌شود؛ از پنل روی دستگاه دیگر استفاده کنید</td></tr>
     </tbody>
   </table></div>
@@ -1337,7 +1346,7 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
       <tr><td><code>AndishkadehKiosk-Setup-&lt;نسخه&gt;.exe</code></td><td>نصب‌کننده کیوسک ویندوز؛ امضای دیجیتال ندارد، پس ویندوز هشدار SmartScreen نشان می‌دهد</td></tr>
       <tr><td><code>AndishkadehKiosk-&lt;نسخه&gt;.apk</code></td><td>برنامه اندروید با امضای انتشار؛ فقط اگر secretهای امضا تعریف شده باشند</td></tr>
       <tr><td><code>AndishkadehKiosk-&lt;نسخه&gt;-debug.apk</code></td><td>اندروید با کلید debug، فقط برای آزمایش؛ روی نسخه قبلی نصب نمی‌شود</td></tr>
-      <tr><td><code>AndishkadehKioskWeb-&lt;نسخه&gt;.zip</code></td><td>وب‌اپ کیوسک برای <code>KIOSK_WEB_DIST_DIR</code></td></tr>
+      <tr><td><code>AndishkadehKioskWeb-&lt;نسخه&gt;.zip</code></td><td>وب‌اپ مشتری برای <code>WEB_APP_DIST_DIR</code> (نشانی <code>/</code>)</td></tr>
       <tr><td><code>AndishkadehAdmin-&lt;نسخه&gt;.zip</code></td><td>پنل مدیریت برای <code>ADMIN_DIST_DIR</code></td></tr>
       <tr><td><code>SHA256SUMS.txt</code></td><td>چکیده SHA-256 همه فایل‌ها</td></tr>
       <tr><td>Source code</td><td>کد همین نسخه (GitHub خودش اضافه می‌کند)؛ سرور از روی آن ساخته می‌شود</td></tr>
@@ -1372,9 +1381,9 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
     <thead><tr><th>لایه</th><th>ابزار</th><th>تعداد</th><th>نتیجه</th></tr></thead>
     <tbody>
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن</td><td>Vitest</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۵۱</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون)</td><td>Vitest</td><td class="num">۵۸</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API + برنامه کمکی کارتخوان + صفحه راه‌اندازی ویندوز + ورود مدیر از کیوسک</td><td>Vitest</td><td class="num">۵۲</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP، صفحه راه‌اندازی ویندوز و ورود مدیر از کیوسک)</td><td>Playwright</td><td class="num">۳۷</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP، صفحه راه‌اندازی ویندوز، ورود مدیر از کیوسک و مدیریت کیوسک در <code>/kiosk</code>)</td><td>Playwright</td><td class="num">۴۰</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1477,8 +1486,15 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.4.1</span></h2>
-  <p class="lede">۲۶ مهر ۱۴۰۵ — رفع خطای ۵۰۲ روی لیارا.</p>
+  <h2>تغییرات نسخه <span class="tag">1.5.0</span></h2>
+  <p class="lede">۲۶ مهر ۱۴۰۵ — نشانی‌های تازه سایت.</p>
+  <ul>
+    <li><strong><code>/</code></strong> وب‌اپ مشتری (پیش‌تر <code>/kiosk/</code>)؛ image لیارا آن را هم می‌سازد.</li>
+    <li><strong><code>/kiosk</code></strong> مدیریت کیوسک‌ها با ورود کارکنان: آدرس سرور، دانلود برنامه ویندوز (فقط پس از انتشار)، ثبت و نام‌گذاری دستگاه، کلید، «فعال‌سازی همین مرورگر» برای وب‌اپ، و وضعیت کیوسک‌ها.</li>
+    <li><strong><code>/admin</code></strong> بدون تغییر. متغیر سرور <code>WEB_APP_DIST_DIR</code> جای <code>KIOSK_WEB_DIST_DIR</code> را گرفت.</li>
+  </ul>
+  <h3>نسخه 1.4.1</h3>
+  <p>۲۶ مهر ۱۴۰۵ — رفع خطای ۵۰۲ روی لیارا.</p>
   <ul>
     <li><strong>شروع image با فایل‌های ویندوز:</strong> اسکریپت شروع با پایان خط CRLF در خط اول متوقف می‌شد و لیارا ۵۰۲ نشان می‌داد. اکنون <code>Dockerfile</code> آن را اصلاح می‌کند و <code>.gitattributes</code> همه فایل‌ها را با LF نگه می‌دارد.</li>
     <li><strong>صفحه علت خطا:</strong> اگر بررسی متغیرها، migration یا داده اولیه خطا بدهد، به‌جای ۵۰۲ صفحه‌ای با مرحله و علت (HTTP 503) نمایش داده می‌شود. اتصال به دیتابیسی که هنوز بالا نیامده تا یک دقیقه دوباره امتحان می‌شود.</li>

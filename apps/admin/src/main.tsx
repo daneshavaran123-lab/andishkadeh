@@ -11,6 +11,7 @@ import { Content } from './pages/Content';
 import { Dashboard } from './pages/Dashboard';
 import { Devices } from './pages/Devices';
 import { Discounts } from './pages/Discounts';
+import { KioskManagement } from './pages/KioskManagement';
 import { Login } from './pages/Login';
 import { MediaLibrary } from './pages/Media';
 import { OrderDetailPage, Orders } from './pages/Orders';
@@ -36,6 +37,26 @@ function Protected({ children, adminOnly }: { children: ReactNode; adminOnly?: b
   if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
+}
+
+/** The same build serves the kiosk management page at /kiosk (apps/server/src/app.factory.ts). */
+const KIOSK_MANAGEMENT = /^\/kiosk(\/|$)/.test(location.pathname);
+if (KIOSK_MANAGEMENT) document.title = 'مدیریت کیوسک‌ها — اندیشکده کشتی ایران';
+
+function KioskManagementApp() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login title="ورود به مدیریت کیوسک‌ها" home="/" />} />
+      <Route
+        path="*"
+        element={
+          <Protected>
+            <KioskManagement />
+          </Protected>
+        }
+      />
+    </Routes>
+  );
 }
 
 function App() {
@@ -92,10 +113,10 @@ function App() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename="/admin">
+      <BrowserRouter basename={KIOSK_MANAGEMENT ? '/kiosk' : '/admin'}>
         <AuthProvider>
           <ToastProvider>
-            <App />
+            {KIOSK_MANAGEMENT ? <KioskManagementApp /> : <App />}
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

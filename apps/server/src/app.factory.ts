@@ -36,41 +36,48 @@ export async function createApp(opts: { logger?: boolean } = {}) {
     express.static(cfg.mediaDirAbs, { immutable: true, maxAge: '365d', index: false, dotfiles: 'deny', fallthrough: false }),
   );
 
-  // Single-origin deployment: the built admin SPA under /admin (client-side routes fall back to index.html).
+  // One origin, three parts (docs/server-setup.md):
+  //   /        customer web app (apps/kiosk dist-web)
+  //   /admin   admin panel (apps/admin dist)
+  //   /kiosk   kiosk management: the same panel build, which shows only its kiosk pages there
+  // Client-side routes fall back to their index.html; a missing asset stays a 404.
+  const isFile = (path: string) => /\.[a-z0-9]+$/i.test(path);
+  const isPage = (req: express.Request) => (req.method === 'GET' || req.method === 'HEAD') && !isFile(req.path);
   if (cfg.adminDistAbs && existsSync(join(cfg.adminDistAbs, 'index.html'))) {
     const index = join(cfg.adminDistAbs, 'index.html');
-    app.use('/admin', express.static(cfg.adminDistAbs, { index: false, maxAge: '1h', dotfiles: 'deny' }));
-    app.use('/admin', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-      // Only client-side routes fall back to the SPA; a missing asset stays a 404.
-      if (req.method !== 'GET' || /\.[a-z0-9]+$/i.test(req.path)) return next();
+    const panelPage = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (!isPage(req)) return next();
       res.setHeader('Cache-Control', 'no-cache');
       res.sendFile(index);
-    });
+    };
+    app.use('/admin', express.static(cfg.adminDistAbs, { index: false, maxAge: '1h', dotfiles: 'deny' }));
+    app.use('/admin', panelPage);
+    app.use('/kiosk', panelPage);
   }
 
-  // Kiosk web app (PWA) under /kiosk/. Hashed assets are immutable; the entry page, manifest and
-  // service worker are revalidated so a new release reaches the kiosks on their next start.
-  if (cfg.kioskWebDistAbs && existsSync(join(cfg.kioskWebDistAbs, 'index.html'))) {
-    const kioskDist = cfg.kioskWebDistAbs;
-    app.use('/kiosk', (req: express.Request, res: express.Response, next: express.NextFunction) => {
-      if (req.method === 'GET' && req.originalUrl === '/kiosk') return res.redirect(301, '/kiosk/');
-      next();
+  // Customer web app at the root. Hashed assets are immutable; the entry page, manifest and service
+  // worker are revalidated so a new release reaches every browser on its next start.
+  if (cfg.webAppDistAbs && existsSync(join(cfg.webAppDistAbs, 'index.html'))) {
+    const webDist = cfg.webAppDistAbs;
+    const webIndex = join(webDist, 'index.html');
+    const ownPath = (req: express.Request) => !/^\/(api|admin|kiosk)(\/|$)/.test(req.path);
+    const files = express.static(webDist, {
+      index: false,
+      dotfiles: 'deny',
+      setHeaders: (res, path) => {
+        // Judged from inside the dist folder: a deployment path containing "assets" must not make
+        // index.html or sw.js immutable (browsers would never update).
+        const rel = relative(webDist, path).split(sep).join('/');
+        if (rel.startsWith('assets/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        else res.setHeader('Cache-Control', 'no-cache');
+      },
     });
-    app.use(
-      '/kiosk',
-      express.static(kioskDist, {
-        index: 'index.html',
-        dotfiles: 'deny',
-        fallthrough: false,
-        setHeaders: (res, path) => {
-          // Judged from inside the dist folder: a deployment path containing "assets" must not make
-          // index.html or sw.js immutable (kiosks would never update).
-          const rel = relative(kioskDist, path).split(sep).join('/');
-          if (rel.startsWith('assets/')) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-          else res.setHeader('Cache-Control', 'no-cache');
-        },
-      }),
-    );
+    app.use((req: express.Request, res: express.Response, next: express.NextFunction) => (ownPath(req) ? files(req, res, next) : next()));
+    app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (!ownPath(req) || !isPage(req)) return next();
+      res.setHeader('Cache-Control', 'no-cache');
+      res.sendFile(webIndex);
+    });
   }
 
   app.setGlobalPrefix('api/v1');

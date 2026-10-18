@@ -90,6 +90,12 @@ const P: Record<string, ReactElement> = {
     </>
   ),
   download: <path d="M12 3v12M7 10l5 5 5-5M4 21h16" />,
+  copy: (
+    <>
+      <rect x="9" y="9" width="12" height="12" rx="2" />
+      <path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1" />
+    </>
+  ),
   upload: <path d="M12 21V9M7 14l5-5 5 5M4 3h16" />,
   logout: <path d="M15 4h4v16h-4M10 17l5-5-5-5M15 12H3" />,
   menu: <path d="M3 6h18M3 12h18M3 18h18" />,

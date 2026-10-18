@@ -22,7 +22,7 @@ type Phase =
   | { kind: 'running'; host: WebHost; setup: WebSetup }
   | { kind: 'error'; message: string };
 
-/** Default server for a kiosk opened from the server itself (https://server/kiosk/). */
+/** Default server for the web app opened from the server itself (https://server/). */
 function defaultServerUrl(): string {
   return PLATFORM === 'web' && /^https?:$/.test(location.protocol) ? location.origin : '';
 }
@@ -43,6 +43,19 @@ function useCornerTaps(enabled: boolean, onTrigger: () => void) {
     window.addEventListener('pointerdown', onDown, true);
     return () => window.removeEventListener('pointerdown', onDown, true);
   }, [enabled, onTrigger]);
+}
+
+/** Web app on the server: staff activate this browser from the kiosk management page (same origin). */
+function ActivationNotice() {
+  return (
+    <div className="setup-notice" data-testid="activation-notice">
+      این دستگاه هنوز فعال نشده است. کارکنان می‌توانند در همین مرورگر به{' '}
+      <a href="/kiosk" dir="ltr">
+        /kiosk
+      </a>{' '}
+      بروند، وارد شوند و «فعال‌سازی همین مرورگر» را بزنند؛ یا شناسه و کلید دستگاه را این‌جا وارد کنند.
+    </div>
+  );
 }
 
 export function WebBoot() {
@@ -87,6 +100,7 @@ export function WebBoot() {
     return (
       <Setup
         initial={{ serverUrl: defaultServerUrl() }}
+        notice={PLATFORM === 'web' && defaultServerUrl() ? <ActivationNotice /> : undefined}
         onSave={(s) => {
           writeWebSetup(s);
           void start();

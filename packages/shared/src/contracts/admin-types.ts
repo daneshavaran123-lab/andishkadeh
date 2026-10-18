@@ -110,6 +110,15 @@ export interface DeviceRow {
 export interface SystemInfo {
   version: string;
   kioskInstallerUrl: string;
+  /** Address kiosks connect to (PUBLIC_BASE_URL). */
+  publicBaseUrl: string;
+}
+
+/** Whether the Windows kiosk installer can be downloaded (null: could not be checked). */
+export interface KioskInstallerInfo {
+  version: string;
+  url: string;
+  available: boolean | null;
 }
 
 export interface DeviceCommandRow {

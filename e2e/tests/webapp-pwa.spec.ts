@@ -1,5 +1,5 @@
 /**
- * Kiosk web app (PWA, the same build as the Android app) served by the server at /kiosk/:
+ * Customer web app (PWA, the same build as the Android app) served by the server at the root /:
  * technician setup with a freshly registered device, a full purchase with the in-page core
  * (sql.js + IndexedDB), restart from local storage, offline restart from the service worker,
  * and the one-tab-only guard.
@@ -16,7 +16,7 @@ test('web app: setup → purchase → restart → offline restart', async ({ pag
   expect(created.status).toBe(201);
 
   // First run: setup screen, server address prefilled with the page's own origin.
-  await page.goto('/kiosk/');
+  await page.goto('/');
   await expect(page.getByTestId('setup')).toBeVisible();
   await expect(page.getByTestId('setup-server')).toHaveValue('http://localhost:3200');
   await page.getByTestId('setup-device').fill(deviceId);
@@ -67,7 +67,7 @@ test('web app: setup → purchase → restart → offline restart', async ({ pag
 
   // A second tab must not start a second core on the same local data.
   const second = await context.newPage();
-  await second.goto('/kiosk/');
+  await second.goto('/');
   await expect(second.getByTestId('boot-error')).toContainText('زبانه یا پنجره دیگری', { timeout: 20_000 });
   await second.close();
 });

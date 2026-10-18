@@ -1,6 +1,6 @@
 // E2E API: dedicated test database, non-destructive migrate + idempotent seed, then start the server.
-// The server also hosts the freshly built kiosk web app at /kiosk/ and the production admin panel at
-// /admin/ (webapp-*.spec.ts: single-origin deployment, built CSP included).
+// The server also hosts the freshly built customer web app at / and the production admin panel at
+// /admin/ (also kiosk management at /kiosk) (webapp-*.spec.ts: single-origin deployment, built CSP included).
 import { execSync, spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,7 +25,7 @@ const env = {
   SEED_OPERATOR_PASSWORD: 'Operator@12345',
   SEED_DEVICE_ID: 'KIOSK-01',
   SEED_DEVICE_KEY: 'test-device-key-0123456789',
-  KIOSK_WEB_DIST_DIR: resolve(kioskDir, 'dist-web'),
+  WEB_APP_DIST_DIR: resolve(kioskDir, 'dist-web'),
   ADMIN_DIST_DIR: resolve(adminDir, 'dist'),
 };
 execSync('npx prisma migrate deploy', { cwd: serverDir, env, stdio: 'inherit' });

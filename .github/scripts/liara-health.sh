@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Polls https://<app>.liara.run/api/v1/health for up to five minutes (CI, after a deploy or on its own).
-# Passes on 200. Fails at once with the server's own reason when the start-up failure page answers
-# (503 with step and reason, apps/server/scripts/startup-failed.mjs).
+# Polls https://<app>.liara.run/api/v1/health for up to five minutes (CI, after a deploy or on its own),
+# then checks that /, /admin and /kiosk serve their parts of the site. Fails at once with the server's
+# own reason when the start-up failure page answers (503 with step and reason,
+# apps/server/scripts/startup-failed.mjs).
 set -u
 app=$(printf '%s' "${1:-}" | tr 'A-Z' 'a-z' | tr -d '[:space:]')
 case "$app" in
@@ -13,12 +14,30 @@ for _ in $(seq 1 60); do
   out=$(curl -s -m 10 -w '\n%{http_code}' "$url" || true)
   code=$(printf '%s' "$out" | tail -n1)
   body=$(printf '%s' "$out" | sed '$d')
-  if [ "$code" = "200" ]; then echo "$body"; exit 0; fi
+  if [ "$code" = "200" ]; then echo "$body"; break; fi
   if [ "$code" = "503" ] && printf '%s' "$body" | grep -q '"step"'; then
     echo "::error::The server did not start: $body"
     exit 1
   fi
   sleep 5
 done
-echo "::error::No healthy answer from $url within 5 minutes (last HTTP status: ${code:-none}). See the app's logs in the Liara console."
-exit 1
+if [ "$code" != "200" ]; then
+  echo "::error::No healthy answer from $url within 5 minutes (last HTTP status: ${code:-none}). See the app's logs in the Liara console."
+  exit 1
+fi
+
+# The three parts of the site: customer web app at /, admin panel at /admin, kiosk management at
+# /kiosk (the panel build). Told apart by their install manifests.
+failed=0
+route() {
+  if curl -s -m 15 "https://$app.liara.run$1" | grep -qF "$2"; then
+    echo "ok  $1  $3"
+  else
+    echo "::error::https://$app.liara.run$1 is not the $3"
+    failed=1
+  fi
+}
+route / './manifest.webmanifest' 'customer web app'
+route /admin/login '/admin/manifest.webmanifest' 'admin panel'
+route /kiosk '/admin/manifest.webmanifest' 'kiosk management page'
+exit $failed

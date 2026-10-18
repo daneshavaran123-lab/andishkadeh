@@ -22,3 +22,10 @@ export interface AdminKioskSession {
 export function adminStartPath(role: AdminRole): string {
   return role === AdminRole.ADMIN ? '/dashboard' : '/orders';
 }
+
+/**
+ * Device activation of the web app served at `/` (localStorage of that origin, read by
+ * apps/kiosk/src/platform/web/config.ts). The kiosk management page at /kiosk writes it to
+ * activate the browser it is opened in.
+ */
+export const WEB_KIOSK_SETUP_STORAGE_KEY = 'andishkadeh.kiosk.setup.v1';

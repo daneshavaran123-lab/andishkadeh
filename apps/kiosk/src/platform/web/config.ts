@@ -1,12 +1,13 @@
 /**
- * Web app / Android app configuration. Entered once by the technician on the setup screen and
- * kept in this browser profile only (never in the build). Changing it requires the device key.
+ * Web app / Android app configuration. Entered once on the setup screen, or written by the kiosk
+ * management page (/kiosk, same origin) when staff activate this browser. Kept in this browser
+ * profile only (never in the build). Changing it requires the device key.
  */
 import { z } from 'zod';
+import { WEB_KIOSK_SETUP_STORAGE_KEY as STORAGE_KEY } from '@andishkadeh/shared';
 import { KioskConfigSchema, type KioskConfig } from '../../core/config';
 import type { SetupValues } from '../../core/setup-check';
 
-const STORAGE_KEY = 'andishkadeh.kiosk.setup.v1';
 export const WEB_DATA_NAME = 'andishkadeh-kiosk';
 
 export const WebSetupSchema = z.object({

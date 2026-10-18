@@ -19,7 +19,9 @@ const EnvSchema = z.object({
   PUBLIC_BASE_URL: z.string().default('http://localhost:3001'),
   /** Optional: built admin panel (apps/admin/dist) served at /admin from the same origin. */
   ADMIN_DIST_DIR: z.string().default(''),
-  /** Optional: built kiosk web app (apps/kiosk/dist-web) served at /kiosk/ for browser kiosks. */
+  /** Optional: built customer web app (apps/kiosk/dist-web) served at the site root `/`. */
+  WEB_APP_DIST_DIR: z.string().default(''),
+  /** Former name of WEB_APP_DIST_DIR (the web app used to live under /kiosk/). */
   KIOSK_WEB_DIST_DIR: z.string().default(''),
   /** Optional: where the panel links the Windows kiosk installer (default: this release on GitHub). */
   KIOSK_INSTALLER_URL: z.string().default(''),
@@ -32,7 +34,7 @@ const DEV_ORIGINS = [5173, 5174, 5176].flatMap((port) => [`http://localhost:${po
 export type AppConfig = z.infer<typeof EnvSchema> & {
   mediaDirAbs: string;
   adminDistAbs: string | null;
-  kioskWebDistAbs: string | null;
+  webAppDistAbs: string | null;
   corsOrigins: string[];
 };
 
@@ -62,14 +64,14 @@ export function config(): AppConfig {
     ...parsed.data,
     mediaDirAbs: resolve(process.cwd(), parsed.data.MEDIA_DIR),
     adminDistAbs: parsed.data.ADMIN_DIST_DIR ? resolve(process.cwd(), parsed.data.ADMIN_DIST_DIR) : null,
-    kioskWebDistAbs: parsed.data.KIOSK_WEB_DIST_DIR ? resolve(process.cwd(), parsed.data.KIOSK_WEB_DIST_DIR) : null,
+    webAppDistAbs: absOrNull(parsed.data.WEB_APP_DIST_DIR || parsed.data.KIOSK_WEB_DIST_DIR),
     corsOrigins: corsOrigins(parsed.data),
   };
   return cached;
 }
 
 /**
- * Browser origins allowed to call the API. Same-origin pages (/admin, /kiosk/) and the Windows
+ * Browser origins allowed to call the API. Same-origin pages (/, /admin, /kiosk) and the Windows
  * kiosk (requests from its main process) need none. Without CORS_ORIGINS, development allows the
  * local dev UIs and production allows nothing.
  */
@@ -78,6 +80,8 @@ function corsOrigins(env: z.infer<typeof EnvSchema>): string[] {
   if (list.length || env.NODE_ENV === 'production') return list;
   return DEV_ORIGINS;
 }
+
+const absOrNull = (dir: string) => (dir ? resolve(process.cwd(), dir) : null);
 
 /** Test helper: forget cached config after mutating process.env. */
 export function resetConfigCache() {
