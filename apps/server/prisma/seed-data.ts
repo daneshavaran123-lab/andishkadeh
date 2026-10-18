@@ -438,9 +438,15 @@ export const SERVICE_IMAGES: Record<string, string> = {
   'PS-401': 'services/PS-401.jpg',
   // Nutrition: photos from the visual design (shown large, at the start of each service row)
   ...Object.fromEntries(
-    ['N-101', 'N-102', 'N-103', 'N-104', 'N-105', 'N-201', 'N-202', 'N-203', 'N-204', 'N-205', 'N-401', 'N-402', 'N-403', 'N-501', 'N-502', 'N-503', 'N-504', 'N-601', 'N-602', 'N-603'].map(
-      (code) => [code, `services/${code}.jpg`],
-    ),
+    [
+      ...['N-101', 'N-102', 'N-103', 'N-104', 'N-105'],
+      ...['N-201', 'N-202', 'N-203', 'N-204', 'N-205'],
+      ...['N-401', 'N-402', 'N-403'],
+      ...['N-501', 'N-502', 'N-503', 'N-504'],
+      ...['N-601', 'N-602', 'N-603'],
+      ...['N-701', 'N-702', 'N-703', 'N-704'],
+      ...['N-801', 'N-802'],
+    ].map((code) => [code, `services/${code}.jpg`]),
   ),
 };
 
