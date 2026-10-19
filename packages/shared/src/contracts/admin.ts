@@ -137,6 +137,7 @@ export const PlanUpsert = z.object({
   durationMonths: z.number().int().min(1).max(36),
   price: Money,
   badge: z.string().trim().max(40).nullable().default(null),
+  mediaId: z.string().nullable().default(null),
   active: z.boolean().default(true),
   sortOrder: z.number().int().min(0).max(9999).default(0),
 });

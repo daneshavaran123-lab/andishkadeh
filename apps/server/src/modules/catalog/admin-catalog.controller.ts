@@ -308,7 +308,7 @@ export class AdminCatalogController {
   async plans(): Promise<AdminPlan[]> {
     const rows = await this.prisma.subscriptionPlan.findMany({
       orderBy: [{ sortOrder: 'asc' }, { durationDays: 'asc' }],
-      include: { _count: { select: { subscriptions: true } } },
+      include: { media: true, _count: { select: { subscriptions: true } } },
     });
     return rows.map((p) => ({
       id: p.id,
@@ -319,6 +319,8 @@ export class AdminCatalogController {
       durationMonths: p.durationMonths,
       price: p.price,
       badge: p.badge,
+      mediaId: p.mediaId,
+      mediaUrl: p.media ? mediaUrl(p.media) : null,
       active: p.active,
       sortOrder: p.sortOrder,
       subscriptionCount: p._count.subscriptions,
@@ -330,6 +332,7 @@ export class AdminCatalogController {
   createPlan(@CurrentAdmin() admin: AdminPrincipal, @Body(new ZodPipe(PlanUpsert)) body: PlanUpsert) {
     return this.mutate(async (tx) => {
       if (await tx.subscriptionPlan.findUnique({ where: { code: body.code } })) throw ApiError.conflict(ErrorCode.DUPLICATE_CODE, 'کد پلن تکراری است');
+      await this.assertMedia(tx, body.mediaId);
       const p = await tx.subscriptionPlan.create({ data: body });
       await this.audit.log(tx, admin, { action: 'plan.created', entityType: 'SubscriptionPlan', entityId: p.id, after: p });
       return p;
@@ -345,6 +348,7 @@ export class AdminCatalogController {
       if (!before) throw ApiError.notFound('پلن');
       const dup = await tx.subscriptionPlan.findUnique({ where: { code: body.code } });
       if (dup && dup.id !== id) throw ApiError.conflict(ErrorCode.DUPLICATE_CODE, 'کد پلن تکراری است');
+      await this.assertMedia(tx, body.mediaId);
       const p = await tx.subscriptionPlan.update({ where: { id }, data: { ...body, revision: { increment: 1 } } });
       await this.audit.log(tx, admin, {
         action: before.price !== body.price ? 'plan.price_changed' : 'plan.updated',

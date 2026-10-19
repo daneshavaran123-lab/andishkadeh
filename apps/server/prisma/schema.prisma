@@ -142,6 +142,7 @@ model Media {
   categories    Category[]
   subcategories Subcategory[]
   services      Service[]
+  plans         SubscriptionPlan[]
 }
 
 model Category {
@@ -215,6 +216,9 @@ model SubscriptionPlan {
   durationMonths Int
   price          Int
   badge          String?
+  /// Photo on the plan's card in the kiosk (replaceable in the panel).
+  mediaId        String?
+  media          Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   active         Boolean  @default(true)
   sortOrder      Int      @default(0)
   revision       Int      @default(1)

@@ -1,7 +1,7 @@
 import { OrderKind, RenewalPolicy, formatJalaliLong, formatNumberFa, formatToman, toPersianDigits } from '@andishkadeh/shared';
-import { Icon } from '../components/Icon';
+import { CATEGORY_ICON, Icon } from '../components/Icon';
 import { BuyAtKioskNotice, Notice, Price, QrCode, Screen } from '../components/ui';
-import { planPrice, useApp, useSession } from '../store';
+import { mediaUrl, planPrice, useApp, useSession } from '../store';
 import { Missing } from './Catalog';
 
 /** K11 — full subscription intro (texts from admin content). No reservation features. */
@@ -64,38 +64,73 @@ export function SubscriptionIntro() {
   );
 }
 
-/** K12 — plans (1/3/6/12 months). Inactive plans never reach the kiosk. */
+/** Colours of the plan cards in their order, like the visual design: blue, red, steel, purple. */
+const PLAN_COLORS = ['var(--blue)', 'var(--red)', '#6f8fc8', 'var(--purple)'];
+
+/**
+ * K12 — plans (1/3/6/12 months) as photo cards: the plan's photo behind its number of months and
+ * title, the domains the subscription covers, and the price row. Inactive plans never reach the kiosk.
+ */
 export function Plans() {
   const bootstrap = useApp((s) => s.bootstrap);
   const { go, set } = useSession();
   if (!bootstrap) return <Missing />;
+  const covered = bootstrap.categories.filter((c) => c.subscriptionCovered);
   return (
     <Screen title="پلن‌های اشتراک" subtitle="مدت اعتبار مورد نظر را انتخاب کنید" theme="red">
       <div className="plan-grid">
         {bootstrap.plans.map((plan, i) => {
           const p = planPrice(bootstrap, plan);
+          const photo = mediaUrl(plan.mediaId);
           return (
             <button
               key={plan.id}
-              className="card plan-card enter"
-              style={{ ['--i' as string]: i }}
+              className={`card plan-card enter${photo ? ' has-photo' : ''}`}
+              style={{ ['--i' as string]: i, ['--theme' as string]: PLAN_COLORS[i % PLAN_COLORS.length] }}
               onClick={() => {
                 set({ planId: plan.id, flow: OrderKind.SUBSCRIPTION });
                 go('planDetail', { planId: plan.id });
               }}
               data-testid={`plan-${plan.durationMonths}`}
             >
-              {plan.badge ? <span className="badge" style={{ alignSelf: 'flex-start' }}>{plan.badge}</span> : <span style={{ height: 38 }} />}
-              <span className="months">
-                {toPersianDigits(plan.durationMonths)}
-                <small>ماه</small>
+              {photo && <span className="plan-photo" style={{ backgroundImage: `url("${photo}")` }} />}
+              <span className="plan-head">
+                {plan.badge && (
+                  <span className="plan-badge">
+                    <Icon name="crown" />
+                    {plan.badge}
+                  </span>
+                )}
+                <span className="months">
+                  {toPersianDigits(plan.durationMonths)}
+                  <small>ماه</small>
+                </span>
+                <span className="plan-title">{plan.title}</span>
+                <span className="plan-rule" />
               </span>
-              <span className="muted" style={{ fontSize: 22 }}>{plan.title}</span>
-              <span className="pp">
-                {p.finalPrice < p.unitPrice && <span className="muted" style={{ textDecoration: 'line-through', fontSize: 22, marginInlineEnd: 12 }}>{formatNumberFa(p.unitPrice)}</span>}
-                {formatToman(p.finalPrice)}
+              {covered.length > 0 && (
+                <span className="plan-features">
+                  <small>دسترسی کامل به</small>
+                  {covered.map((c) => (
+                    <span key={c.id}>
+                      <Icon name={CATEGORY_ICON[c.theme]} />
+                      {c.title.replace(/^مرکز\s+/, '')}
+                    </span>
+                  ))}
+                </span>
+              )}
+              <span className="plan-price">
+                <span className="chevron-circle">
+                  <Icon name="chevron" />
+                </span>
+                <span className="plan-amount">
+                  <span className="pp">
+                    {p.finalPrice < p.unitPrice && <s>{formatNumberFa(p.unitPrice)}</s>}
+                    {formatToman(p.finalPrice)}
+                  </span>
+                  <span className="per">معادل ماهانه {formatToman(Math.round(p.finalPrice / plan.durationMonths))}</span>
+                </span>
               </span>
-              <span className="per">معادل ماهانه {formatToman(Math.round(p.finalPrice / plan.durationMonths))}</span>
             </button>
           );
         })}

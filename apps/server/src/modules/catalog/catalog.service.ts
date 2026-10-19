@@ -48,6 +48,7 @@ export function toPlanDto(p: SubscriptionPlan): PlanDto {
     durationMonths: p.durationMonths,
     price: p.price,
     badge: p.badge,
+    mediaId: p.mediaId,
     sortOrder: p.sortOrder,
   };
 }
@@ -162,6 +163,7 @@ export class CatalogService {
         sc.services.forEach((s) => add(s.mediaId));
       }
     }
+    plans.forEach((p) => add(p.mediaId));
     const media = mediaIds.size ? await this.prisma.media.findMany({ where: { id: { in: [...mediaIds] } } }) : [];
 
     return {

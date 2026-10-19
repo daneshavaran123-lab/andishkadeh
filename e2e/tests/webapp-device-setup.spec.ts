@@ -68,6 +68,10 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await page.getByTestId('home-subscription').click();
   await expect(page.getByTestId('choose-plan')).toHaveText(/مشاهده پلن‌های اشتراک/);
   await page.getByTestId('choose-plan').click();
+  // every plan card has its photo, each a different one
+  const planPhoto = (months: number) => page.getByTestId(`plan-${months}`).locator('.plan-photo');
+  await expect(planPhoto(1)).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
+  expect(await planPhoto(1).getAttribute('style')).not.toBe(await planPhoto(3).getAttribute('style'));
   await page.getByTestId('plan-1').click();
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
   await expect(page.getByTestId('plan-continue')).toHaveCount(0);

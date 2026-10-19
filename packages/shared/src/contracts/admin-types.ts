@@ -288,6 +288,8 @@ export interface AdminPlan {
   durationMonths: number;
   price: number;
   badge: string | null;
+  mediaId: string | null;
+  mediaUrl: string | null;
   active: boolean;
   sortOrder: number;
   subscriptionCount: number;

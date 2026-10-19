@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Andishkadeh Koshti Iran — Kiosk & Admin API",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "description": "API کیوسک سلف‌سرویس و پنل مدیریت اندیشکده کشتی ایران. خطاها: { error: { code, message, details }, requestId }. مبالغ عدد صحیح تومان هستند. هیچ endpoint رزرو یا نوبت‌دهی وجود ندارد."
   },
   "servers": [
@@ -508,6 +508,11 @@
                           "badge": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "mediaId": {
+                            "type": "string",
+                            "nullable": true,
+                            "default": null
                           },
                           "sortOrder": {
                             "type": "integer"
@@ -4590,6 +4595,11 @@
                               "badge": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "mediaId": {
+                                "type": "string",
+                                "nullable": true,
+                                "default": null
                               },
                               "sortOrder": {
                                 "type": "integer"
@@ -9635,6 +9645,11 @@
                     "maxLength": 40,
                     "default": null
                   },
+                  "mediaId": {
+                    "type": "string",
+                    "nullable": true,
+                    "default": null
+                  },
                   "active": {
                     "type": "boolean",
                     "default": true
@@ -9874,6 +9889,11 @@
                     "type": "string",
                     "nullable": true,
                     "maxLength": 40,
+                    "default": null
+                  },
+                  "mediaId": {
+                    "type": "string",
+                    "nullable": true,
                     "default": null
                   },
                   "active": {

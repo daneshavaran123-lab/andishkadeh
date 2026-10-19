@@ -9,7 +9,7 @@ import { join, resolve } from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { sniffImage } from '../src/media/image-meta';
-import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, HOME_CARD_IMAGES, PLANS, SERVICE_IMAGES, SUBCATEGORY_IMAGES } from './seed-data';
+import { CATEGORIES, DEFAULT_CONTENT, DEFAULT_SETTINGS, HOME_CARD_IMAGES, PLAN_IMAGES, PLANS, SERVICE_IMAGES, SUBCATEGORY_IMAGES } from './seed-data';
 
 const prisma = new PrismaClient();
 const SEED_MEDIA_DIR = resolve(__dirname, '../../../assets/seed-media');
@@ -164,11 +164,21 @@ async function main() {
   }
 
   for (const p of PLANS) {
-    await prisma.subscriptionPlan.upsert({
+    const plan = await prisma.subscriptionPlan.upsert({
       where: { code: p.code },
       update: {},
       create: { ...p, description: `دسترسی کامل به حوزه‌های تحت پوشش به مدت ${p.durationMonths} ماه`, active: true },
+      include: { media: true },
     });
+    // As for subgroups: photo where none is set or where it is still an earlier default.
+    const image = PLAN_IMAGES[p.code];
+    if (image && (!plan.media || plan.media.originalName === image)) {
+      const mediaId = await seedMedia(image);
+      if (mediaId !== plan.mediaId) {
+        await prisma.subscriptionPlan.update({ where: { id: plan.id }, data: { mediaId } });
+        catalogChanged = true;
+      }
+    }
   }
 
   // Initial passwords are read only while the account does not exist yet, so after the first run

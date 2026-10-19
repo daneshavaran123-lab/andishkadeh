@@ -419,8 +419,8 @@ export const HOME_CARD_IMAGES = {
 
 /**
  * Per-service images (assets/seed-media/services/<file>), cropped from the approved mockups: small
- * thumbnails, and the large nutrition photos. Services without one show their subgroup's image; every
- * image can be replaced in the admin panel.
+ * thumbnails, and large photos (nutrition, counselling). Services without one show their subgroup's
+ * image; every image can be replaced in the admin panel.
  */
 export const SERVICE_IMAGES: Record<string, string> = {
   'P-101': 'services/P-101.jpg',
@@ -433,10 +433,9 @@ export const SERVICE_IMAGES: Record<string, string> = {
   'PS-104': 'services/PS-104.jpg',
   'PS-105': 'services/PS-105.jpg',
   'PS-106': 'services/PS-106.jpg',
-  'PS-201': 'services/PS-201.jpg',
-  'PS-301': 'services/PS-301.jpg',
   'PS-401': 'services/PS-401.jpg',
-  // Nutrition: photos from the visual design (shown large, at the start of each service row)
+  // From the visual design: the large photos of nutrition and counselling (shown at the start of each
+  // service row), the small thumbnails of QEEG and cognitive assessment
   ...Object.fromEntries(
     [
       ...['N-101', 'N-102', 'N-103', 'N-104', 'N-105'],
@@ -446,9 +445,15 @@ export const SERVICE_IMAGES: Record<string, string> = {
       ...['N-601', 'N-602', 'N-603'],
       ...['N-701', 'N-702', 'N-703', 'N-704'],
       ...['N-801', 'N-802'],
+      ...['PS-201', 'PS-202', 'PS-203', 'PS-204', 'PS-205', 'PS-206', 'PS-207', 'PS-208', 'PS-209', 'PS-210'],
+      ...['NE-101', 'NE-102', 'NE-103', 'NE-104', 'NE-105'],
+      ...['PS-301', 'PS-302', 'PS-303', 'PS-304', 'PS-305', 'PS-306', 'PS-307'],
     ].map((code) => [code, `services/${code}.jpg`]),
   ),
 };
+
+/** Photos on the plan cards (assets/seed-media/plans/<code>.jpg), cut from the plans screen of the visual design. */
+export const PLAN_IMAGES: Record<string, string> = Object.fromEntries(PLANS.map((p) => [p.code, `plans/${p.code}.jpg`]));
 
 /**
  * Subcategory images (assets/seed-media/subcategories/<code>.jpg): one illustration per subgroup,

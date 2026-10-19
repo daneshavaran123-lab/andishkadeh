@@ -132,6 +132,17 @@ textarea {
   flex: none;
 }
 
+/* photo of a plan's card in the kiosk, on the plans page */
+.plan-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center 20%;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
 .login-logo {
   width: 104px;
   height: 104px;

@@ -27,14 +27,15 @@ export class MediaController {
   private async usage(): Promise<Map<string, number>> {
     const counts = new Map<string, number>();
     const inc = (id: string | null) => id && counts.set(id, (counts.get(id) ?? 0) + 1);
-    const [cats, subs, svcs, settings, content] = await Promise.all([
+    const [cats, subs, svcs, plans, settings, content] = await Promise.all([
       this.prisma.category.findMany({ select: { mediaId: true } }),
       this.prisma.subcategory.findMany({ select: { mediaId: true } }),
       this.prisma.service.findMany({ where: { deletedAt: null }, select: { mediaId: true } }),
+      this.prisma.subscriptionPlan.findMany({ select: { mediaId: true } }),
       this.settings.settings(),
       this.settings.content(),
     ]);
-    [...cats, ...subs, ...svcs].forEach((r) => inc(r.mediaId));
+    [...cats, ...subs, ...svcs, ...plans].forEach((r) => inc(r.mediaId));
     inc(settings.logoMediaId);
     inc(content.welcome.heroMediaId);
     inc(content.home.servicesMediaId);

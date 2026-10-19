@@ -7,6 +7,7 @@ import { ReadOnlyNote } from '../components/Layout';
 import { Icon } from '../components/Icon';
 import { Alert, Badge, Card, Code, ErrorBox, Field, Loading, Modal, PageHead, Switch, useAction, useToast } from '../components/ui';
 import { MoneyInput } from './Catalog';
+import { MediaPicker } from './Media';
 
 function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: () => void }) {
   const qc = useQueryClient();
@@ -14,8 +15,19 @@ function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: 
   const action = useAction();
   const [f, setF] = useState<PlanUpsert>(
     initial
-      ? { code: initial.code, title: initial.title, description: initial.description, durationDays: initial.durationDays, durationMonths: initial.durationMonths, price: initial.price, badge: initial.badge, active: initial.active, sortOrder: initial.sortOrder }
-      : { code: '', title: '', description: '', durationDays: 30, durationMonths: 1, price: 0, badge: null, active: true, sortOrder: 9 },
+      ? {
+          code: initial.code,
+          title: initial.title,
+          description: initial.description,
+          durationDays: initial.durationDays,
+          durationMonths: initial.durationMonths,
+          price: initial.price,
+          badge: initial.badge,
+          mediaId: initial.mediaId,
+          active: initial.active,
+          sortOrder: initial.sortOrder,
+        }
+      : { code: '', title: '', description: '', durationDays: 30, durationMonths: 1, price: 0, badge: null, mediaId: null, active: true, sortOrder: 9 },
   );
   const save = async () => {
     try {
@@ -65,6 +77,9 @@ function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: 
         <Field label="توضیح" className="full">
           <textarea className="textarea" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
         </Field>
+        <Field label="عکس کارت پلن (در صفحه پلن‌های کیوسک)" className="full">
+          <MediaPicker value={f.mediaId} onChange={(mediaId) => setF({ ...f, mediaId })} />
+        </Field>
         <div className="full">
           <Switch checked={f.active} onChange={(active) => setF({ ...f, active })} label="فعال (نمایش در کیوسک)" />
         </div>
@@ -74,7 +89,7 @@ function PlanDialog({ initial, onClose }: { initial: AdminPlan | null; onClose: 
   );
 }
 
-/** A08 — subscription plans (1/3/6/12 months): duration, price, badge, activation. */
+/** A08 — subscription plans (1/3/6/12 months): duration, price, badge, card photo, activation. */
 export function Plans() {
   const q = useQuery({ queryKey: ['plans'], queryFn: () => api.get<AdminPlan[]>('/admin/plans') });
   const { isAdmin } = useAuth();
@@ -99,6 +114,7 @@ export function Plans() {
       <div className="grid grid-4">
         {q.data.map((p) => (
           <Card key={p.id} title={p.title} sub={<Code>{p.code}</Code>} actions={!p.active ? <Badge>غیرفعال</Badge> : p.badge ? <Badge tone="info" icon={null}>{p.badge}</Badge> : null}>
+            {p.mediaUrl && <img className="plan-photo" src={p.mediaUrl} alt="" />}
             <div style={{ fontSize: 26, fontWeight: 800 }}>{formatToman(p.price)}</div>
             <div className="muted" style={{ margin: '6px 0 12px' }}>
               {toPersianDigits(p.durationMonths)} ماه ({toPersianDigits(p.durationDays)} روز) · معادل ماهانه {formatToman(Math.round(p.price / p.durationMonths))}

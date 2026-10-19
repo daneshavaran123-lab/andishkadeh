@@ -146,6 +146,8 @@ export const PlanDto = z.object({
   durationMonths: z.number().int().positive(),
   price: Money,
   badge: z.string().nullable(),
+  /** Photo on the plan's card (absent from servers before 1.10). */
+  mediaId: z.string().nullable().default(null),
   sortOrder: z.number().int(),
 });
 export type PlanDto = z.infer<typeof PlanDto>;

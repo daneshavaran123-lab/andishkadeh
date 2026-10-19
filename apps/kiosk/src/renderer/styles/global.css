@@ -1109,36 +1109,168 @@ button:focus-visible,
   gap: var(--s4);
 }
 
+/* Plan cards (K12) like the visual design: the plan's photo behind the top of the card, the number of
+   months and title on its darker side, the covered domains on a dark panel, the price row below. The
+   card's colour (--theme) is set per card. */
 .plan-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: var(--s4);
-  min-height: 340px;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 0;
+  min-height: 700px;
   width: 100%;
+  overflow: hidden;
+  border: 2px solid color-mix(in srgb, var(--theme) 70%, transparent);
+  box-shadow:
+    0 0 30px color-mix(in srgb, var(--theme) 30%, transparent),
+    0 24px 60px rgba(0, 0, 0, 0.4);
   --theme: var(--red);
 }
 
+.plan-photo {
+  position: absolute;
+  inset: 0 0 132px 0;
+  background-size: cover;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+}
+
+.plan-head,
+.plan-features,
+.plan-price {
+  position: relative;
+  z-index: 1;
+}
+
+.plan-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 50%;
+  padding: var(--s3) var(--s3) 0 0;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+}
+
+.plan-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--theme) 85%, black 15%);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--theme) 55%, transparent);
+  font-size: 20px;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.plan-badge svg {
+  width: 24px;
+  height: 24px;
+}
+
 .plan-card .months {
-  font-size: 88px;
+  font-size: 132px;
   font-weight: 900;
-  line-height: 1;
+  line-height: 0.95;
 }
 
 .plan-card .months small {
-  font-size: 32px;
+  font-size: 40px;
+  font-weight: 800;
+  margin-inline-start: 10px;
+}
+
+.plan-title {
+  font-size: 24px;
   font-weight: 700;
-  margin-inline-start: 8px;
+}
+
+.plan-rule {
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--theme);
+  box-shadow: 0 0 12px var(--theme);
+}
+
+.plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 50%;
+  padding: 18px 20px;
+  border-radius: 20px 0 0 20px;
+  background: rgba(5, 11, 24, 0.62);
+  backdrop-filter: blur(6px);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.plan-features small {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.plan-features span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.plan-features svg {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: var(--theme);
+}
+
+.plan-price {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  align-self: stretch;
+  margin: auto 12px 12px;
+  min-height: 116px;
+  padding: 0 22px;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--theme) 40%, transparent);
+  background: linear-gradient(180deg, rgba(14, 26, 50, 0.92), rgba(6, 12, 26, 0.96));
+}
+
+.plan-price .chevron-circle {
+  width: 72px;
+  height: 72px;
+  border-color: var(--theme);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--theme) 45%, transparent);
+}
+
+.plan-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .plan-card .pp {
   font-size: 32px;
   font-weight: 800;
-  margin-top: auto;
+  white-space: nowrap;
+}
+
+.plan-card .pp s {
+  font-size: 20px;
+  color: var(--faint);
+  margin-inline-end: 10px;
 }
 
 .plan-card .per {
-  font-size: 20px;
+  font-size: 18px;
   color: var(--muted);
 }
 
