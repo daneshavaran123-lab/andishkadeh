@@ -62,6 +62,19 @@ describe('subcategory images', () => {
     for (const id of ids) expect(b.media.find((m) => m.id === id)!.width).toBeGreaterThanOrEqual(600);
   });
 
+  it('the psychology services have their design photos: large in the photo-row lists, small thumbnails in QEEG and cognitive', async () => {
+    const b = (await kiosk(app).get('/kiosk/bootstrap')).body as Bootstrap;
+    const psychology = b.categories.find((c) => c.code === 'PS')!;
+    const width = (id: string | null) => b.media.find((m) => m.id === id)!.width ?? 0;
+    const large = psychology.subcategories.filter((s) => ['PS-2', 'NF', 'NS', 'VR', 'PS-4', 'PS-5'].includes(s.code)).flatMap((s) => s.services);
+    expect(large).toHaveLength(39);
+    expect(new Set(large.map((s) => s.mediaId)).size).toBe(39);
+    for (const s of large) expect(width(s.mediaId)).toBeGreaterThanOrEqual(600);
+    const small = psychology.subcategories.filter((s) => ['NE', 'PS-3'].includes(s.code)).flatMap((s) => s.services);
+    expect(small).toHaveLength(12);
+    for (const s of small) expect(width(s.mediaId)).toBeLessThan(400); // the kiosk keeps square thumbnails below 400 px
+  });
+
   it('a newer default replaces the earlier default on the next deploy, an image chosen in the panel stays', async () => {
     const prisma = new PrismaClient();
     const fake = (originalName: string) =>
