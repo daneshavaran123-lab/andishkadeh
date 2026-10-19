@@ -21,6 +21,12 @@ CREATE ROLE andishkadeh LOGIN PASSWORD 'رمز-قوی';
 CREATE DATABASE andishkadeh OWNER andishkadeh ENCODING 'UTF8';
 ```
 
+**امنیت سطر (RLS):** migrationها RLS را روی همه جدول‌ها روشن می‌کنند.
+- کاربر سرور (`andishkadeh`) مالک جدول‌هاست و محدود نمی‌شود. سرور، migrationها و پشتیبان‌گیری با همین کاربر مثل قبل کار می‌کنند.
+- برای هیچ نقش دیگری policy تعریف نشده است. اگر کاربر دیگری در پایگاه داده ساخته شود (مثلاً برای گزارش‌گیری)، حتی با مجوز SELECT هیچ سطری نمی‌بیند تا برایش policy جداگانه تعریف شود.
+- جدول‌ها باید با همان کاربر سرور ساخته شوند (همان `prisma migrate deploy` سرور)، نه با کاربر دیگر.
+- جدولی که migration بعدی اضافه کند باید خودش `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` داشته باشد؛ تست `row-level-security` در غیر این صورت شکست می‌خورد.
+
 ## ۳. نصب و پیکربندی
 
 ```bash
@@ -131,7 +137,7 @@ server {
 
 | آدرس | انتظار |
 | --- | --- |
-| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.12.1",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
+| `GET /api/v1/health` | `{"status":"ok","db":"ok","version":"1.13.0",...}`؛ اگر پایگاه داده در دسترس نباشد، `degraded` برمی‌گردد |
 | `/api/docs` | مستند تعاملی API (OpenAPI) |
 | `/` | وب‌اپ عمومی مشتری با صفحه شروع، بدون فعال‌سازی (اگر `WEB_APP_DIST_DIR` تنظیم شده باشد) |
 | `/admin/` | صفحه ورود پنل مدیریت (اگر `ADMIN_DIST_DIR` تنظیم شده باشد) |
@@ -152,7 +158,7 @@ server {
 نسخه‌ها با برچسب `v<نسخه>` منتشر می‌شوند (ر.ک. [انتشار نسخه](release.md)). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:
 
 ```bash
-git fetch --tags && git checkout v1.12.1
+git fetch --tags && git checkout v1.13.0
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
