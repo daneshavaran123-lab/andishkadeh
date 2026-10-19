@@ -37,6 +37,7 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   const art = (code: string) => page.getByTestId(`sub-${code}`).locator('.row-art').getAttribute('style');
   expect(await art('P-1')).not.toBe(await art('P-2'));
   const sub = (await page.getByTestId('sub-P-1').boundingBox())!;
+  await expect(page.locator('.tap-ring')).toHaveCount(0); // the ring of the tap that opened this screen is gone
   await page.mouse.move(sub.x + sub.width / 2, sub.y + sub.height / 2);
   await page.mouse.down();
   await expect(page.locator('.tap-ring')).toHaveCount(1);
