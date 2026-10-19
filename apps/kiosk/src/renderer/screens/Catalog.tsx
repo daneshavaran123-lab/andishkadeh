@@ -187,9 +187,15 @@ export function Monitoring({ categoryId }: { categoryId?: string }) {
   );
 }
 
-/** The image shown for a service: its own, else its subgroup's, else its domain's. */
-function serviceImage(r: ServiceRef): string | null {
-  return [r.service.mediaId, r.sub.mediaId, r.category.mediaId].find((id) => mediaUrl(id)) ?? null;
+/** Big enough for the photo at the start of a service row. */
+const isLarge = (id: string | null | undefined) => (mediaWidth(id) ?? 0) >= 400;
+
+/**
+ * The image shown for a service: its own, else its subgroup's, else its domain's. In a list of photo
+ * rows (`large`) a small image of its own is passed over for the subgroup's photo.
+ */
+function serviceImage(r: ServiceRef, large = false): string | null {
+  return [r.service.mediaId, r.sub.mediaId, r.category.mediaId].find((id) => mediaUrl(id) && (!large || isLarge(id))) ?? null;
 }
 
 /** Width of the photo at the start of a service row (stage px). */
@@ -197,13 +203,16 @@ const PHOTO_W = 340;
 
 /**
  * Like the visual design, a list of services shows a large photo with a slanted edge at the start of
- * each row when every row has a large enough image (its own or its subgroup's); a list with small
- * thumbnails keeps square ones. Returns the rows' height, from the photos' proportions so they show
- * whole, or null for square thumbnails.
+ * each row; a list of small thumbnails (most rows have a small image of their own) keeps square ones.
+ * In a list of photos, a row without a large photo of its own shows its subgroup's, so one service
+ * without a photo does not turn the whole list back into thumbnails. Returns the rows' height, from
+ * the photos' proportions so they show whole, or null for square thumbnails.
  */
 function photoRowHeight(list: ServiceRef[]): number | null {
-  const ids = list.map(serviceImage);
-  if (!ids.length || ids.some((id) => (mediaWidth(id) ?? 0) < 400)) return null;
+  const small = list.filter((r) => mediaUrl(r.service.mediaId) && !isLarge(r.service.mediaId)).length;
+  const own = list.filter((r) => isLarge(r.service.mediaId)).length;
+  const ids = list.map((r) => serviceImage(r, true));
+  if (!ids.length || (small > 0 && small >= own) || ids.some((id) => !id)) return null;
   const ratios = ids.map((id) => mediaRatio(id) ?? 1.8).sort((a, b) => a - b);
   return Math.round(Math.min(270, Math.max(180, PHOTO_W / ratios[Math.floor(ratios.length / 2)])));
 }
@@ -216,7 +225,7 @@ function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: num
   // the tick pops in only when added here, not on rows that were already in the cart
   const wasInCart = useRef(inCart);
   const p = servicePrice(bootstrap, refx);
-  const imageId = serviceImage(refx);
+  const imageId = serviceImage(refx, !!photoHeight);
   const thumb = mediaUrl(imageId);
   return (
     <div

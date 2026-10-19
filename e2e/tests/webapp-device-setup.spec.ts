@@ -82,6 +82,18 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await page.mouse.click(box.x + box.width * 0.7, box.y + box.height / 2);
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
 
+  // Psychological assessment: photos from PS-103 on; PS-101 and PS-102 (small images of their own)
+  // show the subgroup's photo, so the list keeps its photo rows.
+  await page.reload();
+  await page.getByTestId('start').click();
+  await page.getByTestId('home-services').click();
+  await page.getByTestId('category-PS').click();
+  await page.getByTestId('sub-PS-1').click();
+  await expect(page.getByTestId('svc-PS-101')).toHaveClass(/has-photo/);
+  await expect(photo('PS-103')).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
+  await expect(photo('PS-101')).toHaveAttribute('style', /blob:/);
+  expect(await photo('PS-101').getAttribute('style')).not.toBe(await photo('PS-103').getAttribute('style'));
+
   // Plans: looked at, not bought.
   await page.reload();
   await page.getByTestId('start').click();

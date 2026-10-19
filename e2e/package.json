@@ -1,6 +1,6 @@
 {
   "name": "@andishkadeh/e2e",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "private": true,
   "description": "تست‌های پذیرش E2E کیوسک و پنل مدیریت (Playwright)",
   "scripts": {

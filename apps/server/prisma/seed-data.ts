@@ -429,13 +429,10 @@ export const SERVICE_IMAGES: Record<string, string> = {
   'P-406': 'services/P-406.jpg',
   'PS-101': 'services/PS-101.jpg',
   'PS-102': 'services/PS-102.jpg',
-  'PS-103': 'services/PS-103.jpg',
-  'PS-104': 'services/PS-104.jpg',
-  'PS-105': 'services/PS-105.jpg',
-  'PS-106': 'services/PS-106.jpg',
-  // From the visual design: the large photos of nutrition, counselling, neuro- and biofeedback, tDCS,
-  // VR, team services and packages (shown at the start of each service row), the small thumbnails of
-  // QEEG and cognitive assessment
+  // From the visual design: the large photos of nutrition, psychological assessment (PS-103 on; the
+  // same files as the earlier small images, so the seed replaces them), counselling, neuro- and
+  // biofeedback, tDCS, VR, team services and packages (shown at the start of each service row), the
+  // small thumbnails of QEEG and cognitive assessment
   ...Object.fromEntries(
     [
       ...['N-101', 'N-102', 'N-103', 'N-104', 'N-105'],
@@ -446,6 +443,7 @@ export const SERVICE_IMAGES: Record<string, string> = {
       ...['N-601', 'N-602', 'N-603'],
       ...['N-701', 'N-702', 'N-703', 'N-704'],
       ...['N-801', 'N-802'],
+      ...['PS-103', 'PS-104', 'PS-105', 'PS-106', 'PS-107', 'PS-108', 'PS-109', 'PS-110'],
       ...['PS-201', 'PS-202', 'PS-203', 'PS-204', 'PS-205', 'PS-206', 'PS-207', 'PS-208', 'PS-209', 'PS-210'],
       ...['NE-101', 'NE-102', 'NE-103', 'NE-104', 'NE-105'],
       ...['PS-301', 'PS-302', 'PS-303', 'PS-304', 'PS-305', 'PS-306', 'PS-307'],
