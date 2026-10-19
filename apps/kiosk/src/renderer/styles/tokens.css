@@ -46,9 +46,16 @@
   --s5: 48px;
   --s6: 64px;
 
-  --dur-card: 240ms;
+  --dur-card: 420ms;
   --dur-page: 300ms;
+  /* change of screen: long and gentle */
+  --dur-screen-in: 520ms;
+  --dur-screen-out: 280ms;
   --ease: cubic-bezier(0.22, 0.8, 0.26, 1);
+  /* fast start, long soft landing */
+  --ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
+  /* a touch of overshoot, for what springs back after a press */
+  --ease-spring: cubic-bezier(0.34, 1.45, 0.64, 1);
 }
 
 [data-theme='blue'] { --theme: var(--blue); }

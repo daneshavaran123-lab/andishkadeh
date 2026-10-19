@@ -228,7 +228,6 @@ button:focus-visible,
   font-size: 32px;
   font-weight: 700;
   line-height: 1.2;
-  transition: transform 120ms ease, filter 120ms ease;
 }
 
 .btn svg {
@@ -237,7 +236,6 @@ button:focus-visible,
 }
 
 .btn:active {
-  transform: scale(0.985);
   filter: brightness(1.1);
 }
 
@@ -1597,7 +1595,7 @@ button:focus-visible,
   border: 2px solid var(--line-strong);
   background: linear-gradient(180deg, #0f2140, #0a1730);
   box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
-  animation: rise var(--dur-page) var(--ease) both;
+  animation: modal-in 420ms var(--ease-soft) both;
 }
 
 .modal h2 {
@@ -1700,18 +1698,36 @@ button:focus-visible,
 /* Motion */
 .enter {
   /* backwards, not both: a held end state would keep the press-in below from showing */
-  animation: rise var(--dur-card) var(--ease) backwards;
-  animation-delay: calc(var(--i, 0) * 50ms);
+  animation: rise var(--dur-card) var(--ease-soft) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
 }
 
+/* The screen's own entrance, where the soft change of screen below is not available (older WebViews). */
 .page-enter {
   animation: page var(--dur-page) var(--ease) both;
+}
+
+@supports (view-transition-name: none) {
+  .page-enter {
+    animation: none;
+  }
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -1756,24 +1772,141 @@ button:focus-visible,
   animation: none;
 }
 
+/* ------------------------------------------------------------------ change of screen (store.ts → transition)
+   The old screen drifts a little and fades out quickly while the new one glides in from the side the
+   customer is heading to (RTL: forward comes from the left) and settles softly; "back" mirrors it.
+   To and from payment and result screens it is a plain cross-fade. The rest of the stage stays put. */
+.page-host {
+  view-transition-name: page;
+}
+
+::view-transition-group(page) {
+  animation-duration: var(--dur-screen-in);
+  animation-timing-function: var(--ease-soft);
+}
+
+::view-transition-old(page) {
+  animation: screen-out-forward var(--dur-screen-out) var(--ease-soft) both;
+}
+
+::view-transition-new(page) {
+  animation: screen-in-forward var(--dur-screen-in) var(--ease-soft) 40ms both;
+}
+
+:root[data-nav='back']::view-transition-old(page) {
+  animation-name: screen-out-back;
+}
+
+:root[data-nav='back']::view-transition-new(page) {
+  animation-name: screen-in-back;
+}
+
+:root[data-nav='fade']::view-transition-old(page) {
+  animation-name: fade-out;
+}
+
+:root[data-nav='fade']::view-transition-new(page) {
+  animation-name: fade;
+  animation-delay: 0ms;
+}
+
+@keyframes screen-out-forward {
+  to {
+    opacity: 0;
+    transform: translateX(28px) scale(0.985);
+  }
+}
+
+@keyframes screen-in-forward {
+  from {
+    opacity: 0;
+    transform: translateX(-44px);
+  }
+}
+
+@keyframes screen-out-back {
+  to {
+    opacity: 0;
+    transform: translateX(-28px) scale(0.985);
+  }
+}
+
+@keyframes screen-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(44px);
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
 /* ------------------------------------------------------------------ touch feedback (tap-feedback.ts) */
+/* Everything tappable presses in quickly under the finger and springs back softly when it lifts
+   (the release uses these transitions, the press the shorter ones under :active). */
 button,
 [role='button'] {
   -webkit-tap-highlight-color: transparent;
   transition:
-    transform 140ms var(--ease),
-    filter 140ms var(--ease),
-    border-color 160ms var(--ease);
+    transform 460ms var(--ease-spring),
+    filter 260ms var(--ease-soft),
+    border-color 260ms var(--ease-soft),
+    background-color 260ms var(--ease-soft),
+    box-shadow 260ms var(--ease-soft),
+    color 260ms var(--ease-soft);
 }
 
-/* Everything tappable presses in for a moment; cards less, so the motion stays calm. */
+/* Cards press in less, so the motion stays calm. */
 button:not(:disabled):not([aria-disabled='true']):active {
   transform: scale(0.96);
+  transition-duration: 90ms;
+  transition-timing-function: var(--ease);
 }
 
 button.card:not(:disabled):not([aria-disabled='true']):active {
   transform: scale(0.985);
   filter: brightness(1.14);
+}
+
+/* With a mouse (the public web app on a computer): a soft lift under the pointer. */
+@media (hover: hover) and (pointer: fine) {
+  button.card:not(:disabled):hover {
+    filter: brightness(1.08);
+  }
+  .btn:not(:disabled):hover,
+  .add-btn:hover,
+  .cartbar:hover {
+    filter: brightness(1.1);
+  }
+}
+
+/* Added to the cart: the tick pops in; the count on the cart bar bumps whenever it changes. */
+.add-btn.pop svg {
+  animation: pop 520ms var(--ease-spring) both;
+}
+
+.cartbar .count {
+  animation: bump 480ms var(--ease-spring);
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bump {
+  40% {
+    transform: scale(1.22);
+  }
 }
 
 /* A ring spreading from the finger, in the colour of what was tapped. */

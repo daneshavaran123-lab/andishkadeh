@@ -9,14 +9,13 @@ import { Categories, Monitoring, ServiceDetail, Services, Subcategories } from '
 import { End, Mobile, PaymentResult, Paying, Printing, Review } from './screens/Checkout';
 import { Home, Welcome } from './screens/Start';
 import { Activation, PlanDetail, Plans, SubscriptionIntro } from './screens/Subscription';
-import { useApp, useSession, type ScreenId } from './store';
+import { CALM, useApp, useSession, type ScreenId } from './store';
 import { useTapFeedback } from './tap-feedback';
 
 /** Screens where the inactivity timeout must never interrupt the customer. */
 const NO_TIMEOUT: ScreenId[] = ['welcome', 'paying', 'printing', 'end'];
 /** Screens where "cancel purchase" is not offered (payment in flight or already settled). */
 const NO_CANCEL: ScreenId[] = ['paying', 'paymentResult', 'activation', 'printing', 'end'];
-const CALM: ScreenId[] = ['mobile', 'review', 'paying', 'paymentResult', 'activation', 'printing', 'end', 'accessResult'];
 
 function useStageScale() {
   const [scale, setScale] = useState(1);
@@ -245,7 +244,10 @@ export function App() {
             {status.browseOnly ? 'آخرین اطلاعات دریافت‌شده نمایش داده می‌شود' : status.salesAvailable ? 'فروش در حالت آفلاین ادامه دارد' : 'فروش موقتاً متوقف است'}
           </div>
         )}
-        <div style={{ flex: 1, minHeight: 0 }}>{ready ? <Router /> : <Booting />}</div>
+        {/* the part that changes from screen to screen (store.ts → transition) */}
+        <div className="page-host" style={{ flex: 1, minHeight: 0 }}>
+          {ready ? <Router /> : <Booting />}
+        </div>
         {status?.mockHardware && (
           <div className="banner test" data-testid="test-banner">
             <Icon name="alert" />

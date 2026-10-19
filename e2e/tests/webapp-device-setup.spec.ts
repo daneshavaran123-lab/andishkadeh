@@ -5,6 +5,7 @@
  * same server and database.
  */
 import { expect, test, type Page } from '@playwright/test';
+import { settled } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -29,15 +30,32 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
   await expect(page.getByTestId('home-member')).toHaveCount(0);
 
+  // A change of screen is soft: the old screen fades away while the new one glides in.
+  const motion = await page.evaluate(
+    () =>
+      new Promise<string[]>((done) => {
+        const names = new Set<string>();
+        (document.querySelector('[data-testid="home-services"]') as HTMLElement).click();
+        const t0 = performance.now();
+        const look = () => {
+          for (const a of document.getAnimations()) if (a instanceof CSSAnimation) names.add(a.animationName);
+          if (performance.now() - t0 < 600) requestAnimationFrame(look);
+          else done([...names]);
+        };
+        requestAnimationFrame(look);
+      }),
+  );
+  expect(motion).toEqual(expect.arrayContaining(['screen-out-forward', 'screen-in-forward']));
+
   // Services with their prices; nothing goes into a cart. Every subgroup has its own image; a tap
   // answers with a ring at the finger.
-  await page.getByTestId('home-services').click();
   await page.getByTestId('category-P').click();
   await expect(page.getByTestId('sub-P-1').locator('.row-art')).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
   const art = (code: string) => page.getByTestId(`sub-${code}`).locator('.row-art').getAttribute('style');
   expect(await art('P-1')).not.toBe(await art('P-2'));
   const sub = (await page.getByTestId('sub-P-1').boundingBox())!;
   await expect(page.locator('.tap-ring')).toHaveCount(0); // the ring of the tap that opened this screen is gone
+  await settled(page);
   await page.mouse.move(sub.x + sub.width / 2, sub.y + sub.height / 2);
   await page.mouse.down();
   await expect(page.locator('.tap-ring')).toHaveCount(1);
@@ -59,6 +77,7 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   const photo = (code: string) => page.getByTestId(`svc-${code}`).locator('.svc-photo');
   await expect(photo('N-101')).toHaveAttribute('style', /blob:/, { timeout: 20_000 });
   expect(await photo('N-101').getAttribute('style')).not.toBe(await photo('N-102').getAttribute('style'));
+  await settled(page);
   const box = (await photo('N-102').boundingBox())!;
   await page.mouse.click(box.x + box.width * 0.7, box.y + box.height / 2);
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();

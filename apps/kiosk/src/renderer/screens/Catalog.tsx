@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { formatNumberFa, toPersianDigits, type CategoryDto } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
 import { BuyAtKioskNotice, CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
@@ -213,6 +213,8 @@ function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: num
   const browseOnly = useApp((s) => !!s.status?.browseOnly);
   const { cart, addToCart, go, showToast } = useSession();
   const inCart = cart.some((c) => c.serviceId === refx.service.id);
+  // the tick pops in only when added here, not on rows that were already in the cart
+  const wasInCart = useRef(inCart);
   const p = servicePrice(bootstrap, refx);
   const imageId = serviceImage(refx);
   const thumb = mediaUrl(imageId);
@@ -248,7 +250,7 @@ function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: num
       </button>
       {!browseOnly && (
         <button
-          className={`add-btn${inCart ? ' added' : ''}`}
+          className={`add-btn${inCart ? ' added' : ''}${inCart && !wasInCart.current ? ' pop' : ''}`}
           aria-label={inCart ? 'در سبد است — مشاهده سبد' : 'افزودن به سبد'}
           data-testid={`add-${refx.service.code}`}
           onClick={() => {

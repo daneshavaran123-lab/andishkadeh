@@ -98,10 +98,24 @@ export async function typeMobile(page: Page, mobile: string) {
 }
 
 /** Back from a service list to the domain grid (services → subgroups → domains). */
+/**
+ * Waits until a change of screen has finished. The change applies inside a soft transition (a frame
+ * after the tap), and taps during the transition do not reach the page.
+ */
+export async function settled(page: Page) {
+  await expect(page.locator('html')).not.toHaveAttribute('data-nav', /./);
+}
+
 export async function backToCategories(page: Page) {
   while (!(await page.getByTestId('category-P').isVisible().catch(() => false))) {
     await page.getByTestId('back').click();
+    await settled(page);
   }
+}
+
+/** The member scan screen is open and listening (a scan sent before it opens is not seen). */
+export async function scanReady(page: Page) {
+  await expect(page.getByText('کد QR کارت عضویت را مقابل اسکنر بگیرید')).toBeVisible();
 }
 
 export async function waitFor<T>(fn: () => Promise<T>, ok: (v: T) => boolean, timeoutMs = 20_000): Promise<T> {
@@ -191,7 +205,7 @@ export async function scanMember(page: Page, payload: string) {
   else await page.goto('/');
   await page.getByTestId('start').click();
   await page.getByTestId('home-member').click();
-  await expect(page.getByText('کد QR کارت عضویت را مقابل اسکنر بگیرید')).toBeVisible();
+  await scanReady(page);
   await devControl({ action: 'scan', payload });
 }
 

@@ -86,7 +86,10 @@ export function CartBar() {
   return (
     <button className="cartbar" onClick={() => go('cart')} data-testid="cartbar">
       <Icon name="cart" />
-      <span className="count">{toPersianDigits(p.count)}</span>
+      {/* keyed by the count, so it bumps whenever it changes */}
+      <span className="count" key={p.count}>
+        {toPersianDigits(p.count)}
+      </span>
       <span>مشاهده سبد خرید</span>
       <span className="total">{formatToman(p.total)}</span>
       <Icon name="chevron" />

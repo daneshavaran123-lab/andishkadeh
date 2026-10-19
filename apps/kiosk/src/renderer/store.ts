@@ -3,6 +3,7 @@
  * journey; it is wiped completely on finish, cancel or inactivity timeout (PRD §12, B-02).
  */
 import { useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { create } from 'zustand';
 import {
   ItemType,
@@ -46,6 +47,33 @@ export interface Route {
   params?: Record<string, string>;
 }
 
+/** Payment and result screens: no decorative motion (PRD F-02), so changes to and from them only cross-fade. */
+export const CALM: ScreenId[] = ['mobile', 'review', 'paying', 'paymentResult', 'activation', 'printing', 'end', 'accessResult'];
+
+let running: ViewTransition | null = null;
+
+/**
+ * Changes the screen with a soft transition (View Transitions API, styled in global.css): the old
+ * screen fades away while the new one slides gently in, the other way round for "back", and a plain
+ * cross-fade to or from a calm screen. The change is applied inside the transition, after the browser
+ * has captured the old screen, so whatever must change with the screen is passed along with it.
+ * Without the API (older WebViews) or with reduced motion it applies at once and the new screen
+ * keeps its own short entrance.
+ */
+function transition(nav: 'forward' | 'back', from: ScreenId, to: ScreenId, apply: () => void): void {
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (typeof document === 'undefined' || !('startViewTransition' in document) || reduced) return apply();
+  const root = document.documentElement;
+  root.dataset.nav = CALM.includes(from) || CALM.includes(to) ? 'fade' : nav;
+  const t = document.startViewTransition(() => flushSync(apply));
+  running = t;
+  t.finished
+    .finally(() => {
+      if (running === t) delete root.dataset.nav;
+    })
+    .catch(() => undefined);
+}
+
 interface AppStore {
   ready: boolean;
   bootstrap: Bootstrap | null;
@@ -64,6 +92,8 @@ export const useApp = create<AppStore>((set) => ({
   setStatus: (status) => set({ status }),
 }));
 
+type SessionPatch = Partial<Pick<SessionStore, 'flow' | 'planId' | 'mobile' | 'order' | 'payment' | 'access' | 'inquiredOnce'>>;
+
 interface SessionStore {
   stack: Route[];
   flow: OrderKind | null;
@@ -76,10 +106,11 @@ interface SessionStore {
   access: ValidateAccessResponse | null;
   inquiredOnce: boolean;
   toast: string | null;
-  go: (id: ScreenId, params?: Record<string, string>) => void;
+  /** `patch`: session data that changes together with the screen (applied in the same transition). */
+  go: (id: ScreenId, params?: Record<string, string>, patch?: SessionPatch) => void;
   replace: (id: ScreenId, params?: Record<string, string>) => void;
   back: () => void;
-  backTo: (id: ScreenId) => void;
+  backTo: (id: ScreenId, patch?: SessionPatch) => void;
   reset: () => void;
   /** Bumped by every reset: async results that belong to an earlier session are dropped. */
   epoch: number;
@@ -89,7 +120,7 @@ interface SessionStore {
   setQty: (serviceId: string, quantity: number) => void;
   removeFromCart: (serviceId: string) => void;
   removeMany: (ids: string[]) => void;
-  set: (patch: Partial<Pick<SessionStore, 'flow' | 'planId' | 'mobile' | 'order' | 'payment' | 'access' | 'inquiredOnce'>>) => void;
+  set: (patch: SessionPatch) => void;
   showToast: (msg: string) => void;
 }
 
@@ -109,34 +140,59 @@ const initial = {
 
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
-export const useSession = create<SessionStore>((set, get) => ({
-  ...initial,
-  epoch: 0,
-  go: (id, params) => set((s) => ({ stack: [...s.stack, { id, params }], toast: null })),
-  replace: (id, params) => set((s) => ({ stack: [...s.stack.slice(0, -1), { id, params }], toast: null })),
-  back: () => set((s) => ({ stack: s.stack.length > 1 ? s.stack.slice(0, -1) : s.stack, toast: null })),
-  backTo: (id) =>
-    set((s) => {
-      const idx = s.stack.map((r) => r.id).lastIndexOf(id);
-      return { stack: idx >= 0 ? s.stack.slice(0, idx + 1) : [...s.stack, { id }], toast: null };
-    }),
-  reset: () => {
-    clearTimeout(toastTimer);
-    set((s) => ({ ...initial, stack: [{ id: 'welcome' }], epoch: s.epoch + 1 }));
-  },
-  addToCart: (serviceId) =>
-    set((s) => (s.cart.some((c) => c.serviceId === serviceId) ? s : { cart: [...s.cart, { serviceId, quantity: 1 }] })),
-  setQty: (serviceId, quantity) =>
-    set((s) => ({ cart: s.cart.map((c) => (c.serviceId === serviceId ? { ...c, quantity } : c)) })),
-  removeFromCart: (serviceId) => set((s) => ({ cart: s.cart.filter((c) => c.serviceId !== serviceId) })),
-  removeMany: (ids) => set((s) => ({ cart: s.cart.filter((c) => !ids.includes(c.serviceId)) })),
-  set: (patch) => set(patch),
-  showToast: (toast) => {
-    clearTimeout(toastTimer);
-    set({ toast });
-    toastTimer = setTimeout(() => get().toast === toast && set({ toast: null }), 2200);
-  },
-}));
+export const useSession = create<SessionStore>((set, get) => {
+  const top = () => get().stack[get().stack.length - 1].id;
+  // A change of screen clears the toast that was showing when it was asked for, not one shown right
+  // after it (the change itself may apply a frame later, inside the transition).
+  const leftToast = (shown: string | null) => (get().toast === shown ? null : get().toast);
+  return {
+    ...initial,
+    epoch: 0,
+    go: (id, params, patch) => {
+      const shown = get().toast;
+      transition('forward', top(), id, () => set((s) => ({ ...patch, stack: [...s.stack, { id, params }], toast: leftToast(shown) })));
+    },
+    replace: (id, params) => {
+      const shown = get().toast;
+      transition('forward', top(), id, () => set((s) => ({ stack: [...s.stack.slice(0, -1), { id, params }], toast: leftToast(shown) })));
+    },
+    back: () => {
+      const { stack, toast: shown } = get();
+      if (stack.length < 2) return;
+      transition('back', top(), stack[stack.length - 2].id, () =>
+        set((s) => ({ stack: s.stack.length > 1 ? s.stack.slice(0, -1) : s.stack, toast: leftToast(shown) })),
+      );
+    },
+    backTo: (id, patch) => {
+      const shown = get().toast;
+      transition('back', top(), id, () =>
+        set((s) => {
+          const idx = s.stack.map((r) => r.id).lastIndexOf(id);
+          return { ...patch, stack: idx >= 0 ? s.stack.slice(0, idx + 1) : [...s.stack, { id }], toast: leftToast(shown) };
+        }),
+      );
+    },
+    reset: () => {
+      clearTimeout(toastTimer);
+      const shown = get().toast;
+      // At once, not with the screen: from here on, late results of this session are dropped.
+      set((s) => ({ epoch: s.epoch + 1 }));
+      transition('back', top(), 'welcome', () => set({ ...initial, stack: [{ id: 'welcome' }], toast: leftToast(shown) }));
+    },
+    addToCart: (serviceId) =>
+      set((s) => (s.cart.some((c) => c.serviceId === serviceId) ? s : { cart: [...s.cart, { serviceId, quantity: 1 }] })),
+    setQty: (serviceId, quantity) =>
+      set((s) => ({ cart: s.cart.map((c) => (c.serviceId === serviceId ? { ...c, quantity } : c)) })),
+    removeFromCart: (serviceId) => set((s) => ({ cart: s.cart.filter((c) => c.serviceId !== serviceId) })),
+    removeMany: (ids) => set((s) => ({ cart: s.cart.filter((c) => !ids.includes(c.serviceId)) })),
+    set: (patch) => set(patch),
+    showToast: (toast) => {
+      clearTimeout(toastTimer);
+      set({ toast });
+      toastTimer = setTimeout(() => get().toast === toast && set({ toast: null }), 2200);
+    },
+  };
+});
 
 /** Captures the current session; `alive()` is false once it has ended (timeout, cancel, finish). */
 export function sessionGuard() {

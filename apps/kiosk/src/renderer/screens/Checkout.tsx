@@ -106,8 +106,8 @@ export function Review() {
       }
       if (r.code === 'ITEM_UNAVAILABLE' && r.unavailable?.length && !isSub) {
         removeMany(r.unavailable);
-        showToast('برخی خدمات دیگر قابل خرید نیستند و از سبد حذف شدند');
         backTo('cart');
+        showToast('برخی خدمات دیگر قابل خرید نیستند و از سبد حذف شدند'); // after, so it shows on the cart
         return;
       }
       if (r.code === 'INVALID_MOBILE') {
@@ -123,8 +123,7 @@ export function Review() {
 
   const edit = async () => {
     if (order) await invoke('order:cancel', { localOrderId: order.localOrderId });
-    set({ order: null });
-    backTo(flow === OrderKind.SUBSCRIPTION ? 'planDetail' : 'cart');
+    backTo(flow === OrderKind.SUBSCRIPTION ? 'planDetail' : 'cart', { order: null });
   };
 
   if (state === 'locking') {

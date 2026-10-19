@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { withDb } from './db';
-import { adminApi, adminToken, buySubscription, devControl, ordersByMobile, randomMobile, resetDevices, scanMember as scan, typeMobile } from './helpers';
+import { adminApi, adminToken, buySubscription, devControl, ordersByMobile, randomMobile, resetDevices, scanMember as scan, scanReady, typeMobile } from './helpers';
 
 test.beforeEach(async () => {
   await resetDevices();
@@ -24,6 +24,7 @@ test('T07 — buy a plan, receive the QR, scan it → ACTIVE with masked member'
   await page.getByTestId('access-done').click();
   await page.getByTestId('start').click();
   await page.getByTestId('home-member').click();
+  await scanReady(page);
   await page.keyboard.type(qr, { delay: 5 });
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('access-ACTIVE')).toBeVisible();
@@ -64,9 +65,11 @@ test('T08 — unknown code → INVALID; cancelled subscription → REVOKED', asy
   await page.goto('/');
   await page.getByTestId('start').click();
   await page.getByTestId('home-member').click();
+  await scanReady(page);
   await devControl({ action: 'scan', payload: 'AKQ1.notARealMembershipCode_000000000' });
   await expect(page.getByTestId('access-INVALID')).toBeVisible();
   await page.getByTestId('rescan').click();
+  await scanReady(page);
   await devControl({ action: 'scan', payload: 'https://example.com/not-ours' });
   await expect(page.getByTestId('access-INVALID')).toBeVisible();
 

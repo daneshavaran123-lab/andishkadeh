@@ -92,7 +92,7 @@ export function Scan() {
 
 /** K20 — validation result. Shows validity only; no personal data beyond the last 4 digits. */
 export function AccessResultScreen() {
-  const { access, replace, reset, set, go } = useSession();
+  const { access, replace, reset, go } = useSession();
   const tz = useApp((s) => s.bootstrap?.settings.timezone);
   const status = useApp((s) => s.status);
 
@@ -133,8 +133,7 @@ export function AccessResultScreen() {
             <button
               className="btn btn-accent"
               onClick={() => {
-                set({ flow: OrderKind.SUBSCRIPTION, access: null });
-                go('plans');
+                go('plans', undefined, { flow: OrderKind.SUBSCRIPTION, access: null });
               }}
               data-testid="buy-new"
             >

@@ -54,10 +54,10 @@ describe('subcategory images', () => {
   it('the nutrition services have photos of their own from the design, all different and large', async () => {
     const b = (await kiosk(app).get('/kiosk/bootstrap')).body as Bootstrap;
     const nutrition = b.categories.find((c) => c.code === 'N')!;
-    const services = nutrition.subcategories.flatMap((s) => s.services).filter((s) => /^N-[1245678]0\d$/.test(s.code));
-    expect(services).toHaveLength(26);
+    const services = nutrition.subcategories.flatMap((s) => s.services).filter((s) => /^N-[1-8]0\d$/.test(s.code));
+    expect(services).toHaveLength(32);
     const ids = services.map((s) => s.mediaId);
-    expect(new Set(ids).size).toBe(26);
+    expect(new Set(ids).size).toBe(32);
     // wide enough for the photo rows and the service page (which uses an image of 600 px and up)
     for (const id of ids) expect(b.media.find((m) => m.id === id)!.width).toBeGreaterThanOrEqual(600);
   });
