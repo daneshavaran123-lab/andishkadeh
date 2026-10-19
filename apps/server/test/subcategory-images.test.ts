@@ -66,9 +66,9 @@ describe('subcategory images', () => {
     const b = (await kiosk(app).get('/kiosk/bootstrap')).body as Bootstrap;
     const psychology = b.categories.find((c) => c.code === 'PS')!;
     const width = (id: string | null) => b.media.find((m) => m.id === id)!.width ?? 0;
-    const large = psychology.subcategories.filter((s) => ['PS-2', 'NF', 'NS', 'VR', 'PS-4', 'PS-5'].includes(s.code)).flatMap((s) => s.services);
-    expect(large).toHaveLength(39);
-    expect(new Set(large.map((s) => s.mediaId)).size).toBe(39);
+    const large = psychology.subcategories.filter((s) => ['PS-2', 'NF', 'BF', 'NS', 'VR', 'PS-4', 'PS-5'].includes(s.code)).flatMap((s) => s.services);
+    expect(large).toHaveLength(44);
+    expect(new Set(large.map((s) => s.mediaId)).size).toBe(44);
     for (const s of large) expect(width(s.mediaId)).toBeGreaterThanOrEqual(600);
     const small = psychology.subcategories.filter((s) => ['NE', 'PS-3'].includes(s.code)).flatMap((s) => s.services);
     expect(small).toHaveLength(12);

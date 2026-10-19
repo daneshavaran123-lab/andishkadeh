@@ -748,8 +748,9 @@ button:focus-visible,
 
 /* Service rows with a large photo (Catalog.tsx decides per list): the photo at the start of the row,
    bright up to a slanted line in the domain's colour where it fades into the card, as on the subgroup
-   rows but mirrored and a little steeper (36°). The main button reaches under the photo, which lets
-   taps through, so the whole row opens the service. */
+   rows but mirrored and at the angle of the design's service lists (26°, so the people in the photos
+   stay in view). The main button reaches under the photo, which lets taps through, so the whole row
+   opens the service. */
 .svc-card.has-photo {
   padding: 0;
   padding-inline-end: var(--s4);
@@ -768,10 +769,10 @@ button:focus-visible,
   width: var(--photo-w);
   background-size: cover;
   pointer-events: none;
-  /* measured from the bottom right corner along -54°: the fade ends on the line (0.809 = cos 36°) */
-  --fade-end: calc(var(--photo-w) * 0.809 - 5px);
-  -webkit-mask-image: linear-gradient(-54deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
-  mask-image: linear-gradient(-54deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
+  /* measured from the bottom right corner along -64°: the fade ends on the line (0.899 = cos 26°) */
+  --fade-end: calc(var(--photo-w) * 0.899 - 5px);
+  -webkit-mask-image: linear-gradient(-64deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
+  mask-image: linear-gradient(-64deg, #000 calc(var(--fade-end) - 60px), transparent var(--fade-end));
 }
 
 .svc-card.has-photo::after {
@@ -780,7 +781,7 @@ button:focus-visible,
   inset-block: 0;
   right: calc(var(--photo-w) - 7px);
   width: 2px;
-  transform: skewX(-36deg);
+  transform: skewX(-26deg);
   transform-origin: bottom left;
   background: linear-gradient(
     to bottom,
