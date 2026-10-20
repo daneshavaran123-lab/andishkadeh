@@ -57,6 +57,8 @@ export const KioskSettings = z.object({
   timezone: z.string().refine(isTimeZone, 'منطقه زمانی نامعتبر است (مثال: Asia/Tehran)'),
   /** A short click sound on every tap (kiosk, web app, Android app). Older settings default to on. */
   tapSound: z.boolean().default(true),
+  /** Red and blue smoke drifting on the start screen (kiosk, web app, Android app). Older settings default to on. */
+  startSmoke: z.boolean().default(true),
 });
 export type KioskSettings = z.infer<typeof KioskSettings>;
 

@@ -1,6 +1,6 @@
 /**
  * Subcategory and service images (seeded, upgraded with newer defaults, replaceable in the panel) and the
- * tap sound setting.
+ * tap sound and start screen smoke settings.
  */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -116,7 +116,7 @@ describe('subcategory images', () => {
   }, 60_000);
 });
 
-describe('tap sound setting', () => {
+describe('tap sound and start screen smoke settings', () => {
   it('is on by default and stays off when other settings are saved', async () => {
     const a = admin(app, token);
     const before = (await a.get('/admin/settings')).body as { tapSound: boolean; maxItemQuantity: number };
@@ -129,5 +129,18 @@ describe('tap sound setting', () => {
       await a.put('/admin/settings', { tapSound: before.tapSound });
     }
     expect(before.tapSound).toBe(true);
+  });
+
+  it('the start screen smoke is on by default, can be switched off and stays off when other settings are saved', async () => {
+    const a = admin(app, token);
+    const before = (await a.get('/admin/settings')).body as { startSmoke: boolean; tapSound: boolean };
+    try {
+      expect((await a.put('/admin/settings', { startSmoke: false })).body.startSmoke).toBe(false);
+      expect((await a.put('/admin/settings', { tapSound: before.tapSound })).body.startSmoke).toBe(false);
+      expect(((await kiosk(app).get('/kiosk/bootstrap')).body as Bootstrap).settings.startSmoke).toBe(false);
+    } finally {
+      await a.put('/admin/settings', { startSmoke: before.startSmoke });
+    }
+    expect(before.startSmoke).toBe(true);
   });
 });

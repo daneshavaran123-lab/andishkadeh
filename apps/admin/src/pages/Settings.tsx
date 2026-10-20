@@ -90,6 +90,9 @@ export function Settings() {
             <div style={{ marginTop: 16 }}>
               <Switch checked={s.tapSound} disabled={ro} onChange={(v) => up('tapSound', v)} label="صدای کلیک هنگام لمس دکمه‌ها در کیوسک و وب‌اپ" />
             </div>
+            <div style={{ marginTop: 12 }}>
+              <Switch checked={s.startSmoke} disabled={ro} onChange={(v) => up('startSmoke', v)} label="دود قرمز و آبی متحرک در صفحه شروع کیوسک و وب‌اپ" />
+            </div>
           </Card>
         </div>
         <div className="grid" style={{ alignContent: 'start' }}>

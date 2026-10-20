@@ -274,6 +274,17 @@ button:focus-visible,
   box-shadow: 0 16px 40px color-mix(in srgb, var(--theme) 32%, transparent);
 }
 
+/* start screen smoke (smoke.ts): drawn small and stretched, over the hero photo, under the texts */
+.start-smoke {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 1.2s var(--ease-soft);
+}
+
 /* Welcome CTA (reference image 1): glowing pill with blue→red border and arrow circle */
 .cta-start {
   position: relative;

@@ -371,6 +371,7 @@ export const DEFAULT_SETTINGS = {
   offlineCatalogMaxAgeHours: 72,
   timezone: 'Asia/Tehran',
   tapSound: true,
+  startSmoke: true,
 };
 
 export const DEFAULT_CONTENT = {

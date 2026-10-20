@@ -25,9 +25,12 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await expect(page.getByTestId('setup')).toHaveCount(0);
   await expect(page.getByTestId('admin-gear')).toHaveCount(0);
   await expect(page.getByTestId('test-banner')).toHaveCount(0);
+  // the smoke layer is there (it draws only on a GPU) and lets taps through to the start button
+  await expect(page.getByTestId('start-smoke')).toBeAttached();
 
   await page.getByTestId('start').click();
   await expect(page.getByTestId('buy-at-kiosk')).toBeVisible();
+  await expect(page.getByTestId('start-smoke')).toHaveCount(0);
   await expect(page.getByTestId('home-member')).toHaveCount(0);
 
   // A change of screen is soft: the old screen fades away while the new one glides in.

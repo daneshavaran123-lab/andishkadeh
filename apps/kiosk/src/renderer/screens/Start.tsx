@@ -1,9 +1,16 @@
-import { OrderKind } from '@andishkadeh/shared';
+import { useEffect, useRef, type RefObject } from 'react';
+import { OrderKind, type MediaRef } from '@andishkadeh/shared';
 import { AdminGear } from '../components/AdminAccess';
 import { Icon } from '../components/Icon';
 import { BuyAtKioskNotice, Notice, Screen } from '../components/ui';
+import heroMatte from '../assets/img/hero-matte.png';
 import matFloor from '../assets/img/mat-floor.jpg';
+import { HERO_MATTE_CHECKSUM, startSmoke } from '../smoke';
 import { mediaUrl, useApp, useSession } from '../store';
+
+/** The hero photo fades out from this fraction of its height down to its bottom. */
+const HERO_FADE_FROM = 0.62;
+const HERO_FADE = `linear-gradient(180deg, #000 ${Math.round(HERO_FADE_FROM * 100)}%, transparent 100%)`;
 
 /** K01 — welcome. No inactivity timeout on this screen (PRD K01). */
 export function Welcome() {
@@ -13,11 +20,13 @@ export function Welcome() {
   const content = bootstrap?.content.welcome;
   const hero = mediaUrl(content?.heroMediaId);
   const logo = mediaUrl(bootstrap?.settings.logoMediaId);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="screen" style={{ alignItems: 'center' }}>
       <AdminGear />
       <div
+        ref={heroRef}
         style={{
           position: 'absolute',
           inset: '0 0 auto 0',
@@ -25,11 +34,12 @@ export function Welcome() {
           backgroundImage: hero ? `url("${hero}")` : undefined,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
-          WebkitMaskImage: 'linear-gradient(180deg, #000 62%, transparent 100%)',
-          maskImage: 'linear-gradient(180deg, #000 62%, transparent 100%)',
+          WebkitMaskImage: HERO_FADE,
+          maskImage: HERO_FADE,
         }}
         aria-hidden
       />
+      {bootstrap && (bootstrap.settings.startSmoke ?? true) && <StartSmoke hero={heroRef} media={bootstrap.media.find((m) => m.id === content?.heroMediaId)} />}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', gap: 20, marginTop: 64 }}>
         {logo && <img src={logo} alt="" style={{ height: 96 }} />}
       </div>
@@ -57,6 +67,24 @@ export function Welcome() {
       </div>
     </div>
   );
+}
+
+/**
+ * Red and blue smoke drifting over the start screen (smoke.ts), behind the wrestler when the hero is
+ * the default photo its matte is cut from. Left out with reduced motion; the panel can switch it off.
+ */
+function StartSmoke({ hero, media }: { hero: RefObject<HTMLElement | null>; media: MediaRef | undefined }) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const matched = media?.checksum === HERO_MATTE_CHECKSUM && media.width && media.height ? media : null;
+  const key = matched?.id ?? 'plain';
+  useEffect(() => {
+    if (!canvas.current || !hero.current || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const matte = matched && { src: heroMatte, hero: hero.current, image: { width: matched.width!, height: matched.height! }, fadeFrom: HERO_FADE_FROM };
+    return startSmoke(canvas.current, { matte }) ?? undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a new bootstrap with the same photo keeps the smoke going
+  }, [key]);
+  // a fresh canvas for each start: stopping releases the old one's WebGL context for good
+  return <canvas key={key} ref={canvas} className="start-smoke" data-testid="start-smoke" aria-hidden />;
 }
 
 /** K02 — main menu: services / full subscription / member QR. */
