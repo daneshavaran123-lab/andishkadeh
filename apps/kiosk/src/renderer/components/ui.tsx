@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { formatNumberFa, formatToman, toPersianDigits } from '@andishkadeh/shared';
 import { platform } from '../bridge';
 import { Icon } from './Icon';
-import { cartPreview, useApp, useSession } from '../store';
+import { cartPreview, useApp, useSession, type SalesBlock } from '../store';
 
 export function Screen({
   title,
@@ -147,6 +147,24 @@ export function BuyAtKioskNotice() {
   return (
     <Notice tone="blue" icon="cart">
       <span data-testid="buy-at-kiosk">خرید، پرداخت و دریافت کد عضویت در کیوسک‌های مرکز انجام می‌شود. این‌جا خدمات، تعرفه‌ها و پلن‌های اشتراک را ببینید.</span>
+    </Notice>
+  );
+}
+
+const NO_SALES: Record<SalesBlock, string> = {
+  pos: 'پرداخت با کارتخوان در این کیوسک هنوز فعال نیست. خدمات، تعرفه‌ها و پلن‌ها را ببینید؛ خرید پس از اتصال کارتخوان ممکن می‌شود.',
+  offline: 'ارتباط با مرکز برقرار نیست و فروش موقتاً متوقف است. خدمات، تعرفه‌ها و پلن‌ها را می‌توانید ببینید.',
+  catalog: 'اطلاعات خدمات هنوز دریافت نشده است. لطفاً چند لحظه بعد دوباره تلاش کنید.',
+};
+
+/** A kiosk that cannot sell right now (useShop): why, and that looking still works. */
+export function NoSalesNotice({ reason, members = false }: { reason: SalesBlock; members?: boolean }) {
+  return (
+    <Notice tone="amber" icon={reason === 'pos' ? 'card' : 'wifiOff'}>
+      <span data-testid="no-sales">
+        {NO_SALES[reason]}
+        {members && reason !== 'catalog' && ' بررسی اعتبار اعضا با QR فعال است.'}
+      </span>
     </Notice>
   );
 }

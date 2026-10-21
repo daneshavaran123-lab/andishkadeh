@@ -54,3 +54,19 @@ test('web app as a kiosk: activation → purchase → restart → offline restar
   await expect(second.getByTestId('boot-error')).toContainText('زبانه یا پنجره دیگری', { timeout: 20_000 });
   await second.close();
 });
+
+test('a kiosk whose card reader is not connected yet shows the services, prices and plans; only buying waits', async ({ page }) => {
+  await activateWebKiosk(page, 'کیوسک بدون کارتخوان', 'NOPOS', 'none');
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('no-sales')).toContainText('کارتخوان');
+  await expect(page.getByTestId('home-subscription')).toBeEnabled();
+
+  await page.getByTestId('home-services').click();
+  await page.getByTestId('category-P').click();
+  await page.getByTestId('sub-P-1').click();
+  await expect(page.getByTestId('svc-P-102')).toContainText('تومان');
+  await expect(page.getByTestId('add-P-102')).toHaveCount(0);
+  await page.getByTestId('svc-P-102').locator('.svc-main').click();
+  await expect(page.getByTestId('no-sales')).toBeVisible();
+  await expect(page.getByTestId('detail-add')).toHaveCount(0);
+});

@@ -76,13 +76,18 @@ test('T11 — network cut: local sale with an OFF code, synced exactly once afte
   expect(sync.status).toBe(200);
 });
 
-test('T11b — offline: subscription sales are blocked by default policy', async ({ page }) => {
+test('T11b — offline: subscription sales are blocked by default policy; the plans can still be looked at', async ({ page }) => {
   await devControl({ action: 'network', online: false });
   await startSession(page);
   await expect(page.getByTestId('offline-banner')).toBeVisible();
-  // offlineSubscriptionSales=false (open policy, PRD default): the entry is disabled, service sales stay open.
-  await expect(page.getByTestId('home-subscription')).toBeDisabled();
+  // offlineSubscriptionSales=false (open policy, PRD default): service sales stay open, plans only show.
   await expect(page.getByTestId('home-services')).toBeEnabled();
+  await page.getByTestId('home-subscription').click();
+  await expect(page.getByTestId('choose-plan')).toContainText('مشاهده پلن‌های اشتراک');
+  await page.getByTestId('choose-plan').click();
+  await page.getByTestId('plan-1').click();
+  await expect(page.getByText('خرید اشتراک در حال حاضر امکان‌پذیر نیست')).toBeVisible();
+  await expect(page.getByTestId('plan-continue')).toHaveCount(0);
 });
 
 test('T11c — offline QR validation from the local cache, access log synced later', async ({ page }) => {

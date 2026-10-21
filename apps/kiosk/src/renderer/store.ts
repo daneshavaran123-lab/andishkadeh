@@ -278,6 +278,27 @@ export function mediaRatio(mediaId: string | null | undefined): number | null {
   return m?.width && m.height ? m.width / m.height : null;
 }
 
+/** Why a kiosk cannot sell right now: no catalogue yet, no server (and no offline sales), or no card reader. */
+export type SalesBlock = 'catalog' | 'offline' | 'pos';
+
+/**
+ * What the customer may do now. Looking at services, prices and plans needs only the catalogue;
+ * buying also needs sales (a card reader set up, and the server or offline sales). So a kiosk whose
+ * card reader is not connected yet still shows everything, and only buying waits. The public web
+ * app only looks.
+ */
+export function useShop() {
+  const hasCatalog = useApp((s) => !!s.bootstrap);
+  const hasPlans = useApp((s) => !!s.bootstrap?.plans.length);
+  const browseOnly = useApp((s) => !!s.status?.browseOnly);
+  const online = useApp((s) => !!s.status?.online);
+  const salesAvailable = useApp((s) => !!s.status?.salesAvailable);
+  const subscriptionSalesAvailable = useApp((s) => !!s.status?.subscriptionSalesAvailable);
+  const canBuy = !browseOnly && salesAvailable;
+  const blocked: SalesBlock | null = browseOnly || canBuy ? null : !hasCatalog ? 'catalog' : !online ? 'offline' : 'pos';
+  return { hasCatalog, hasPlans, browseOnly, canBuy, canBuyPlans: !browseOnly && subscriptionSalesAvailable, blocked };
+}
+
 /** Web/Android target: cached images are object URLs held by the in-page core. */
 let mediaResolver: ((checksum: string) => string | null) | null = null;
 export function setMediaResolver(fn: (checksum: string) => string | null) {

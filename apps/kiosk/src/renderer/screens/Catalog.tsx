@@ -1,8 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { formatNumberFa, toPersianDigits, type CategoryDto } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
-import { BuyAtKioskNotice, CartBar, Modal, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
-import { indexServices, mediaRatio, mediaUrl, mediaWidth, servicePrice, useApp, useSession, type ServiceRef } from '../store';
+import { BuyAtKioskNotice, CartBar, Modal, NoSalesNotice, Notice, Price, Screen, SearchKeyboard, Stepper } from '../components/ui';
+import { indexServices, mediaRatio, mediaUrl, mediaWidth, servicePrice, useApp, useSession, useShop, type ServiceRef } from '../store';
 
 function categoryById(id?: string): CategoryDto | undefined {
   return useApp.getState().bootstrap?.categories.find((c) => c.id === id);
@@ -146,7 +146,7 @@ export function Subcategories({ categoryId }: { categoryId?: string }) {
 export function Monitoring({ categoryId }: { categoryId?: string }) {
   const c = categoryById(categoryId);
   const intro = useApp((s) => s.bootstrap?.content.monitoringIntro);
-  const status = useApp((s) => s.status);
+  const { hasPlans } = useShop();
   const { go, set } = useSession();
   const img = mediaUrl(c?.mediaId);
   return (
@@ -157,7 +157,7 @@ export function Monitoring({ categoryId }: { categoryId?: string }) {
       footer={
         <button
           className="btn btn-theme btn-block"
-          disabled={!status?.subscriptionSalesAvailable && !status?.browseOnly}
+          disabled={!hasPlans}
           onClick={() => {
             set({ flow: 'SUBSCRIPTION' as never });
             go('subscriptionIntro');
@@ -219,7 +219,7 @@ function photoRowHeight(list: ServiceRef[]): number | null {
 
 function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: number; photoHeight: number | null }) {
   const bootstrap = useApp((s) => s.bootstrap)!;
-  const browseOnly = useApp((s) => !!s.status?.browseOnly);
+  const { canBuy } = useShop();
   const { cart, addToCart, go, showToast } = useSession();
   const inCart = cart.some((c) => c.serviceId === refx.service.id);
   // the tick pops in only when added here, not on rows that were already in the cart
@@ -257,7 +257,7 @@ function ServiceRow({ refx, index, photoHeight }: { refx: ServiceRef; index: num
         </span>
         <Price final={p.finalPrice} was={p.unitPrice} unit={refx.service.unit} />
       </button>
-      {!browseOnly && (
+      {canBuy && (
         <button
           className={`add-btn${inCart ? ' added' : ''}${inCart && !wasInCart.current ? ' pop' : ''}`}
           aria-label={inCart ? 'در سبد است — مشاهده سبد' : 'افزودن به سبد'}
@@ -338,7 +338,7 @@ export function Services({ categoryId, subId }: { categoryId?: string; subId?: s
 /** K06 — service detail. Re-adding an item already in the cart is prevented. */
 export function ServiceDetail({ serviceId }: { serviceId?: string }) {
   const bootstrap = useApp((s) => s.bootstrap);
-  const browseOnly = useApp((s) => !!s.status?.browseOnly);
+  const { browseOnly, canBuy, blocked } = useShop();
   const { cart, addToCart, setQty, go, showToast } = useSession();
   const ref = serviceId ? indexServices(bootstrap).get(serviceId) : undefined;
   if (!ref || !bootstrap) return <Missing />;
@@ -359,6 +359,8 @@ export function ServiceDetail({ serviceId }: { serviceId?: string }) {
       footer={
         browseOnly ? (
           <BuyAtKioskNotice />
+        ) : !canBuy ? (
+          <NoSalesNotice reason={blocked ?? 'pos'} />
         ) : line ? (
           <div className="footer-row">
             <Stepper value={line.quantity} max={max} onChange={(v) => setQty(ref.service.id, v)} />

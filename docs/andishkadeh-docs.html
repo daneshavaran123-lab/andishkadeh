@@ -154,7 +154,7 @@ footer.end { max-width: 1180px; margin: 56px auto 0; padding-top: 18px; border-t
 <div class="page" dir="rtl" lang="fa">
 
 <header class="mast">
-  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.15.0</span> · ۲۹ مهر ۱۴۰۵</div>
+  <div class="eyebrow">اندیشکده کشتی ایران · نسخه <span dir="ltr">1.15.1</span> · ۲۹ مهر ۱۴۰۵</div>
   <h1>مستندات کیوسک سلف‌سرویس</h1>
   <div class="mat" aria-hidden="true"><span></span><span></span></div>
   <p>سامانه فروش خدمات و اشتراک برای کیوسک ۴۳ اینچ عمودی (لمسی، کارتخوان بانکی، اسکنر QR و چاپگر حرارتی) به‌همراه پنل مدیریت تحت وب و سرور مرکزی. کیوسک سه نسخه با یک رابط و یک هسته دارد: ویندوز، وب‌اپ و اندروید. راهنمای راه‌اندازی، نصب، تنظیمات دستگاه، نگهداری و گزارش تست در یک صفحه.</p>
@@ -741,7 +741,7 @@ WantedBy=multi-user.target</code></pre></div>
   <div class="table-wrap"><table>
     <thead><tr><th>آدرس</th><th>انتظار</th></tr></thead>
     <tbody>
-      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.15.0",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
+      <tr><td><code>GET /api/v1/health</code></td><td><code>{"status":"ok","db":"ok","version":"1.15.1",…}</code>؛ اگر پایگاه داده در دسترس نباشد <code>degraded</code></td></tr>
       <tr><td><code>/api/docs</code></td><td>مستند تعاملی API (OpenAPI)</td></tr>
       <tr><td><code>/admin/</code></td><td>صفحه ورود پنل مدیریت (اگر <code>ADMIN_DIST_DIR</code> تنظیم شده باشد)</td></tr>
     </tbody>
@@ -756,7 +756,7 @@ WantedBy=multi-user.target</code></pre></div>
 
   <h3>به‌روزرسانی نسخه</h3>
   <p>نسخه‌ها با برچسب <code>v&lt;نسخه&gt;</code> منتشر می‌شوند (ر.ک. <a href="#release">انتشار نسخه</a>). روی سرور عملیاتی همان برچسب را بگیرید، نه آخرین commit:</p>
-  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.15.0
+  <div class="code"><span class="lang">bash</span><button type="button" data-copy>کپی</button><pre><code>git fetch --tags &amp;&amp; git checkout v1.15.1
 pnpm install --frozen-lockfile
 pnpm build
 pnpm db:migrate          # فقط migrationهای جدید را اعمال می‌کند
@@ -1389,7 +1389,7 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
       <tr><td>واحد: قیمت‌گذاری، تخفیف، تقویم جلالی، موبایل، QR، دوره اشتراک، هش و توکن، کد فعال‌سازی</td><td>Vitest</td><td class="num">۴۰</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه سرور (HTTP واقعی + PostgreSQL آزمون، تصویرها، امنیت سطر، تنظیمات و کد فعال‌سازی)</td><td>Vitest</td><td class="num">۸۸</td><td><span class="chip ok">همه موفق</span></td></tr>
       <tr><td>یکپارچه هسته کیوسک (هر سناریو روی <code>better-sqlite3</code> و <code>sql.js</code>) + درایور <code>sql.js</code> + کلاینت API + برنامه کمکی کارتخوان + صفحه راه‌اندازی ویندوز + ورود مدیر از کیوسک + حالت فقط مشاهده + صدای لمس + تغییر نرم صفحه + دود صفحه شروع</td><td>Vitest</td><td class="num">۶۹</td><td><span class="chip ok">همه موفق</span></td></tr>
-      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP، صفحه راه‌اندازی ویندوز، ورود مدیر از کیوسک، وب‌اپ عمومی، تصویر زیرگروه‌ها و خدمات و مدیریت کیوسک و فعال‌سازی با کد در <code>/kiosk</code>)</td><td>Playwright</td><td class="num">۴۲</td><td><span class="chip ok">همه موفق</span></td></tr>
+      <tr><td>پذیرش E2E (رابط کیوسک + پنل + هسته + سرور، وب‌اپ، پنل تولیدی زیر CSP، صفحه راه‌اندازی ویندوز، ورود مدیر از کیوسک، وب‌اپ عمومی، تصویر زیرگروه‌ها و خدمات و مدیریت کیوسک و فعال‌سازی با کد در <code>/kiosk</code>، کیوسک بدون کارتخوان)</td><td>Playwright</td><td class="num">۴۳</td><td><span class="chip ok">همه موفق</span></td></tr>
     </tbody>
   </table></div>
 
@@ -1492,8 +1492,13 @@ pg_restore --no-owner --role=andishkadeh --dbname=andishkadeh_restore andishkade
 
 <!-- ============================================================ changelog -->
 <section id="changelog">
-  <h2>تغییرات نسخه <span class="tag">1.15.0</span></h2>
-  <p class="lede">۲۹ مهر ۱۴۰۵ — راه‌اندازی کیوسک با کد فعال‌سازی.</p>
+  <h2>تغییرات نسخه <span class="tag">1.15.1</span></h2>
+  <p class="lede">۲۹ مهر ۱۴۰۵ — کیوسک بدون کارتخوان هم خدمات را نشان می‌دهد.</p>
+  <ul>
+    <li><strong>پیش از اتصال کارتخوان:</strong> حوزه‌ها، خدمات، تعرفه‌ها و پلن‌ها دیده می‌شوند و فقط افزودن به سبد و ادامه خرید تا اتصال کارتخوان (یا برگشتن ارتباط با مرکز) نشان داده نمی‌شود. پیام علت را دقیق می‌گوید: کارتخوان فعال نیست، یا ارتباط با مرکز قطع است.</li>
+  </ul>
+  <h3>نسخه 1.15.0</h3>
+  <p>۲۹ مهر ۱۴۰۵ — راه‌اندازی کیوسک با کد فعال‌سازی.</p>
   <ul>
     <li><strong>کد فعال‌سازی:</strong> «ثبت کیوسک جدید» فقط نام می‌خواهد و کد ۸ رقمی (۳۰ دقیقه، یک‌بارمصرف)، لینک و QR آن را نشان می‌دهد. برای کیوسک موجود، «کد فعال‌سازی» روی کارت آن.</li>
     <li><strong>ویندوز و اندروید:</strong> صفحه راه‌اندازی فقط کد را می‌خواهد، با صفحه‌کلید عددی روی صفحه یا اسکن QR. آدرس سرور از پیش پر است و اگر یک چاپگر واقعی نصب باشد، خودش انتخاب می‌شود.</li>

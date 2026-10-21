@@ -1,13 +1,13 @@
 import { OrderKind, RenewalPolicy, formatJalaliLong, formatNumberFa, formatToman, toPersianDigits } from '@andishkadeh/shared';
 import { CATEGORY_ICON, Icon } from '../components/Icon';
-import { BuyAtKioskNotice, Notice, Price, QrCode, Screen } from '../components/ui';
-import { mediaUrl, planPrice, useApp, useSession } from '../store';
+import { BuyAtKioskNotice, NoSalesNotice, Notice, Price, QrCode, Screen } from '../components/ui';
+import { mediaUrl, planPrice, useApp, useSession, useShop } from '../store';
 import { Missing } from './Catalog';
 
 /** K11 — full subscription intro (texts from admin content). No reservation features. */
 export function SubscriptionIntro() {
   const bootstrap = useApp((s) => s.bootstrap);
-  const status = useApp((s) => s.status);
+  const { hasPlans, browseOnly, canBuy, canBuyPlans, blocked } = useShop();
   const go = useSession((s) => s.go);
   const intro = bootstrap?.content.subscriptionIntro;
   const covered = bootstrap?.categories.filter((c) => c.subscriptionCovered) ?? [];
@@ -19,11 +19,11 @@ export function SubscriptionIntro() {
       footer={
         <button
           className="btn btn-accent btn-block"
-          disabled={!status?.subscriptionSalesAvailable && !(status?.browseOnly && bootstrap?.plans.length)}
+          disabled={!hasPlans}
           onClick={() => go('plans')}
           data-testid="choose-plan"
         >
-          {status?.browseOnly ? 'مشاهده پلن‌های اشتراک' : 'انتخاب پلن اشتراک'}
+          {canBuyPlans ? 'انتخاب پلن اشتراک' : 'مشاهده پلن‌های اشتراک'}
           <Icon name="chevron" />
         </button>
       }
@@ -49,16 +49,23 @@ export function SubscriptionIntro() {
           </span>
         ))}
       </div>
-      {status?.browseOnly ? (
+      {browseOnly ? (
         <div style={{ marginTop: 32 }}>
           <BuyAtKioskNotice />
         </div>
-      ) : !status?.subscriptionSalesAvailable && (
+      ) : blocked ? (
         <div style={{ marginTop: 32 }}>
-          <Notice tone="amber" icon="wifiOff">
-            خرید اشتراک در حال حاضر امکان‌پذیر نیست؛ لطفاً کمی بعد دوباره تلاش کنید یا به پذیرش مراجعه کنید.
-          </Notice>
+          <NoSalesNotice reason={blocked} />
         </div>
+      ) : (
+        canBuy &&
+        !canBuyPlans && (
+          <div style={{ marginTop: 32 }}>
+            <Notice tone="amber" icon="wifiOff">
+              خرید اشتراک در حال حاضر امکان‌پذیر نیست؛ لطفاً کمی بعد دوباره تلاش کنید یا به پذیرش مراجعه کنید.
+            </Notice>
+          </div>
+        )
       )}
     </Screen>
   );
@@ -148,7 +155,7 @@ export function Plans() {
 /** K12D — plan detail and final price. */
 export function PlanDetail({ planId }: { planId?: string }) {
   const bootstrap = useApp((s) => s.bootstrap);
-  const browseOnly = useApp((s) => !!s.status?.browseOnly);
+  const { browseOnly, canBuyPlans, blocked } = useShop();
   const go = useSession((s) => s.go);
   const plan = bootstrap?.plans.find((p) => p.id === planId);
   if (!bootstrap || !plan) return <Missing />;
@@ -162,6 +169,14 @@ export function PlanDetail({ planId }: { planId?: string }) {
       footer={
         browseOnly ? (
           <BuyAtKioskNotice />
+        ) : !canBuyPlans ? (
+          blocked ? (
+            <NoSalesNotice reason={blocked} />
+          ) : (
+            <Notice tone="amber" icon="wifiOff">
+              خرید اشتراک در حال حاضر امکان‌پذیر نیست؛ لطفاً کمی بعد دوباره تلاش کنید یا به پذیرش مراجعه کنید.
+            </Notice>
+          )
         ) : (
           <button className="btn btn-accent btn-block" onClick={() => go('mobile')} data-testid="plan-continue">
             ادامه — {formatToman(p.finalPrice)}

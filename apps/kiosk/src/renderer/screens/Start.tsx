@@ -2,11 +2,11 @@ import { useEffect, useRef, type RefObject } from 'react';
 import { OrderKind, type MediaRef } from '@andishkadeh/shared';
 import { AdminGear } from '../components/AdminAccess';
 import { Icon } from '../components/Icon';
-import { BuyAtKioskNotice, Notice, Screen } from '../components/ui';
+import { BuyAtKioskNotice, NoSalesNotice, Notice, Screen } from '../components/ui';
 import heroMatte from '../assets/img/hero-matte.png';
 import matFloor from '../assets/img/mat-floor.jpg';
 import { HERO_MATTE_CHECKSUM, startSmoke } from '../smoke';
-import { mediaUrl, useApp, useSession } from '../store';
+import { mediaUrl, useApp, useSession, useShop } from '../store';
 
 /** The hero photo fades out from this fraction of its height down to its bottom. */
 const HERO_FADE_FROM = 0.62;
@@ -90,15 +90,13 @@ function StartSmoke({ hero, media }: { hero: RefObject<HTMLElement | null>; medi
 /** K02 — main menu: services / full subscription / member QR. */
 export function Home() {
   const bootstrap = useApp((s) => s.bootstrap);
-  const status = useApp((s) => s.status);
   const { go, set, reset } = useSession();
   const c = bootstrap?.content.home;
-  const browseOnly = !!status?.browseOnly;
-  const salesOk = !!status?.salesAvailable;
-  const subOk = !!status?.subscriptionSalesAvailable;
-  // Public web app: services and plans can be looked at; buying happens at the center's kiosks.
-  const servicesOpen = salesOk || (browseOnly && !!bootstrap);
-  const plansOpen = subOk || (browseOnly && !!bootstrap?.plans.length);
+  const { hasCatalog, hasPlans, browseOnly, canBuy, canBuyPlans, blocked } = useShop();
+  // Services and plans can be looked at as soon as the catalogue is here; buying may wait (card
+  // reader not connected yet, no server) and happens only at the center's kiosks for the web app.
+  const servicesOpen = hasCatalog;
+  const plansOpen = hasPlans;
 
   const cards = [
     {
@@ -173,14 +171,8 @@ export function Home() {
           </button>
         ))}
         {browseOnly && bootstrap && <BuyAtKioskNotice />}
-        {!salesOk && (!browseOnly || !bootstrap) && (
-          <Notice tone="amber" icon="wifiOff">
-            {!bootstrap
-              ? 'اطلاعات خدمات هنوز دریافت نشده است. لطفاً چند لحظه بعد دوباره تلاش کنید.'
-              : 'فروش در حال حاضر امکان‌پذیر نیست (عدم اتصال به مرکز یا در دسترس نبودن کارتخوان). بررسی اعتبار اعضا همچنان فعال است.'}
-          </Notice>
-        )}
-        {salesOk && !subOk && !browseOnly && (
+        {(blocked || (browseOnly && !bootstrap)) && <NoSalesNotice reason={blocked ?? 'catalog'} members={!browseOnly} />}
+        {canBuy && !canBuyPlans && hasPlans && (
           <Notice tone="amber" icon="wifiOff">
             خرید اشتراک در زمان قطع ارتباط با مرکز امکان‌پذیر نیست؛ خرید خدمات و بررسی اعتبار اعضا فعال است.
           </Notice>
