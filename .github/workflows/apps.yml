@@ -6,6 +6,8 @@
 #   image    — the server + admin panel Docker image (Liara), started against PostgreSQL and checked
 #   release  — manual runs with "release" ticked: a draft GitHub Release v<version> with all of the above
 #              (see docs/release.md); nothing is published until someone presses "Publish release"
+#   publish  — manual runs with "publish" ticked: publishes that draft (same as "Publish release"), for
+#              those who run the workflow without using the GitHub site; ticked with "release", after it
 #   liara    — manual runs with "deploy to Liara" ticked: uploads this commit to the Liara app (docs/liara-deploy.md)
 name: Apps
 
@@ -26,6 +28,10 @@ on:
         default: false
       check:
         description: 'Only check the server on Liara, without deploying (e.g. after changing its variables in the Liara console)'
+        type: boolean
+        default: false
+      publish:
+        description: 'Publish the draft GitHub Release of this version (the kiosk management page then offers its Windows installer)'
         type: boolean
         default: false
 
@@ -367,3 +373,33 @@ jobs:
           fi
       - name: Draft release
         run: gh release create "v$VERSION" out/* --draft --target "$GITHUB_SHA" --title "اندیشکده کشتی ایران $VERSION" --notes-file notes.md
+
+  publish:
+    name: Publish release
+    # after "release" when both are ticked; on its own it publishes the draft made earlier
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.publish && contains(fromJSON('["success", "skipped"]'), needs.release.result)
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Publish the draft of this version
+        run: |
+          version=$(node tools/release/version.mjs)
+          if ! gh release view "v$version" --json isDraft --jq .isDraft >/dev/null 2>&1; then
+            echo "::error::No release v$version yet: run the workflow with \"release\" ticked first"
+            exit 1
+          fi
+          gh release edit "v$version" --draft=false --latest
+          gh release view "v$version" --json url,isDraft,tagName,assets --jq '"\(.url) draft=\(.isDraft) tag=\(.tagName)", (.assets[] | "  \(.name) \(.size)")'
+      - name: The Windows installer downloads
+        run: |
+          version=$(node tools/release/version.mjs)
+          url="https://github.com/${{ github.repository }}/releases/download/v$version/AndishkadehKiosk-Setup-$version.exe"
+          curl -sfL -r 0-0 -o /dev/null "$url" && echo "ok  $url"
