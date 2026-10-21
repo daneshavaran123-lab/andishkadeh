@@ -1,7 +1,8 @@
 /**
  * Node-only helpers (server and Electron main process). Not importable from browser bundles.
  */
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { ACTIVATION_CODE_LENGTH } from './activation';
 import { QR_TOKEN_PREFIX, cleanScannedPayload } from './qr';
 
 export function sha256Hex(input: string): string {
@@ -25,6 +26,11 @@ export function safeEqualHex(a: string, b: string): boolean {
 
 export function randomApiKey(): string {
   return randomBytes(32).toString('base64url');
+}
+
+/** A one-time kiosk activation code: 8 random digits (activation.ts). */
+export function generateActivationCode(): string {
+  return Array.from({ length: ACTIVATION_CODE_LENGTH }, () => randomInt(10)).join('');
 }
 
 export * from './qr';

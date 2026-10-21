@@ -2037,6 +2037,38 @@ button.card:not(:disabled):not([aria-disabled='true']):active {
   outline: 3px solid var(--blue);
   outline-offset: 1px;
 }
+.setup-card input.setup-code {
+  min-height: 76px;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+/* the kiosk's own pad: a touch screen may have no keyboard */
+.setup-numpad .numpad {
+  margin-top: 0;
+  gap: 10px;
+}
+.setup-numpad .numpad button {
+  height: 72px;
+  border-radius: 16px;
+  font-size: 34px;
+}
+.setup-numpad .numpad button svg {
+  width: 34px;
+  height: 34px;
+}
+.setup-numpad .numpad .fn {
+  font-size: 18px;
+}
+.setup-ok {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(22, 199, 132, 0.14);
+  border: 1px solid rgba(22, 199, 132, 0.5);
+  color: #c9f7e4;
+  font-size: 18px;
+}
 .setup-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

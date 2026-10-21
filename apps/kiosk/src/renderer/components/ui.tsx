@@ -166,17 +166,17 @@ export function NumPad({ onDigit, onBackspace, onClear }: { onDigit: (d: string)
   return (
     <div className="numpad" dir="ltr">
       {keys.map((k) => (
-        <button key={k} onClick={() => onDigit(k)} data-testid={`key-${k}`}>
+        <button type="button" key={k} onClick={() => onDigit(k)} data-testid={`key-${k}`}>
           {toPersianDigits(k)}
         </button>
       ))}
-      <button className="fn" onClick={onClear} data-testid="key-clear">
+      <button type="button" className="fn" onClick={onClear} data-testid="key-clear">
         پاک کردن
       </button>
-      <button onClick={() => onDigit('0')} data-testid="key-0">
+      <button type="button" onClick={() => onDigit('0')} data-testid="key-0">
         {toPersianDigits('0')}
       </button>
-      <button onClick={onBackspace} aria-label="حذف رقم" data-testid="key-back">
+      <button type="button" onClick={onBackspace} aria-label="حذف رقم" data-testid="key-back">
         <Icon name="backspace" />
       </button>
     </div>

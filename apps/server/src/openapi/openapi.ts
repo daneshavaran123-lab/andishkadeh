@@ -56,6 +56,10 @@ export function buildOpenApiDocument(): OpenAPIObject {
 
   // Kiosk
   path('get', '/kiosk/bootstrap', 'Kiosk', 'کاتالوگ، پلن‌ها، تخفیف‌ها، تنظیمات و revision', { auth: 'device', response: C.Bootstrap });
+  path('post', '/kiosk/activate', 'Kiosk', 'راه‌اندازی کیوسک با کد فعال‌سازی یک‌بارمصرف پنل (یا لینک آن): شناسه و کلید تازه دستگاه؛ بدون احراز هویت دستگاه، تلاش‌های نادرست برای هر نشانی محدود', {
+    auth: null,
+    body: C.ActivateDeviceRequest,
+  });
   path('post', '/orders', 'Kiosk', 'ایجاد و قفل قیمت سفارش (idempotent روی localOrderId)', { auth: 'device', body: C.CreateOrderRequest, response: C.OrderDto });
   path('post', '/orders/{id}/checkout', 'Kiosk', 'خواندن سفارش قفل‌شده', { auth: 'device', params: ['id'], response: C.OrderDto });
   path('post', '/orders/{id}/cancel', 'Kiosk', 'لغو سفارش پرداخت‌نشده', { auth: 'device', params: ['id'], response: C.OrderDto });
@@ -119,7 +123,8 @@ export function buildOpenApiDocument(): OpenAPIObject {
   path('get', '/admin/system', 'Admin · Devices', 'نسخه سرور، نشانی عمومی سرور و نشانی نصب‌کننده کیوسک ویندوز همان نسخه');
   path('get', '/admin/system/installer', 'Admin · Devices', 'آیا نصب‌کننده کیوسک ویندوز همین نسخه قابل دانلود است (available: true/false/null)');
   path('get', '/admin/devices', 'Admin · Devices', 'وضعیت کیوسک‌ها و تجهیزات');
-  path('post', '/admin/devices', 'Admin · Devices', 'ثبت دستگاه جدید (ADMIN)', { body: C.CreateDeviceRequest });
+  path('post', '/admin/devices', 'Admin · Devices', 'ثبت دستگاه جدید با کلید و کد فعال‌سازی (ADMIN؛ بدون شناسه: KIOSK-NN آزاد بعدی)', { body: C.CreateDeviceRequest });
+  path('post', '/admin/devices/{id}/activation', 'Admin · Devices', 'کد فعال‌سازی یک‌بارمصرف کیوسک، ۳۰ دقیقه (ADMIN)؛ استفاده از آن کلید دستگاه را عوض می‌کند', { params: ['id'] });
   path('post', '/admin/devices/{id}/rotate-key', 'Admin · Devices', 'کلید جدید دستگاه (ADMIN)', { params: ['id'] });
   path('post', '/admin/devices/{id}/sync-now', 'Admin · Devices', 'فرمان همگام‌سازی فوری (ADMIN)', { params: ['id'] });
   path('get', '/admin/devices/{id}/commands', 'Admin · Devices', 'سوابق فرمان‌ها', { params: ['id'] });

@@ -16,6 +16,7 @@ import { AdminAuth, AdminPrincipal, ClientIp, CurrentAdmin, signAdminToken } fro
 import { AuditService } from '../common/core.services';
 import { ApiError } from '../common/errors';
 import { PrismaService } from '../common/prisma.service';
+import { IpRateLimiter } from '../common/rate-limit';
 import { ZodPipe } from '../common/zod.pipe';
 
 const DUMMY_HASH = bcrypt.hashSync('timing-equaliser', 10);
@@ -33,24 +34,9 @@ export function toUserDto(u: AdminUser): AdminUserDto {
   };
 }
 
-/** Per-IP sliding window in addition to the per-account lock (blocks username spraying). */
-class IpRateLimiter {
-  private hits = new Map<string, number[]>();
-  constructor(
-    private readonly max: number,
-    private readonly windowMs: number,
-  ) {}
-  hit(ip: string): boolean {
-    const now = Date.now();
-    const list = (this.hits.get(ip) ?? []).filter((t) => now - t < this.windowMs);
-    list.push(now);
-    this.hits.set(ip, list);
-    return list.length <= this.max;
-  }
-}
-
 @Injectable()
 export class AuthService {
+  /** Per-IP limit in addition to the per-account lock (blocks username spraying). */
   private readonly ipLimiter = new IpRateLimiter(30, 10 * 60_000);
 
   constructor(

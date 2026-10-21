@@ -5,6 +5,7 @@ import {
   AuditQuery,
   AuditRow,
   CreateDeviceRequest,
+  DeviceActivation,
   DeviceCommandRow,
   DeviceCommandType,
   ErrorCode,
@@ -448,14 +449,41 @@ export class AdminOpsController {
     return rows.map(toDeviceRow);
   }
 
+  /** Registers a kiosk (id left out: the next free KIOSK-NN) with its key and a one-time activation code. */
   @Post('devices')
   @Roles(AdminRole.ADMIN)
   async createDevice(@CurrentAdmin() admin: AdminPrincipal, @Body(new ZodPipe(CreateDeviceRequest)) body: CreateDeviceRequest) {
-    if (await this.prisma.device.findUnique({ where: { id: body.id } })) throw ApiError.conflict(ErrorCode.DUPLICATE_CODE, 'شناسه دستگاه تکراری است');
+    const id = body.id ?? (await this.nextDeviceId());
+    if (await this.prisma.device.findUnique({ where: { id } })) throw ApiError.conflict(ErrorCode.DUPLICATE_CODE, 'شناسه دستگاه تکراری است');
     const apiKey = randomApiKey();
-    const d = await this.prisma.device.create({ data: { id: body.id, name: body.name, apiKeyHash: hashDeviceKey(apiKey) } });
+    const d = await this.prisma.device.create({ data: { id, name: body.name, apiKeyHash: hashDeviceKey(apiKey) } });
     await this.audit.log(this.prisma, admin, { action: 'device.created', entityType: 'Device', entityId: d.id, after: { name: d.name } });
-    return { device: toDeviceRow(d), apiKey };
+    const activation = await this.devices.issueActivation(d.id);
+    return { device: toDeviceRow(await this.prisma.device.findUniqueOrThrow({ where: { id } })), apiKey, activation };
+  }
+
+  private async nextDeviceId(): Promise<string> {
+    const taken = new Set((await this.prisma.device.findMany({ select: { id: true } })).map((d) => d.id));
+    let n = 1;
+    while (taken.has(`KIOSK-${String(n).padStart(2, '0')}`)) n++;
+    return `KIOSK-${String(n).padStart(2, '0')}`;
+  }
+
+  /**
+   * A one-time activation code for connecting a kiosk (a new one, or the same kiosk on other
+   * hardware): entered on the kiosk's setup screen, or opened as a link. Using it replaces the key.
+   */
+  @Post('devices/:id/activation')
+  @HttpCode(200)
+  @Roles(AdminRole.ADMIN)
+  async issueActivation(@CurrentAdmin() admin: AdminPrincipal, @Param('id') id: string): Promise<DeviceActivation> {
+    const d = await this.prisma.device.findUnique({ where: { id } });
+    if (!d) throw ApiError.notFound('دستگاه');
+    if (id === WEB_APP_DEVICE_ID) throw ApiError.conflict(ErrorCode.CONFLICT, 'وب‌اپ عمومی فعال‌سازی ندارد؛ برای همه باز است');
+    if (!d.active) throw ApiError.conflict(ErrorCode.CONFLICT, 'دستگاه غیرفعال است؛ ابتدا آن را فعال کنید');
+    const activation = await this.devices.issueActivation(id);
+    await this.audit.log(this.prisma, admin, { action: 'device.activation_issued', entityType: 'Device', entityId: id, after: { expiresAt: activation.expiresAt } });
+    return activation;
   }
 
   @Patch('devices/:id')

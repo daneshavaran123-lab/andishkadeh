@@ -1,4 +1,7 @@
-/** Windows app, first run: the setup screen writes kiosk.config.json through the main process, which then restarts. */
+/**
+ * Windows app, first run: the setup screen (activation code from the panel, server already filled in)
+ * writes kiosk.config.json through the main process, which then restarts.
+ */
 import { useEffect, useState } from 'react';
 import { Setup } from './screens/Setup';
 
@@ -25,10 +28,11 @@ export function ElectronSetup() {
   }
   return (
     <Setup
-      initial={{ payment: 'none', printer: 'windows' }}
+      initial={{ serverUrl: __KIOSK_DEFAULT_SERVER__, payment: 'none', printer: 'windows' }}
       printerOptions={WINDOWS_PRINTERS}
       printerNames={printers}
       verify={(s) => api.verify(s)}
+      activate={(serverUrl, code) => api.activate({ serverUrl, code })}
       onSave={async (s) => {
         await api.save(s);
         setSaved(true);

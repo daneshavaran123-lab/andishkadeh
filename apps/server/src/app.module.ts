@@ -9,6 +9,7 @@ import { AdminCatalogController } from './modules/catalog/admin-catalog.controll
 import { CatalogService } from './modules/catalog/catalog.service';
 import { MediaController } from './modules/catalog/media.controller';
 import { DevicesService } from './modules/sales/devices.service';
+import { DeviceActivationController } from './modules/sales/device-activation.controller';
 import { KioskController } from './modules/sales/kiosk.controller';
 import { OrdersService } from './modules/sales/orders.service';
 import { PaymentsService } from './modules/sales/payments.service';
@@ -41,7 +42,7 @@ class CoreModule {}
 
 @Module({
   imports: [CoreModule, AuthModule],
-  controllers: [HealthController, KioskController, AdminCatalogController, MediaController, AdminOpsController, ReportsController],
+  controllers: [HealthController, KioskController, DeviceActivationController, AdminCatalogController, MediaController, AdminOpsController, ReportsController],
   providers: [CatalogService, OrdersService, PaymentsService, SubscriptionsService, SyncService, DevicesService],
 })
 export class AppModule {}

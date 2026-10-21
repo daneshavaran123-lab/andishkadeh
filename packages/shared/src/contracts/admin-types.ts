@@ -106,6 +106,22 @@ export interface DeviceRow {
   lastSyncAt: string | null;
   /** The public web app at `/` (WEB_APP_DEVICE_ID): no key, no commands; "online" while someone has it open. */
   publicWebApp: boolean;
+  /** Until when the activation code issued for this kiosk can be used (null: none waiting). */
+  activationExpiresAt: string | null;
+}
+
+/** One-time activation code of a kiosk, shown once in the panel (activation.ts). */
+export interface DeviceActivation {
+  deviceId: string;
+  code: string;
+  expiresAt: string;
+}
+
+/** What a kiosk receives for its activation code: its id and a fresh key (the previous key stops working). */
+export interface ActivateDeviceResponse {
+  deviceId: string;
+  deviceName: string;
+  deviceKey: string;
 }
 
 /** Release of this server; the Windows kiosk installer of the same version (A15). */

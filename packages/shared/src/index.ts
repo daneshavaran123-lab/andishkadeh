@@ -8,6 +8,7 @@ export * from './qr';
 export * from './token';
 export * from './labels';
 export * from './kiosk-admin';
+export * from './activation';
 export * from './contracts/common';
 export * from './contracts/catalog';
 export * from './contracts/orders';

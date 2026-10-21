@@ -5,7 +5,7 @@
  *    with attachApi() once the device has been set up.
  *  - Browser development / E2E: the dev bridge over HTTP + SSE.
  */
-import type { SetupCheck, SetupValues } from '../core/setup-check';
+import type { ActivationResult, SetupCheck, SetupValues } from '../core/setup-check';
 import type { IpcChannel, IpcChannels, IpcEvent, IpcEvents } from '../core/types';
 
 export interface KioskApi {
@@ -16,6 +16,7 @@ export interface KioskApi {
   setup?: {
     printers(): Promise<string[]>;
     verify(s: Pick<SetupValues, 'serverUrl' | 'deviceId' | 'deviceKey'>): Promise<SetupCheck>;
+    activate(a: { serverUrl: string; code: string }): Promise<ActivationResult>;
     save(values: SetupValues): Promise<{ ok: true }>;
   };
 }

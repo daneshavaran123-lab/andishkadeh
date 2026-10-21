@@ -118,7 +118,7 @@ test('/ is the public web app: start screen at once, services, prices and plans;
   await second.close();
 });
 
-test('manager: /kiosk → register a kiosk → activate this browser → / opens as that kiosk, reported online', async ({ page }) => {
+test('manager: /kiosk → register a kiosk with only a name → its activation link makes this browser that kiosk, reported online', async ({ page }) => {
   await signIn(page, 'admin', 'Admin@12345');
   await expect(page).toHaveURL(/\/kiosk\/?$/);
   await expect(page.getByTestId('server-url')).toHaveText('http://localhost:3200');
@@ -130,31 +130,43 @@ test('manager: /kiosk → register a kiosk → activate this browser → / opens
   await expect(publicCard).toContainText('WEB-APP');
   await expect(publicCard).toContainText('در حال استفاده');
   await expect(publicCard.getByRole('button', { name: 'کلید جدید' })).toHaveCount(0);
+  await expect(publicCard.getByTestId('activation-issue')).toHaveCount(0);
 
-  const deviceId = `WEB-${Date.now().toString(36).toUpperCase()}`;
   await page.getByRole('button', { name: 'ثبت کیوسک جدید' }).click();
   const form = page.locator('.modal', { hasText: 'ثبت کیوسک جدید' });
-  await form.locator('input').nth(0).fill(deviceId);
-  await form.locator('input').nth(1).fill('کیوسک وب طبقه اول');
-  await form.getByRole('button', { name: 'ثبت و دریافت کلید' }).click();
+  await form.locator('input').nth(0).fill('کیوسک وب طبقه اول');
+  await form.getByRole('button', { name: 'ثبت و دریافت کد فعال‌سازی' }).click();
 
-  const connection = page.getByTestId('device-connection');
-  await expect(connection).toContainText('http://localhost:3200');
-  await expect(connection).toContainText(deviceId);
-  await expect(page.getByTestId('device-key')).not.toBeEmpty();
-  await page.getByTestId('activate-browser').click();
+  // An 8-digit code, its link (also as a QR code) and, for the manual way, the key.
+  const code = (await page.getByTestId('activation-code').innerText()).replace(/\s/g, '');
+  expect(code).toMatch(/^\d{8}$/);
+  await expect(page.getByTestId('activation-link')).toHaveText(`http://localhost:3200/?activate=${code}`);
+  await expect(page.getByTestId('activation').locator('svg')).toBeVisible();
+  const deviceId = (await page.locator('.modal-head h3').innerText()).match(/\((KIOSK-\d+)\)/)![1];
+  const card = () => page.locator('.card', { hasText: deviceId });
+
+  await page.getByTestId('activate-this-browser').click();
+  await expect(page.getByTestId('activate-here')).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(new RegExp(`activate=${code}`));
   const heartbeat = page.waitForResponse((r) => r.url().endsWith('/api/v1/devices/heartbeat') && r.ok(), { timeout: 30_000 });
-  await page.getByTestId('open-web-app').click();
+  await page.getByTestId('activate-confirm').click();
 
-  // The web app at / starts as that kiosk: no setup screen, catalogue from the same server.
-  await expect(page).toHaveURL(/:3200\/$/);
+  // The web app at / starts as that kiosk: the link is gone from the address, catalogue from the same server.
   await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+  await expect(page).toHaveURL(/:3200\/$/);
   await heartbeat;
 
+  // A code works once: the same link again only reports it (this browser stays that kiosk).
+  await page.goto(`/?activate=${code}`);
+  await expect(page.getByTestId('activate-here')).toContainText(`کیوسک ${deviceId}`);
+  await page.getByTestId('activate-confirm').click();
+  await expect(page.getByTestId('activate-error')).toContainText('کد فعال‌سازی نادرست است');
+  await page.getByRole('button', { name: 'انصراف' }).click();
+  await expect(page.getByTestId('start')).toBeVisible({ timeout: 30_000 });
+
   await page.goto('/kiosk');
-  const card = page.locator('.card', { hasText: deviceId });
-  await expect(card).toContainText('کیوسک وب طبقه اول');
-  await expect(card).toContainText('آنلاین', { timeout: 20_000 });
+  await expect(card()).toContainText('کیوسک وب طبقه اول');
+  await expect(card()).toContainText('آنلاین', { timeout: 20_000 });
 });
 
 test('operator: /kiosk shows the kiosks and the server address; registration stays with the manager', async ({ page }) => {
@@ -163,6 +175,9 @@ test('operator: /kiosk shows the kiosks and the server address; registration sta
   await expect(page.locator('.card', { hasText: 'KIOSK-01' }).first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'ثبت کیوسک جدید' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'کلید جدید' })).toHaveCount(0);
+  await expect(page.getByTestId('activation-issue')).toHaveCount(0);
+  // told to sign in as the main admin for that
+  await expect(page.getByTestId('kiosk-management')).toContainText('با حساب مدیر (admin) وارد شوید');
   await page.getByTestId('logout').click();
   await expect(page.getByRole('heading', { name: 'ورود به مدیریت کیوسک‌ها' })).toBeVisible();
 });

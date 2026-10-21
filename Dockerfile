@@ -45,9 +45,12 @@ COPY apps/server apps/server
 RUN sed -i 's/\r$//' apps/server/scripts/docker-start.sh && [ -f apps/server/dist/main.js ] \
     || { echo "Missing apps/server/dist: build the server before docker build (see the top of this Dockerfile)." >&2; exit 1; }
 
+# CORS_ORIGINS: the Android kiosk app (its pages come from https://localhost); same-origin pages and
+# the Windows app need no CORS. Set the variable on the host to replace it.
 ENV NODE_ENV=production \
     PORT=3001 \
     TRUST_PROXY=1 \
+    CORS_ORIGINS=https://localhost \
     ADMIN_DIST_DIR=/app/apps/admin/dist \
     WEB_APP_DIST_DIR=/app/apps/kiosk/dist-web \
     MEDIA_DIR=/app/storage/media

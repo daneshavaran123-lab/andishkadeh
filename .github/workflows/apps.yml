@@ -133,6 +133,9 @@ jobs:
       - name: Build web app and copy it into the Android project
         working-directory: apps/kiosk
         run: pnpm run android:sync
+        env:
+          KIOSK_DEFAULT_SERVER_URL: ${{ vars.KIOSK_SERVER_URL }}
+          KIOSK_LIARA_APP: ${{ vars.LIARA_APP || secrets.LIARA_APP }}
       - name: Debug APK
         working-directory: apps/kiosk/android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
@@ -179,6 +182,9 @@ jobs:
         run: pnpm run dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          # the setup screen suggests this server, so a technician only enters the activation code
+          KIOSK_DEFAULT_SERVER_URL: ${{ vars.KIOSK_SERVER_URL }}
+          KIOSK_LIARA_APP: ${{ vars.LIARA_APP || secrets.LIARA_APP }}
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer

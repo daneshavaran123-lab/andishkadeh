@@ -26,6 +26,7 @@ export const PAYMENT_TONE: Record<PaymentStatus, Tone> = {
 
 export function DeviceHealthBadge({ d }: { d: DeviceRow }) {
   if (!d.active) return <Badge>غیرفعال</Badge>;
+  if (!d.lastSeenAt) return <Badge tone="warning">هنوز وصل نشده</Badge>;
   if (!d.online) return <Badge tone="danger" icon="wifiOff">قطع ارتباط</Badge>;
   const hw = d.hardware ? Object.values(d.hardware) : [];
   if (hw.some((h) => h.state === 'ERROR')) return <Badge tone="danger">خطای تجهیزات</Badge>;

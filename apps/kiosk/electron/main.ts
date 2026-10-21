@@ -3,8 +3,8 @@
  * Security (PRD §18): contextIsolation, sandboxed renderer, no Node in the UI, IPC allowlist,
  * navigation/new-window blocked, device secrets only in this process.
  * Lifecycle: fullscreen kiosk window, renderer crash → reload, single instance, no sleep.
- * First run (no kiosk.config.json): the setup screen asks for the server address and device key,
- * writes the file and restarts the app.
+ * First run (no kiosk.config.json): the setup screen takes the one-time activation code from the panel
+ * (or the server address, kiosk id and key), writes the file and restarts the app.
  * Staff: the gear on the welcome screen signs in and opens the existing admin panel in its own
  * window (admin-window.ts); the kiosk returns to its welcome screen and syncs when it closes.
  */
@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url';
 import type { KioskConfig } from '../src/core/config';
 import type { KioskCore } from '../src/core/kiosk-core';
 import { adminPanelBase, type AdminLoginResult } from '../src/core/admin-access';
-import { verifySetup } from '../src/core/setup-check';
+import { activateDevice, verifySetup } from '../src/core/setup-check';
 import { IPC_CHANNELS, IPC_EVENTS, type IpcChannel } from '../src/core/types';
 import { createNodeCore, isConfigured, loadConfig, writeSetupConfig } from '../src/platform/node';
 import { openAdminWindow } from './admin-window';
@@ -83,7 +83,7 @@ function createWindow(kioskMode: boolean, search = '') {
 
 if (primary) void app.whenReady().then(() => (isConfigured(dataDir) ? start() : setup()));
 
-/** First run: the setup screen collects the server address and device key, then the app restarts. */
+/** First run: the setup screen connects the kiosk (activation code, or id and key), then the app restarts. */
 function setup() {
   session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
   const trusted = (event: Electron.IpcMainInvokeEvent) => {
@@ -96,6 +96,11 @@ function setup() {
   ipcMain.handle('kiosk-setup:verify', (event, s: { serverUrl: string; deviceId: string; deviceKey: string }) => {
     trusted(event);
     return verifySetup(s);
+  });
+  // The page may only talk to itself (CSP), so the code goes to the server from here.
+  ipcMain.handle('kiosk-setup:activate', (event, a: { serverUrl: string; code: string }) => {
+    trusted(event);
+    return activateDevice(String(a.serverUrl), String(a.code));
   });
   ipcMain.handle('kiosk-setup:save', (event, values: unknown) => {
     trusted(event);

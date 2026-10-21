@@ -1,18 +1,21 @@
 /**
  * Start-up of the web app (PWA) and the Android app. The web app served by the server opens at
  * once as the public web app (start screen, services, prices, plans; browsing only); a browser
- * activated as a kiosk from /kiosk, the Android app and a development build run as a kiosk device
- * (setup on first run). The kiosk core is started in this page and handed to the regular kiosk UI.
+ * activated as a kiosk (activation link from /kiosk, `/?activate=<code>`), the Android app and a
+ * development build run as a kiosk device (setup on first run). The kiosk core is started in this
+ * page and handed to the regular kiosk UI.
  * On a kiosk device a technician re-opens the settings with 7 quick taps in the top-left corner
  * followed by the device key.
  */
 import { Capacitor } from '@capacitor/core';
 import { useEffect, useRef, useState } from 'react';
+import { ACTIVATION_PARAM, normalizeActivationCode } from '@andishkadeh/shared';
 import wasmUrl from 'sql.js/dist/sql-wasm-browser.wasm?url';
 import { clearWebSetup, publicKioskConfig, readWebSetup, toKioskConfig, writeWebSetup, type WebSetup } from '../platform/web/config';
 import type { WebHost } from '../platform/web';
 import { App } from './App';
 import fontUrl from './assets/fonts/Vazirmatn-wght.woff2?url';
+import { activateDevice } from '../core/setup-check';
 import { attachApi } from './bridge';
 import { Setup, TechGate } from './screens/Setup';
 import { setMediaResolver } from './store';
@@ -22,16 +25,84 @@ const PLATFORM: 'web' | 'android' = Capacitor.isNativePlatform() ? 'android' : '
 /** The web app served by the server itself (https://server/): opens for anyone without setup. */
 const PUBLIC_WEB_APP = PLATFORM === 'web' && !import.meta.env.DEV && /^https?:$/.test(location.protocol);
 
+/** Activation link opened in this browser (the web app at the server's own address only). */
+const ACTIVATION_CODE = PLATFORM === 'web' && /^https?:$/.test(location.protocol) ? normalizeActivationCode(new URLSearchParams(location.search).get(ACTIVATION_PARAM) ?? '') : null;
+
 type Phase =
+  | { kind: 'activate'; code: string }
   | { kind: 'setup' }
   | { kind: 'starting' }
   /** setup null: the public web app. */
   | { kind: 'running'; host: WebHost; setup: WebSetup | null }
   | { kind: 'error'; message: string };
 
-/** Default server for the setup screen when the page comes from a server (development build). */
+/** Default server for the setup screen: the server the page comes from, or the one the build suggests (Android). */
 function defaultServerUrl(): string {
-  return PLATFORM === 'web' && /^https?:$/.test(location.protocol) ? location.origin : '';
+  return PLATFORM === 'web' && /^https?:$/.test(location.protocol) ? location.origin : __KIOSK_DEFAULT_SERVER__;
+}
+
+/** The activation link stays out of the address bar (and of a later reload). */
+function dropActivationParam() {
+  const url = new URL(location.href);
+  url.searchParams.delete(ACTIVATION_PARAM);
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
+}
+
+/** Activation link opened on this device: one tap makes this browser that kiosk. */
+function ActivateHere({ code, onDone, onCancel }: { code: string; onDone(): void; onCancel(): void }) {
+  const current = readWebSetup();
+  const [payment, setPayment] = useState<'mock' | 'none'>('mock');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const go = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const got = await activateDevice(location.origin, code);
+      if (!got.ok) return setError(got.message);
+      writeWebSetup({ serverUrl: location.origin, deviceId: got.deviceId, deviceKey: got.deviceKey, payment, printer: 'browser', scanner: 'keyboard', devControls: false });
+      onDone();
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="setup" data-testid="activate-here">
+      <div className="setup-card">
+        <h1>فعال‌سازی کیوسک</h1>
+        <p className="setup-hint">
+          این مرورگر به کیوسک فروش تبدیل می‌شود و از این پس نشانی اصلی سایت در آن، کیوسک کامل با خرید و پرداخت را باز می‌کند. این کار را روی همان دستگاهی
+          انجام دهید که کیوسک است.
+        </p>
+        {current && (
+          <div className="setup-error">
+            این مرورگر هم‌اکنون کیوسک {current.deviceId} است. فروش‌ها و رویدادهای ارسال‌نشده آن باید پیش از جایگزینی ارسال شده باشند (صف همگام‌سازی آن در صفحه
+            کیوسک‌ها صفر باشد).
+          </div>
+        )}
+        <label>
+          کارتخوان
+          <select value={payment} onChange={(e) => setPayment(e.target.value as 'mock' | 'none')} data-testid="activate-payment">
+            <option value="mock">شبیه‌ساز (نمایش و آموزش، با نوار «حالت آزمایشی»)</option>
+            <option value="none">متصل نشده (فروش متوقف)</option>
+          </select>
+        </label>
+        {error && (
+          <div className="setup-error" role="alert" data-testid="activate-error">
+            {error}
+          </div>
+        )}
+        <div className="setup-actions">
+          <button type="button" className="setup-primary" disabled={busy} onClick={() => void go()} data-testid="activate-confirm">
+            {busy ? 'در حال فعال‌سازی…' : 'فعال‌سازی این دستگاه'}
+          </button>
+          <button type="button" className="setup-secondary" onClick={onCancel}>
+            انصراف
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function useCornerTaps(enabled: boolean, onTrigger: () => void) {
@@ -53,7 +124,9 @@ function useCornerTaps(enabled: boolean, onTrigger: () => void) {
 }
 
 export function WebBoot() {
-  const [phase, setPhase] = useState<Phase>(() => (readWebSetup() || PUBLIC_WEB_APP ? { kind: 'starting' } : { kind: 'setup' }));
+  const [phase, setPhase] = useState<Phase>(() =>
+    ACTIVATION_CODE ? { kind: 'activate', code: ACTIVATION_CODE } : readWebSetup() || PUBLIC_WEB_APP ? { kind: 'starting' } : { kind: 'setup' },
+  );
   const [settings, setSettings] = useState<'closed' | 'gate' | 'open'>('closed');
   const started = useRef(false);
 
@@ -91,6 +164,13 @@ export function WebBoot() {
 
   useCornerTaps(phase.kind === 'running' && !!phase.setup && settings === 'closed', () => setSettings('gate'));
 
+  if (phase.kind === 'activate') {
+    const leave = () => {
+      dropActivationParam();
+      void start();
+    };
+    return <ActivateHere code={phase.code} onDone={leave} onCancel={leave} />;
+  }
   if (phase.kind === 'setup') {
     return (
       <Setup

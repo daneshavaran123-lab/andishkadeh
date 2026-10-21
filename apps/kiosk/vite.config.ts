@@ -6,6 +6,14 @@ import { defineConfig, type Plugin } from 'vite';
 
 const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf8')) as { version: string };
 
+/**
+ * Server the setup screen of the Windows and Android apps suggests (they do not come from a server),
+ * so a technician only enters the activation code: KIOSK_DEFAULT_SERVER_URL, or the Liara app of the
+ * release builds (CI). Empty: the technician enters it.
+ */
+const liaraApp = (process.env.KIOSK_LIARA_APP ?? '').trim().toLowerCase();
+const DEFAULT_SERVER = process.env.KIOSK_DEFAULT_SERVER_URL?.trim() || (/^[a-z0-9-]+$/.test(liaraApp) ? `https://${liaraApp}.liara.run` : '');
+
 /** Strict CSP for the packaged Electron app (dev mode keeps Vite's inline HMR preamble working). */
 const ELECTRON_CSP =
   "default-src 'self'; img-src 'self' data: blob: kiosk-media:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; connect-src 'self'";
@@ -69,6 +77,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), csp(web ? WEB_CSP : ELECTRON_CSP), ...(web ? [pwa()] : [])],
     define: {
       __KIOSK_VERSION__: JSON.stringify(pkg.version),
+      __KIOSK_DEFAULT_SERVER__: JSON.stringify(DEFAULT_SERVER),
       // Compile-time switch: the Electron build drops the in-page core (and the SQLite WebAssembly) entirely.
       __KIOSK_WEB__: JSON.stringify(web),
     },

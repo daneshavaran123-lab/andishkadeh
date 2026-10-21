@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('kiosk', {
   setup: {
     printers: () => ipcRenderer.invoke('kiosk-setup:printers'),
     verify: (s: unknown) => ipcRenderer.invoke('kiosk-setup:verify', s),
+    activate: (a: unknown) => ipcRenderer.invoke('kiosk-setup:activate', a),
     save: (values: unknown) => ipcRenderer.invoke('kiosk-setup:save', values),
   },
 });

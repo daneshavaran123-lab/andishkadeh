@@ -234,15 +234,21 @@ export const AuditQuery = PageQuery.extend({
 export type AuditQuery = z.infer<typeof AuditQuery>;
 
 export const CreateDeviceRequest = z.object({
+  /** Left out: the next free KIOSK-NN. */
   id: z
     .string()
     .trim()
     .min(3)
     .max(24)
-    .regex(/^[A-Z0-9-]+$/, 'شناسه دستگاه فقط حروف بزرگ لاتین، عدد و خط تیره'),
+    .regex(/^[A-Z0-9-]+$/, 'شناسه دستگاه فقط حروف بزرگ لاتین، عدد و خط تیره')
+    .optional(),
   name: z.string().trim().min(2).max(80),
 });
 export type CreateDeviceRequest = z.infer<typeof CreateDeviceRequest>;
+
+/** A kiosk exchanges a one-time activation code (or the link carrying it) for its id and key. */
+export const ActivateDeviceRequest = z.object({ code: z.string().trim().min(1).max(500) });
+export type ActivateDeviceRequest = z.infer<typeof ActivateDeviceRequest>;
 
 export const PrintReceiptCommandRequest = z.object({ deviceId: z.string().min(1) });
 export type PrintReceiptCommandRequest = z.infer<typeof PrintReceiptCommandRequest>;

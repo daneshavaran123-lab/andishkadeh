@@ -2,13 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Device } from '@prisma/client';
 import {
+  ACTIVATION_MINUTES,
+  ActivateDeviceResponse,
+  DeviceActivation,
   DeviceCommandDto,
   DeviceCommandType,
   DeviceRow,
   HeartbeatRequest,
   HeartbeatResponse,
+  parseActivationInput,
   WEB_APP_DEVICE_ID,
 } from '@andishkadeh/shared';
+import { generateActivationCode, randomApiKey, sha256Hex } from '@andishkadeh/shared/node';
+import { hashDeviceKey } from '../../common/auth';
 import { CounterService } from '../../common/core.services';
 import { PrismaService, Tx } from '../../common/prisma.service';
 
@@ -31,6 +37,7 @@ export function toDeviceRow(d: Device): DeviceRow {
     unresolvedPayments: d.unresolvedPayments,
     lastSyncAt: d.lastSyncAt?.toISOString() ?? null,
     publicWebApp: d.id === WEB_APP_DEVICE_ID,
+    activationExpiresAt: d.activationCodeHash && d.activationExpiresAt && d.activationExpiresAt > new Date() ? d.activationExpiresAt.toISOString() : null,
   };
 }
 
@@ -40,6 +47,40 @@ export class DevicesService {
     private readonly prisma: PrismaService,
     private readonly counters: CounterService,
   ) {}
+
+  /** A one-time activation code for a kiosk (replaces one not yet used); only its hash is kept. */
+  async issueActivation(deviceId: string): Promise<DeviceActivation> {
+    const expiresAt = new Date(Date.now() + ACTIVATION_MINUTES * 60_000);
+    for (let attempt = 0; ; attempt++) {
+      const code = generateActivationCode();
+      try {
+        await this.prisma.device.update({ where: { id: deviceId }, data: { activationCodeHash: sha256Hex(code), activationExpiresAt: expiresAt } });
+        return { deviceId, code, expiresAt: expiresAt.toISOString() };
+      } catch (e) {
+        // the same code waiting for another kiosk (unique hash): draw again
+        if (!(e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') || attempt >= 4) throw e;
+      }
+    }
+  }
+
+  /**
+   * A kiosk's activation code (or the link carrying it) → its id and a fresh key, which replaces the
+   * previous one. Works once and only before it expires; null otherwise.
+   */
+  async activate(input: string): Promise<ActivateDeviceResponse | null> {
+    const parsed = parseActivationInput(input);
+    if (!parsed) return null;
+    const hash = sha256Hex(parsed.code);
+    const device = await this.prisma.device.findUnique({ where: { activationCodeHash: hash } });
+    if (!device?.active || device.id === WEB_APP_DEVICE_ID || !device.activationExpiresAt || device.activationExpiresAt <= new Date()) return null;
+    const deviceKey = randomApiKey();
+    // only the request that still finds the code takes it
+    const taken = await this.prisma.device.updateMany({
+      where: { id: device.id, activationCodeHash: hash },
+      data: { apiKeyHash: hashDeviceKey(deviceKey), activationCodeHash: null, activationExpiresAt: null },
+    });
+    return taken.count === 1 ? { deviceId: device.id, deviceName: device.name, deviceKey } : null;
+  }
 
   async heartbeat(deviceId: string, hb: HeartbeatRequest): Promise<HeartbeatResponse> {
     const now = new Date();

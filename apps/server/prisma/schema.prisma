@@ -321,23 +321,23 @@ model OrderItem {
 
 model PaymentAttempt {
   /// Kiosk generated UUID.
-  id               String               @id
-  orderId          String
-  order            Order                @relation(fields: [orderId], references: [id])
-  idempotencyKey   String               @unique
-  amount           Int
-  status           PaymentStatus        @default(INITIATED)
-  terminalRef      String?
-  rrn              String?
-  traceNo          String?
-  resultSource     PaymentResultSource?
-  resultMessage    String?
-  initiatedAt      DateTime             @default(now())
-  resolvedAt       DateTime?
-  reconciledById   String?
-  reconcileReason  String?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  id              String               @id
+  orderId         String
+  order           Order                @relation(fields: [orderId], references: [id])
+  idempotencyKey  String               @unique
+  amount          Int
+  status          PaymentStatus        @default(INITIATED)
+  terminalRef     String?
+  rrn             String?
+  traceNo         String?
+  resultSource    PaymentResultSource?
+  resultMessage   String?
+  initiatedAt     DateTime             @default(now())
+  resolvedAt      DateTime?
+  reconciledById  String?
+  reconcileReason String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
   @@index([orderId])
   @@index([status])
@@ -386,20 +386,23 @@ model AccessLog {
 }
 
 model Device {
-  id                 String    @id
-  name               String
-  apiKeyHash         String
-  active             Boolean   @default(true)
-  lastSeenAt         DateTime?
-  appVersion         String?
-  catalogRevision    Int?
-  subRev             Int?
-  hardware           Json?
-  outbox             Json?
-  unresolvedPayments Int       @default(0)
-  lastSyncAt         DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                  String    @id
+  name                String
+  apiKeyHash          String
+  /// sha256 of the one-time activation code issued in the panel; cleared once used
+  activationCodeHash  String?   @unique
+  activationExpiresAt DateTime?
+  active              Boolean   @default(true)
+  lastSeenAt          DateTime?
+  appVersion          String?
+  catalogRevision     Int?
+  subRev              Int?
+  hardware            Json?
+  outbox              Json?
+  unresolvedPayments  Int       @default(0)
+  lastSyncAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   orders     Order[]
   accessLogs AccessLog[]
@@ -425,17 +428,17 @@ model DeviceCommand {
 
 model SyncEvent {
   /// Device generated event UUID — the dedup key.
-  id          String          @id
-  deviceId    String
-  device      Device          @relation(fields: [deviceId], references: [id])
-  type        String
-  payload     Json
-  status      SyncEventStatus
-  error       String?
-  result      Json?
-  retryCount  Int             @default(0)
-  receivedAt  DateTime        @default(now())
-  appliedAt   DateTime?
+  id         String          @id
+  deviceId   String
+  device     Device          @relation(fields: [deviceId], references: [id])
+  type       String
+  payload    Json
+  status     SyncEventStatus
+  error      String?
+  result     Json?
+  retryCount Int             @default(0)
+  receivedAt DateTime        @default(now())
+  appliedAt  DateTime?
 
   @@index([deviceId, status])
   @@index([receivedAt])
