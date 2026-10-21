@@ -319,12 +319,20 @@ jobs:
       - run: npm i -g @liara/cli@9
       # liara.json supplies platform, port, build location and the media disk. An app owned by a Liara
       # team is only found with the team id (variable LIARA_TEAM_ID).
+      # The image upload sometimes stalls part-way and never ends (Liara keeps the previous release
+      # meanwhile): an attempt that has not finished in 10 minutes is stopped and tried again.
       - name: liara deploy
         run: |
           token=$(printf '%s' "$LIARA_API_TOKEN" | tr -d '[:space:]')
           echo "::add-mask::$token"
-          liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} \
-            --build-arg RUNTIME=.liara/runtime.tgz --no-app-logs
+          for attempt in 1 2 3; do
+            if timeout 600 liara deploy --app "$LIARA_APP" --api-token "$token" ${LIARA_TEAM_ID:+--team-id "$LIARA_TEAM_ID"} \
+              --build-arg RUNTIME=.liara/runtime.tgz --no-app-logs; then
+              exit 0
+            fi
+            echo "::warning::liara deploy attempt $attempt did not finish (stalled upload or an error); trying again"
+          done
+          exit 1
       - name: Check the deployed server
         # First start runs the migrations and the seed; a failed start reports its reason here. Waits
         # for this version: the previous release answers until the new container is up.
